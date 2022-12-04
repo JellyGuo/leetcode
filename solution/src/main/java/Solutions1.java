@@ -4168,7 +4168,7 @@ public class Solutions1 {
         if (find) return;
         if (root == null) return;
         inorderSuccessorDfs(root.right, p);
-        if (root.val == p.val) {
+        if (root.val == p.val) { 
             find = true;
             return;
         }
