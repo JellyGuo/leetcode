@@ -36,7 +36,7 @@ public class MyUtil {
 
     public static void decryptAndUncompress() {
         try {
-            FileInputStream in = new FileInputStream("C:\\Users\\GDJessica\\Documents\\Solution1Encode.txt");
+            FileInputStream in = new FileInputStream("C:\\Users\\GDJessica\\Documents\\Solution3Encode.txt");
             InputStreamReader reader = new InputStreamReader(in);
             BufferedReader br = new BufferedReader(reader);
             String line;
@@ -47,7 +47,7 @@ public class MyUtil {
             br.close();
             reader.close();
             System.out.println("Done reading");
-            FileOutputStream out = new FileOutputStream("C:\\Users\\GDJessica\\Documents\\Solution1Decode.txt");
+            FileOutputStream out = new FileOutputStream("C:\\Users\\GDJessica\\Documents\\Solution3Decode.txt");
             String s = DESUtil.getDecryptString(sb.toString());
             s = GZipUtil.uncompress(s);
             byte[] b = s.getBytes(StandardCharsets.UTF_8);
