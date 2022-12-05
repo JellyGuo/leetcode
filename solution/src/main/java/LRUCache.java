@@ -1,14 +1,14 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class LRUClass {
+public class LRUCache {
     int size;
     int capacity;
     ListNode head;
     ListNode tail;
     Map<Integer, ListNode> map;
 
-    public LRUClass(int capacity) {
+    public LRUCache(int capacity) {
         this.capacity = capacity;
         this.map = new HashMap<>();
         head = new ListNode(-1);

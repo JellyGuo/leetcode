@@ -6798,6 +6798,39 @@ public class Solutions1 {
         }
     }
 
+    //2492. 两个城市间路径的最小分数
+    // 1和n 保证连接，求1的连通最小权边
+    public int minScore(int n, int[][] roads) {
+        Map<Integer, Integer> dist = new HashMap<>();
+        Map<Integer, List<Integer>> edges = new HashMap<>();
+        for (int[] road : roads) {
+            add(dist, edges, road[0], road[1], road[2]);
+            add(dist, edges, road[1], road[0], road[2]);
+        }
+        int min = Integer.MAX_VALUE;
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.offer(1);
+        boolean[] visited = new boolean[n+1];
+        while (!queue.isEmpty()) {
+            int cur = queue.poll();
+            for (int near : edges.getOrDefault(cur, new ArrayList<>())) {
+                if (visited[near]) continue;
+                visited[near] = true;
+                queue.offer(near);
+                min = Math.min(min, dist.getOrDefault(near, Integer.MAX_VALUE));
+            }
+        }
+        return min;
+    }
+    private void add(Map<Integer, Integer> dist, Map<Integer, List<Integer>> edges, int x, int y, int d) {
+        List<Integer> list = edges.getOrDefault(x, new ArrayList<>());
+        list.add(y);
+        edges.put(x, list);
+        if (!dist.containsKey(x) || (dist.containsKey(x) && dist.get(x) > d)) {
+            dist.put(x, d);
+        }
+    }
+
     //3中存图方式 N点 M边
     // 邻接矩阵数组：w[a][b] = c 代表从 a 到 b 有权重为 c 的边 M = N^2
     int Nodes, Edges;
