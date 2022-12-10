@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Solution {
     //    882. 细分图中的可到达节点
@@ -209,10 +210,12 @@ public class Solution {
         }
     }
 
+   
+
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.dividePlayers(new int[]{3,2,5,1,3,4});
+        solution.dividePlayers(new int[]{3, 2, 5, 1, 3, 4});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);

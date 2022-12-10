@@ -6167,6 +6167,63 @@ public class Solutions2 {
         }
         return idx;
     }
+    //1691. 堆叠长方体的最大高度
+    public int maxHeight(int[][] cuboids) {
+        int n = cuboids.length;
+        for (int[] v : cuboids) {
+            // 把长宽高重新排列，每一个长方体都是高度最高
+            Arrays.sort(v);
+        }
+        Arrays.sort(cuboids, Comparator.comparingInt(a -> (a[0] + a[1] + a[2])));
+        int ans = 0;
+        // LIS问题
+        int[] dp = new int[n];
+        for (int i = 0; i < n; i++) {
+            dp[i] = cuboids[i][2];
+            for (int j = 0; j < i; j++) {
+                if (cuboids[i][0] >= cuboids[j][0] &&
+                        cuboids[i][1] >= cuboids[j][1] &&
+                        cuboids[i][2] >= cuboids[j][2]) {
+                    dp[i] = Math.max(dp[i], dp[j] + cuboids[i][2]);
+                }
+            }
+            ans = Math.max(ans, dp[i]);
+        }
+        return ans;
+    }
+
+    public int maxHeightDFS(int[][] cuboids) {
+        int n = cuboids.length;
+        for (int[] v : cuboids) {
+            Arrays.sort(v);
+        }
+        Arrays.sort(cuboids, Comparator.comparingInt(a -> (a[0] + a[1] + a[2])));
+
+        int[] memo = new int[n];
+        Arrays.fill(memo, -1);
+        return dfs(cuboids, memo, -1, 0);
+    }
+
+    public int dfs(int[][] cuboids, int[] memo, int top, int index) {
+        if (index == cuboids.length) {
+            return 0;
+        }
+        if (top != -1 && memo[top] != -1) {
+            return memo[top];
+        }
+        int height = dfs(cuboids, memo, top, index + 1);
+        if (top == -1 || check(cuboids[top], cuboids[index])) {
+            height = Math.max(height, cuboids[index][2] + dfs(cuboids, memo, index, index + 1));
+        }
+        if (top != -1) {
+            memo[top] = height;
+        }
+        return height;
+    }
+
+    public boolean check(int[] a, int[] b) {
+        return a[0] <= b[0] && a[1] <= b[1] && a[2] <= b[2];
+    }
 
     // 面试08.13 堆箱子
     //堆箱子。给你一堆n个箱子，箱子宽 wi、深 di、高 hi。箱子不能翻转，将箱子堆起来时，下面箱子的宽度、高度和深度必须大于上面的箱子。实现一种方法，搭出最

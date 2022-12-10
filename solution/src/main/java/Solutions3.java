@@ -22,6 +22,21 @@ public class Solutions3 {
         return n == 1;
     }
 
+    // 1780. 判断一个数字是否可以表示成三的幂的和
+    //给你一个整数 n ，如果你可以将 n 表示成若干个[不同]的三的幂之和，请你返回 true ，否则请返回 false 。
+    //输入：n = 91
+    //输出：true
+    //解释：91 = 3^0 + 3^2 + 3^4
+    // 要么可以除以3 要么多1,如果多一个1就是相同
+    public boolean checkPowersOfThree(int n) {
+        while (n != 0) {
+            if (n % 3 == 2) {
+                return false;
+            }
+            n /= 3;
+        }
+        return true;
+    }
     // 27 移除元素
     public int removeElement(int[] nums, int val) {
         int idx = 0;
@@ -760,6 +775,23 @@ public class Solutions3 {
         return second;
     }
 
+    // 414. 第三大的数
+    public int thirdMax(int[] nums) {
+        Integer first = null, second = null, third = null;
+        for (int num : nums) {
+            if (first == null || num > first) {
+                third = second;
+                second = first;
+                first = num;
+            } else if (num < first && (second == null || num > second)) {
+                third = second;
+                second = num;
+            } else if (second!=null && num < second && (third == null || num > third)) {
+                third = num;
+            }
+        }
+        return third == null ? first : third;
+    }
     // 1523 在区间范围内统计奇数数目
     public int countOdds(int low, int high) {
         int len = high - low + 1;
@@ -2939,6 +2971,48 @@ public class Solutions3 {
         return result;
     }
 
+    // 2028. 找出缺失的观测数据
+    public int[] missingRolls(int[] rolls, int mean, int n) {
+        int m = rolls.length;
+        int total = mean * (m + n);
+        int sum = 0;
+        for (int num : rolls) {
+            sum += num;
+        }
+        int diff = total - sum;
+        if (diff < n || diff > n * 6) return new int[0];
+        int avg = diff / n, r = diff % n;
+        int[] ans = new int[n];
+        for (int i = 0; i < n; i++) {
+            ans[i] = avg + (i < r ? 1 : 0);
+        }
+        return ans;
+    }
+
+    //1805. 字符串中不同整数的数目
+    public int numDifferentIntegers(String word) {
+        Set<String> set = new HashSet<>();
+        int idx = 0, n = word.length();
+        char[] chars = word.toCharArray();
+        while (idx < n) {
+            if (Character.isLetter(chars[idx])) {
+                idx++;
+                continue;
+            }
+            StringBuilder sb = new StringBuilder();
+            while (idx < n && Character.isDigit(chars[idx])) {
+                sb.append(chars[idx++]);
+            }
+            String s = sb.toString();
+            int i = 0;
+            while (i < s.length() && s.charAt(i) == '0') {
+                i++;
+            }
+            set.add(s.substring(i));
+        }
+        return set.size();
+    }
+
     //1582. 二进制矩阵中的特殊位置
     public int numSpecial(int[][] mat) {
         int m = mat.length, n = mat[0].length;
@@ -3126,6 +3200,13 @@ public class Solutions3 {
             }
         }
         return s0 + s1;
+    }
+
+    //1812. 判断国际象棋棋盘中一个格子的颜色
+    public boolean squareIsWhite(String coordinates) {
+        int col = coordinates.charAt(0) - 'a';
+        int row = coordinates.charAt(1) - '1';
+        return ((col & 1) == 1 && (row & 1) == 0) || ((col & 1) == 0 && (row & 1) == 1);
     }
 
 
@@ -4869,6 +4950,47 @@ public class Solutions3 {
             set.remove(max);
             set.add(max / 2);
             res = Math.min(res, set.last() - set.first());
+        }
+        return res;
+    }
+
+    //1775. 通过最少操作次数使数组的和相等
+    public int minOperations(int[] nums1, int[] nums2) {
+        int n = nums1.length, m = nums2.length;
+        if (6 * n < m || 6 * m < n) {
+            return -1;
+        }
+        int[] cnt1 = new int[7];
+        int[] cnt2 = new int[7];
+        int diff = 0;
+        for (int i : nums1) {
+            ++cnt1[i];
+            diff += i;
+        }
+        for (int i : nums2) {
+            ++cnt2[i];
+            diff -= i;
+        }
+        if (diff == 0) {
+            return 0;
+        }
+        if (diff > 0) {
+            return help(cnt2, cnt1, diff);
+        }
+        return help(cnt1, cnt2, -diff);
+    }
+
+    public int help(int[] h1, int[] h2, int diff) {
+        int[] h = new int[7];
+        for (int i = 1; i < 7; ++i) {
+            h[6 - i] += h1[i];
+            h[i - 1] += h2[i];
+        }
+        int res = 0;
+        for (int i = 5; i > 0 && diff > 0; --i) {
+            int t = Math.min((diff + i - 1) / i, h[i]);
+            res += t;
+            diff -= t * i;
         }
         return res;
     }
