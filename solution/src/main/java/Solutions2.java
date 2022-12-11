@@ -6109,6 +6109,52 @@ public class Solutions2 {
         return ans;
     }
 
+    //6258. 数组中最长的方波
+    public int longestSquareStreak(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.add(num * num);
+        }
+        Arrays.sort(nums);
+        int[] dp = new int[n];
+        int max = 1;
+        for (int i = 0; i < n; i++) {
+            dp[i] = 1;
+            if (!set.contains(nums[i])) continue;
+            for (int j = 0; j < i; j++) {
+                if (nums[j] * nums[j] == nums[i]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                    break;
+                }
+            }
+            max = Math.max(dp[i], max);
+        }
+        return max == 1 ? -1 : max;
+    }
+
+    public int longestSquareStreak2(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.add(num);
+        }
+        Arrays.sort(nums);
+        int max = 1;
+        for(int num:nums){
+            int cur = 1;
+            int x = num;
+            while(set.contains(x*x)){
+                x*=x;
+                cur++;
+            }
+            if(cur>1){
+                max = Math.max(max,cur);
+            }
+        }
+        return max == 1 ? -1 : max;
+    }
+
     // 354 俄罗斯套娃信封问题
     public int maxEnvelopes(int[][] envelopes) {
         int n = envelopes.length;

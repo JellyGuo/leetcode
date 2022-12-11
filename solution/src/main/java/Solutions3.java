@@ -4839,6 +4839,29 @@ public class Solutions3 {
         return Integer.parseInt(String.valueOf(chars));
     }
 
+    //942. 增减字符串匹配
+    public int[] diStringMatch(String s) {
+        int n = s.length(), l = 0, r = n, idx = 0;
+        int[] ans = new int[n + 1];
+        for (int i = 0; i < n; i++) {
+            ans[idx++] = s.charAt(i) == 'I' ? l++ : r--;
+        }
+        ans[idx] = l;
+        return ans;
+    }
+
+    //1827. 最少操作使数组递增
+    public int minOperations(int[] nums) {
+        int ans = 0;
+        for (int i = 1; i < nums.length; i++) {
+            if (nums[i] > nums[i - 1]) continue;
+
+            ans += nums[i - 1] + 1 - nums[i];
+            nums[i] = nums[i - 1] + 1;
+        }
+        return ans;
+    }
+
     // 857 雇佣K名工人的最低成本
     public double mincostToHireWorkers(int[] quality, int[] wage, int k) {
         int n = quality.length;

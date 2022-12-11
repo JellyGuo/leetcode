@@ -210,12 +210,88 @@ public class Solution {
         }
     }
 
-   
 
+    public int deleteGreatestValue(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        boolean[][] visited = new boolean[m][n];
+        int cnt = n, ans = 0;
+        while (cnt-- > 0) {
+            int max = 0;
+            for (int i = 0; i < m; i++) {
+                int colMax = 0, col = -1;
+                for (int j = 0; j < n; j++) {
+                    if (!visited[i][j] && grid[i][j] > colMax) {
+                        colMax = grid[i][j];
+                        col = j;
+                    }
+                }
+                visited[i][col] = true;
+                max = Math.max(max, colMax);
+            }
+            ans += max;
+        }
+        return ans;
+    }
+
+    public int longestSquareStreak(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.add(num * num);
+        }
+        Arrays.sort(nums);
+        int[] dp = new int[n];
+        int max = 1;
+        for (int i = 0; i < n; i++) {
+            dp[i] = 1;
+            if (!set.contains(nums[i])) continue;
+            for (int j = 0; j < i; j++) {
+                if (nums[j] * nums[j] == nums[i]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                    break;
+                }
+            }
+            max = Math.max(dp[i], max);
+        }
+        return max == 1 ? -1 : max;
+    }
+
+    public int longestSquareStreak2(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.add(num);
+        }
+        Arrays.sort(nums);
+        int max = 1;
+        for(int num:nums){
+            int cur = 1;
+            int x = num;
+            while(set.contains(x*x)){
+                x*=x;
+                cur++;
+            }
+            if(cur>1){
+                max = Math.max(max,cur);
+            }
+        }
+        return max == 1 ? -1 : max;
+    }
+
+    public int minOperations(int[] nums) {
+        int ans = 0;
+        for (int i = 1; i < nums.length; i++) {
+            if (nums[i] > nums[i - 1]) continue;
+
+            ans += nums[i - 1] + 1 - nums[i];
+            nums[i] = nums[i - 1] + 1;
+        }
+        return ans;
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.dividePlayers(new int[]{3, 2, 5, 1, 3, 4});
+        solution.longestSquareStreak(new int[]{2, 3, 5, 6, 7});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);
