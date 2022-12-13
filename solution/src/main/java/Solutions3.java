@@ -37,6 +37,7 @@ public class Solutions3 {
         }
         return true;
     }
+
     // 27 移除元素
     public int removeElement(int[] nums, int val) {
         int idx = 0;
@@ -230,9 +231,9 @@ public class Solutions3 {
     // 位运算
     // 面试16.01
     public int[] swapNumbers(int[] numbers) {
-        numbers[0] = numbers[0]^numbers[1];
-        numbers[1] = numbers[0]^numbers[1];
-        numbers[0] = numbers[1]^numbers[0];
+        numbers[0] = numbers[0] ^ numbers[1];
+        numbers[1] = numbers[0] ^ numbers[1];
+        numbers[0] = numbers[1] ^ numbers[0];
         return numbers;
     }
 
@@ -344,15 +345,15 @@ public class Solutions3 {
     // 面试题 16.07 最大数值
     // n输入为 0或1
     // 输出一定为 0 -> 1 或 1 -> 0
-    public static int filp(int n){
+    public static int filp(int n) {
         return n ^ 1;
     }
 
     // n是非负数, 返回1
     // n是负数， 返回0
-    public static int sign(int n){
+    public static int sign(int n) {
         // 相当于判断n的符号位
-        return filp( (n >> 31) & 1 );
+        return filp((n >> 31) & 1);
     }
 
     // 这种写法可以防止溢出
@@ -786,12 +787,13 @@ public class Solutions3 {
             } else if (num < first && (second == null || num > second)) {
                 third = second;
                 second = num;
-            } else if (second!=null && num < second && (third == null || num > third)) {
+            } else if (second != null && num < second && (third == null || num > third)) {
                 third = num;
             }
         }
         return third == null ? first : third;
     }
+
     // 1523 在区间范围内统计奇数数目
     public int countOdds(int low, int high) {
         int len = high - low + 1;
@@ -2926,6 +2928,44 @@ public class Solutions3 {
             }
         }
         return true;
+    }
+
+    //1781. 所有子字符串美丽值之和
+    public int beautySum(String s) {
+        int n = s.length();
+        Map<Character, Integer> map = new HashMap<>();
+        char[] chars = s.toCharArray();
+        int max;
+        final int[] min = new int[1];
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            map.clear();
+            max = Integer.MIN_VALUE;
+            for (int j = i; j < n; j++) {
+                map.put(chars[j], map.getOrDefault(chars[j], 0) + 1);
+                max = Math.max(map.get(chars[j]), max);
+                min[0] = Integer.MAX_VALUE;
+                map.forEach((k,v)-> min[0] = Math.min(min[0],v));
+                ans += max - min[0];
+            }
+        }
+        return ans;
+    }
+
+    //1832. 判断句子是否为全字母句
+    public boolean checkIfPangram(String sentence) {
+        int[] cnt = new int[26];
+        int n = sentence.length();
+        if (n < 26) return false;
+        int count = 0;
+        for (char c : sentence.toCharArray()) {
+            if (cnt[c - 'a'] == 0) {
+                cnt[c - 'a']++;
+                count++;
+            }
+            if (count == 26) return true;
+        }
+        return false;
     }
 
     // 1742 盒子中小球的最大数量
@@ -6211,6 +6251,43 @@ public class Solutions3 {
         return left;
     }
 
+    // 三向切分 把小于中位数的放到前面，大于中位数的放到后面
+    private void threeWayPartition(int[] nums, int median) {
+        int l = 0, r = nums.length - 1, i = 0;
+        // 类似3色问题
+        while (i <= r) {
+            if (nums[i] > median) {
+                // 换完继续判断当前i
+                swap(nums, r--, i);
+            } else if (nums[i] < median) {
+                // 和当前l一样，同时加1
+                // 比l大，此时l指向的一定是median，换完继续往后移
+                swap(nums, l++, i++);
+            } else {
+                i++;
+            }
+        }
+    }
+    // 三向切分+倒序重组
+    private void threeWayPartition2(int[] nums, int median) {
+        int l = 0, r = nums.length - 1, i = 0;
+        // 类似3色问题
+        while (i <= r) {
+            if (nums[getIdx(i)] < median) {
+                swap(nums, getIdx(r--), getIdx(i));
+            } else if (nums[getIdx(i)] > median) {
+                swap(nums, getIdx(l++), getIdx(i++));
+            } else {
+                i++;
+            }
+        }
+    }
+
+    public int getIdx(int i) {
+        int n=0;
+        return (1 + 2 * (i)) % (n | 1);
+    }
+
     // 406 根据身高重建队列
     public int[][] reconstructQueue(int[][] people) {
         Arrays.sort(people, (p1, p2) -> p1[0] != p2[0] ? Integer.compare(p2[0], p1[0]) : Integer.compare(p1[1], p2[1]));
@@ -7153,6 +7230,7 @@ public class Solutions3 {
         }
         return s.equals(words[l]) ? l : -1;
     }
+
     public int findString2(String[] words, String s) {
         int n = words.length;
         int l = 0, r = n - 1;

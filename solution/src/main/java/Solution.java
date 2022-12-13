@@ -1,5 +1,4 @@
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Solution {
     //    882. 细分图中的可到达节点
@@ -264,15 +263,15 @@ public class Solution {
         }
         Arrays.sort(nums);
         int max = 1;
-        for(int num:nums){
+        for (int num : nums) {
             int cur = 1;
             int x = num;
-            while(set.contains(x*x)){
-                x*=x;
+            while (set.contains(x * x)) {
+                x *= x;
                 cur++;
             }
-            if(cur>1){
-                max = Math.max(max,cur);
+            if (cur > 1) {
+                max = Math.max(max, cur);
             }
         }
         return max == 1 ? -1 : max;
@@ -289,9 +288,74 @@ public class Solution {
         return ans;
     }
 
+    int n;
+
+    public void wiggleSort(int[] nums) {
+        this.n = nums.length;
+        int k = n >> 1;
+        int median = findKthLargest(nums, k);
+        threeWayPartition(nums, median);
+    }
+
+    private void threeWayPartition(int[] nums, int median) {
+        int l = 0, r = nums.length - 1, i = 0;
+        // 类似3色问题
+        while (i <= r) {
+            if (nums[getIdx(i)] > median) {
+                // 换完继续判断当前i
+                swap(nums, getIdx(r--), getIdx(i));
+            } else if (nums[getIdx(i)] < median) {
+                // 和当前l一样，同时加1
+                // 比l大，此时l指向的一定是median，换完继续往后移
+                swap(nums, getIdx(l++), getIdx(i++));
+            } else {
+                i++;
+            }
+        }
+    }
+
+    public int getIdx(int i) {
+        return (1 + 2 * (i)) % (n | 1);
+    }
+
+    private void swap(int[] nums, int i, int j) {
+        int tmp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = tmp;
+    }
+
+    private int findKthLargest(int[] nums, int target) {
+        int l = 0, r = n - 1;
+        while (true) {
+            int k = quickPartition(nums, l, r);
+            if (k == target) return nums[k];
+            if (k < target) {
+                l = k + 1;
+            } else {
+                r = k - 1;
+            }
+        }
+    }
+
+    private int quickPartition(int[] nums, int l, int r) {
+        int pivot = nums[l];
+        while (l < r) {
+            while (l < r && nums[r] >= pivot) {
+                r--;
+            }
+            nums[l] = nums[r];
+            while (l < r && nums[l] <= pivot) {
+                l++;
+            }
+            nums[r] = nums[l];
+        }
+        nums[l] = pivot;
+        return l;
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.longestSquareStreak(new int[]{2, 3, 5, 6, 7});
+        solution.wiggleSort(new int[]{1, 5, 1, 1, 6, 4});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);
