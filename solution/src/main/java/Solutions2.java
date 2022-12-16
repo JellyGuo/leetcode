@@ -2956,6 +2956,50 @@ public class Solutions2 {
         }
         return memo[r][c];
     }
+    // 688 骑士在棋盘上的概率
+    int[][] directions = new int[][]{{1, 2}, {-1, 2}, {1, -2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
+
+    public double knightProbability(int n, int k, int row, int column) {
+        double[][][] memo = new double[n][n][k + 1];
+        return dfs(n, k, row, column, memo);
+    }
+
+    private double dfs(int n, int k, int x, int y, double[][][] memo) {
+        if (x >= n || x < 0 || y >= n || y < 0) return 0;
+        if (k == 0) return 1;
+        if (memo[x][y][k] > 0) return memo[x][y][k];
+        double ans = 0;
+        for (int[] dire : directions) {
+            ans += dfs(n, k - 1, x + dire[0], y + dire[1], memo) / 8;
+        }
+        return memo[x][y][k] = ans;
+    }
+
+    public double knightProbabilityDP(int n, int k, int row, int column) {
+        //定义 dp[i][j][p] 为从位置 (i, j) 出发，使用步数不超过 p 步，最后仍在棋盘内的概率
+        // 若下一步落点(nx,ny)在棋盘内，剩余可走步数是p-1，问题转为 从(nx,ny)出发，使用不超过p-1步依然在棋盘的概率
+        // 下一步落点是1/8概率，故 dp[i][j][p] = dp[nx][ny][p-1]/8
+        double[][][] dp = new double[n][n][k + 1];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                dp[i][j][0] = 1;
+            }
+        }
+        for (int p = 1; p <= k; p++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    for (int[] dire : directions) {
+                        int nx = i + dire[0];
+                        int ny = j + dire[1];
+                        if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
+                            dp[i][j][p] += dp[nx][ny][p - 1] / 8;
+                        }
+                    }
+                }
+            }
+        }
+        return dp[row][column][k];
+    }
 
     // 面试08.14 布尔运算 自顶向下 记忆化DFS
     Integer[][][] countEvalMemo;
@@ -4847,6 +4891,37 @@ public class Solutions2 {
         }
         return sum - 2 * dp[target];
     }
+
+    // 1751 最多可以参加会议的次数
+    public int maxValue(int[][] events, int k) {
+        int n = events.length;
+        // 对结束时间二分，根据结束时间排序
+        Arrays.sort(events, Comparator.comparingInt(o -> o[1]));
+        // 前n个会议参加k个的最大价值，包括不参加
+        int[][] dp = new int[n + 1][k + 1];
+        for (int i = 1; i <= n; i++) {
+            int[] cur = events[i - 1];
+            // 从第一个到i的前一个
+            int l = 1, r = i - 1;
+            while (l < r) {
+                int mid = l + r + 1 >> 1;
+                // 由于l和r都后移一位，此处mid前移
+                if (events[mid - 1][1] < cur[0]) {
+                    l = mid;
+                } else {
+                    r = mid - 1;
+                }
+            }
+            // 对events的索引都要-1
+            int last = events[l - 1][1] < cur[0] ? l : 0;
+            // last=0代表只参加本次会议
+            for (int j = 1; j <= k; j++) {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[last][j - 1] + cur[2]);
+            }
+        }
+        return dp[n][k];
+    }
+
     //endregion------------------------------------------------------------------------------------------
 
     //region----------------------------------------------- 完全背包 每件可以取无数次---------------------------------------

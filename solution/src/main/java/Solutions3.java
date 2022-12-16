@@ -2930,6 +2930,25 @@ public class Solutions3 {
         return true;
     }
 
+    //1945. 字符串转化后的各位数字之和
+    public int getLucky(String s, int k) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            sb.append(c - 'a' + 1);
+        }
+        String digits = sb.toString();
+        int ans = 0;
+        while (k-- > 0) {
+            ans = 0;
+            for (char c : digits.toCharArray()) {
+                ans += c - '0';
+            }
+            digits = String.valueOf(ans);
+
+        }
+        return ans;
+    }
+
     //1781. 所有子字符串美丽值之和
     public int beautySum(String s) {
         int n = s.length();
@@ -4888,6 +4907,17 @@ public class Solutions3 {
         }
         ans[idx] = l;
         return ans;
+    }
+
+    // 1785. 构成特定和需要添加的最少元素
+    public int minElements(int[] nums, int limit, int goal) {
+        long sum = 0;
+        for (int num : nums) {
+            sum += num;
+        }
+        long diff = goal - sum;
+        long ans = (Math.abs(diff) + limit - 1) / limit;
+        return (int)ans;
     }
 
     //1827. 最少操作使数组递增

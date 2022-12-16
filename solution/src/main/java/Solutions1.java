@@ -7221,6 +7221,32 @@ public class Solutions1 {
         }
     }
 
+    // 1697. 检查边长度限制的路径是否存在
+    public boolean[] distanceLimitedPathsExist(int n, int[][] edgeList, int[][] queries) {
+        // 将edgeList和queries分别按边的权重从小到大排序
+        Arrays.sort(edgeList, Comparator.comparingInt(o -> o[2]));
+        // 保存下标数组，用于ans的下标，避免排序完queries后ans找不到对应的idx
+        Integer[] idx = new Integer[queries.length];
+        for (int i = 0; i < idx.length; i++) {
+            idx[i] = i;
+        }
+        Arrays.sort(idx, Comparator.comparingInt(o -> queries[o][2]));
+        int k = 0;
+        UnionFind1 unionFind = new UnionFind1(n);
+        boolean[] ans = new boolean[queries.length];
+        for (int i : idx) {
+            // 离线查询：将小于当前query的limit的边合并，k指向下一个大于limit的边
+            // 下一个查询时，利用已有的结果
+            while (k < edgeList.length && edgeList[k][2] < queries[i][2]) {
+                unionFind.union(edgeList[k][0], edgeList[k][1]);
+                k++;
+            }
+            ans[i] = unionFind.isConnect(queries[i][0], queries[i][1]);
+        }
+        return ans;
+
+    }
+
     // endregion -----------------------------------------------------------------------------------------
     //region -------------------------------------------------------------------最短路径------------------------------------------
 
