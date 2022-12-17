@@ -353,9 +353,30 @@ public class Solution {
         return l;
     }
 
+    public boolean canChoose(int[][] groups, int[] nums) {
+        int i = 0;
+        for (int k = 0; i < groups.length && k < nums.length; ) {
+            if (check(nums, groups[i], k)) {
+                k += groups[i].length;
+                i++;
+            } else {
+                k++;
+            }
+        }
+        return i == groups.length;
+    }
+
+    private boolean check(int[] nums, int[] group, int k) {
+        if (k + group.length > nums.length) return false;
+        for (int j = 0; j < group.length; j++) {
+            if (nums[k + j] != group[j]) return false;
+        }
+        return true;
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.wiggleSort(new int[]{1, 5, 1, 1, 6, 4});
+        solution.canChoose(new int[][]{{1, 2, 3}, {3, 4}}, new int[]{7, 7, 1, 2, 3, 4, 7, 7});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);

@@ -2050,6 +2050,69 @@ public class Solutions3 {
         return false;
     }
 
+    // 1764. 通过连接另一个数组的子数组得到一个数组
+    public boolean canChooseGreedy(int[][] groups, int[] nums) {
+        int i = 0;
+        for (int k = 0; i < groups.length && k < nums.length; ) {
+            if (check(nums, groups[i], k)) {
+                k += groups[i].length;
+                i++;
+            } else {
+                k++;
+            }
+        }
+        return i == groups.length;
+    }
+
+    private boolean check(int[] nums, int[] group, int k) {
+        if (k + group.length > nums.length) return false;
+        for (int j = 0; j < group.length; j++) {
+            if (nums[k + j] != group[j]) return false;
+        }
+        return true;
+    }
+
+    public boolean canChooseKMP(int[][] groups, int[] nums) {
+        int k = 0;
+        for (int i = 0; i < groups.length; i++) {
+            k = find(nums, k, groups[i]);
+            if (k == -1) {
+                return false;
+            }
+            k += groups[i].length;
+        }
+        return true;
+    }
+
+    // 数组KMP:nums 原串 g 匹配串 k从nums k开始
+    public int find(int[] nums, int k, int[] g) {
+        int m = g.length, n = nums.length;
+        if (k + g.length > nums.length) {
+            return -1;
+        }
+        int[] pi = new int[m];
+        for (int i = 1, j = 0; i < m; i++) {
+            while (j > 0 && g[i] != g[j]) {
+                j = pi[j - 1];
+            }
+            if (g[i] == g[j]) {
+                j++;
+            }
+            pi[i] = j;
+        }
+        for (int i = k, j = 0; i < n; i++) {
+            while (j > 0 && nums[i] != g[j]) {
+                j = pi[j - 1];
+            }
+            if (nums[i] == g[j]) {
+                j++;
+            }
+            if (j == m) {
+                return i - m + 1;
+            }
+        }
+        return -1;
+    }
     // 961 在长度2N的数组中找出重复N次的元素
     // n+1个数,x重复了n次 => 其余数字出现1次
     public int repeatedNTimes(int[] nums) {

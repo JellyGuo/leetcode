@@ -5793,9 +5793,12 @@ public class Solutions2 {
     }
 
     // 664 奇怪的打印机 String painter
+    // aba 两端字符一样，打印次数=ab的打印次数
+    // abab 两端字符不一样，打印次数 = min([a,bab],[ab,ab],[aba,b])
     // 控制长度写法
     public int strangePrinter(String s) {
         int n = s.length();
+        // dp[l][r] 代表从l到r最小打印次数
         int[][] dp = new int[n][n];
         for (int len = 1; len <= n; len++) {
             for (int l = 0; l + len - 1 < n; l++) {
