@@ -1066,6 +1066,63 @@ public class Solutions3 {
         return count;
     }
 
+    //6266. 使用质因数之和替换后可以取到的最小值
+    public int smallestValue(int n) {
+        int sum = n;
+        while (!isPrime(sum)) {
+            int cur = sum;
+            List<Integer> res = fac(cur);
+            sum = 0;
+            for (int num : res) {
+                sum += num;
+            }
+            if (cur == sum) return cur;
+        }
+        return sum;
+    }
+
+    // 质因数分解
+    private List<Integer> fac(int n) {
+        List<Integer> ans = new ArrayList<>();
+        for (int i = 2; i <= Math.sqrt(n); i++) {
+            if (isPrime(i)) {
+                while (n % i == 0) {
+                    n /= i;
+                    ans.add(i);
+                    if (isPrime(n)) {
+                        ans.add(n);
+                        break;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+
+    public int smallestValue2(int n) {
+        int nxt = facSum(n);
+        while (nxt < n) {
+            n = nxt;
+            nxt = facSum(n);
+        }
+        return n;
+    }
+
+    // 合数由质数组成，不缺分质数或是合数因子
+    private int facSum(int n) {
+        int i = 2, sum = 0;
+        while (i * i <= n) {
+            if (n % i == 0) {
+                sum += i;
+                n /= i;
+            } else {
+                i++;
+            }
+        }
+        if (n != 1) sum += n;
+        return sum;
+    }
+
     // 258 各位相加
     public int addDigits(int num) {
         while (num >= 10) {
@@ -2105,6 +2162,109 @@ public class Solutions3 {
                 j = pi[j - 1];
             }
             if (nums[i] == g[j]) {
+                j++;
+            }
+            if (j == m) {
+                return i - m + 1;
+            }
+        }
+        return -1;
+    }
+    //686. 重复叠加字符串匹配
+    public int repeatedStringMatch(String a, String b) {
+        int m = a.length(), n = b.length();
+        int cnt = (n + m - 1) / m;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i <= cnt; i++) {
+            sb.append(a);
+        }
+        int idx = sb.toString().indexOf(b);
+        if (idx == -1) return -1;
+        return ((idx + n) > m * cnt) ? cnt + 1 : cnt;
+    }
+
+    // Rabin-Karp 算法
+    // 链接：https://leetcode.cn/problems/repeated-string-match/solution/zhong-fu-die-jia-zi-fu-chuan-pi-pei-by-l-vnye/
+    static final int kMod1 = 1000000007;
+    static final int kMod2 = 1337;
+
+    public int repeatedStringMatchRabinKarp(String a, String b) {
+        int an = a.length(), bn = b.length();
+        int index = strStrRabinKarp(a, b);
+        if (index == -1) {
+            return -1;
+        }
+        if (an - index >= bn) {
+            return 1;
+        }
+        return (bn + index - an - 1) / an + 2;
+    }
+
+    public int strStrRabinKarp(String haystack, String needle) {
+        int n = haystack.length(), m = needle.length();
+        if (m == 0) {
+            return 0;
+        }
+
+        int k1 = 1000000009;
+        int k2 = 1337;
+        Random random = new Random();
+        int kMod1 = random.nextInt(k1) + k1;
+        int kMod2 = random.nextInt(k2) + k2;
+
+        long hashNeedle = 0;
+        for (int i = 0; i < m; i++) {
+            char c = needle.charAt(i);
+            hashNeedle = (hashNeedle * kMod2 + c) % kMod1;
+        }
+        long hashHaystack = 0, extra = 1;
+        for (int i = 0; i < m - 1; i++) {
+            hashHaystack = (hashHaystack * kMod2 + haystack.charAt(i % n)) % kMod1;
+            extra = (extra * kMod2) % kMod1;
+        }
+        for (int i = m - 1; (i - m + 1) < n; i++) {
+            hashHaystack = (hashHaystack * kMod2 + haystack.charAt(i % n)) % kMod1;
+            if (hashHaystack == hashNeedle) {
+                return i - m + 1;
+            }
+            hashHaystack = (hashHaystack - extra * haystack.charAt((i - m + 1) % n)) % kMod1;
+            hashHaystack = (hashHaystack + kMod1) % kMod1;
+        }
+        return -1;
+    }
+
+    public int repeatedStringMatchKMP(String a, String b) {
+        int an = a.length(), bn = b.length();
+        int index = strStrKMP(a, b);
+        if (index == -1) {
+            return -1;
+        }
+        if (an - index >= bn) {
+            return 1;
+        }
+        return (bn + index - an - 1) / an + 2;
+    }
+
+    public int strStrKMP(String haystack, String needle) {
+        int n = haystack.length(), m = needle.length();
+        if (m == 0) {
+            return 0;
+        }
+        int[] pi = new int[m];
+        for (int i = 1, j = 0; i < m; i++) {
+            while (j > 0 && needle.charAt(i) != needle.charAt(j)) {
+                j = pi[j - 1];
+            }
+            if (needle.charAt(i) == needle.charAt(j)) {
+                j++;
+            }
+            pi[i] = j;
+        }
+        for (int i = 0, j = 0; i - j < n; i++) { // b 开始匹配的位置是否超过第一个叠加的 a
+            while (j > 0 && haystack.charAt(i % n) != needle.charAt(j)) { // haystack 是循环叠加的字符串，所以取 i % n
+                j = pi[j - 1];
+            }
+            if (haystack.charAt(i % n) == needle.charAt(j)) {
                 j++;
             }
             if (j == m) {
@@ -4625,6 +4785,71 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //6268. 查询树中环的长度
+    //    设 LCA 为 aa 和 bb 的最近公共祖先，那么环长等于LCA 到 a 的距离加 LCA 到 b 的距离加一。
+//    如何找 LCA？
+//    不断循环，每次循环比较 a 和 b 的大小：
+//    如果 a>b，说明 a 的深度大于等于 b 的深度，那么把 a 移动到其父节点，即 a=a/2；
+//    如果 a<b，说明 a 的深度小于等于 b 的深度，那么把 b 移动到其父节点，即 b=b/2；
+//    如果 a=b，说明找到了 LCA，退出循环。
+//    循环次数加一即为环长。
+    public int[] cycleLengthQueries(int n, int[][] queries) {
+        int m = queries.length;
+        int[] ans = new int[m];
+        for (int i = 0; i < m; i++) {
+            int res = 1, a = queries[i][0], b = queries[i][1];
+            while (a != b) {
+                if (a > b) a /= 2;
+                else b /= 2;
+                ++res;
+            }
+            ans[i] = res;
+        }
+        return ans;
+    }
+
+    //6267. 添加边使所有节点度数都为偶数
+    // 分类讨论
+    public boolean isPossible(int n, List<List<Integer>> edges) {
+        int[] deg = new int[n];
+        List<Integer>[] g = new List[n + 1];
+        for (int i = 0; i <= n; i++) {
+            g[i] = new ArrayList<>();
+        }
+        for (List<Integer> edge : edges) {
+            int x = edge.get(0), y = edge.get(1);
+            g[x].add(y);
+            g[y].add(x);
+            deg[x - 1]++;
+            deg[y - 1]++;
+        }
+        List<Integer> odd = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            if (deg[i] % 2 != 0) {
+                odd.add(i + 1);
+            }
+        }
+        if (odd.size() == 0) return true;
+        if (odd.size() == 2) {
+            int x = odd.get(0), y = odd.get(1);
+            if (!isConnected(x, y, g)) return true;
+            for (int i = 1; i <= n; i++) {
+                if (i == x || i == y) continue;
+                if (!isConnected(i, x, g) && !isConnected(i, y, g)) return true;
+            }
+        } else if (odd.size() == 4) {
+            int a = odd.get(0), b = odd.get(1), c = odd.get(2), d = odd.get(3);
+            return (!isConnected(a, b, g) && !isConnected(c, d, g))
+                    || (!isConnected(a, c, g) && !isConnected(b, d, g))
+                    || (!isConnected(a, d, g) && !isConnected(b, c, g));
+        }
+        return false;
+    }
+
+    private boolean isConnected(int x, int y, List<Integer>[] g) {
+        return g[x].contains(y);
     }
 
     //endregion ----------------------------------------------------------------------------------------------

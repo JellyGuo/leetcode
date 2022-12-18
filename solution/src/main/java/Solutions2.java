@@ -1999,6 +1999,7 @@ public class Solutions2 {
     }
 
     // 1703 得到连续K个1的最少相邻交换次数 Hard toreview
+    //https://leetcode.cn/problems/minimum-adjacent-swaps-for-k-consecutive-ones/solution/duo-tu-xin-shou-jiao-cheng-yi-bu-bu-dai-6bps4/
     public int minMoves(int[] nums, int k) {
         int n = nums.length;
         int[] pos = new int[n];

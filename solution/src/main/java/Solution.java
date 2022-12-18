@@ -374,9 +374,84 @@ public class Solution {
         return true;
     }
 
+    public int similarPairs(String[] words) {
+        int n = words.length;
+        int ans = 0;
+        for (int i = 0; i < n - 1; i++) {
+            int[] cnt = new int[26];
+            for (char c : words[i].toCharArray()) {
+                if (cnt[c - 'a'] == 0) {
+                    cnt[c - 'a']++;
+                }
+            }
+            for (int j = i + 1; j < n; j++) {
+                int[] cnt2 = new int[26];
+                for (char cc : words[j].toCharArray()) {
+                    if (cnt2[cc - 'a'] == 0) {
+                        cnt2[cc - 'a']++;
+                    }
+                }
+                if (check(cnt, cnt2)) {
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
+
+    private boolean check(int[] cnt1, int[] cnt2) {
+        for (int i = 0; i < 26; i++) {
+            if (cnt1[i] != cnt2[i]) return false;
+        }
+        return true;
+    }
+
+
+    public int smallestValue(int n) {
+        int sum = n;
+        while (!isPrime(sum)) {
+            int cur = sum;
+            List<Integer> res = fac(cur);
+            sum = 0;
+            for (int num : res) {
+                sum += num;
+            }
+            if (cur == sum) return cur;
+        }
+        return sum;
+    }
+
+    private List<Integer> fac(int n) {
+        List<Integer> ans = new ArrayList<>();
+        for (int i = 2; i <= Math.sqrt(n); i++) {
+            if (isPrime(i)) {
+                while (n % i == 0) {
+                    n /= i;
+                    ans.add(i);
+                    if (isPrime(n)) {
+                        ans.add(n);
+                        break;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+
+    private boolean isPrime(int n) {
+        if (n == 1) return false;
+        // n/i 当i大于sqrt(n)时另一个因子肯定小于sqrt(n),所以只遍历到sqrt(n)
+        for (int i = 2; i * i <= n; i++) {
+            if (n % i == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.canChoose(new int[][]{{1, 2, 3}, {3, 4}}, new int[]{7, 7, 1, 2, 3, 4, 7, 7});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);
