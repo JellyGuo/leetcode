@@ -901,6 +901,25 @@ public class Solutions2 {
         return list.stream().mapToInt(p -> p.intValue()).toArray();
     }
 
+    // 面试题 16.24. 数对和 类似盛水最多的容器
+    public List<List<Integer>> pairSums(int[] nums, int target) {
+        List<List<Integer>> ans = new ArrayList<>();
+        int n = nums.length;
+        Arrays.sort(nums);
+        int l = 0, r = n - 1;
+        while (l < r) {
+            int sum = nums[l] + nums[r];
+            if (sum == target) {
+                ans.add(Arrays.asList(nums[l++], nums[r--]));
+            } else if (sum > target) {
+                r--;
+            } else {
+                l++;
+            }
+        }
+        return ans;
+    }
+
     // 6246 追加字符以获得子序列
     public int appendCharacters(String s, String t) {
         int m = s.length(), n = t.length();
@@ -2644,6 +2663,7 @@ public class Solutions2 {
     //1610 可见点的最大数目
     // 每个点的极坐标
     double eps = 1e-9;
+
     public int visiblePoints(List<List<Integer>> points, int angle, List<Integer> location) {
         int x = location.get(0), y = location.get(1);
         List<Double> list = new ArrayList<>();
@@ -2957,6 +2977,7 @@ public class Solutions2 {
         }
         return memo[r][c];
     }
+
     // 688 骑士在棋盘上的概率
     int[][] directions = new int[][]{{1, 2}, {-1, 2}, {1, -2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
 
@@ -4741,6 +4762,40 @@ public class Solutions2 {
         }
         return Math.max(f[n * 2 - 2][n - 1][n - 1], 0);
     }
+
+    //1799. N 次操作后的最大分数和 Hard toreview
+    // 状态压缩 + 动态规划
+    public int maxScore(int[] nums) {
+        int m = nums.length;
+        int[] dp = new int[1 << m];
+        int[][] gcdTmp = new int[m][m];
+        for (int i = 0; i < m; ++i) {
+            for (int j = i + 1; j < m; ++j) {
+                gcdTmp[i][j] = gcd(nums[i], nums[j]);
+            }
+        }
+        int all = 1 << m;
+        for (int s = 1; s < all; ++s) {
+            int t = Integer.bitCount(s);
+            if ((t & 1) != 0) {
+                continue;
+            }
+            for (int i = 0; i < m; ++i) {
+                if (((s >> i) & 1) != 0) {
+                    for (int j = i + 1; j < m; ++j) {
+                        if (((s >> j) & 1) != 0) {
+                            dp[s] = Math.max(dp[s], dp[s ^ (1 << i) ^ (1 << j)] + t / 2 * gcdTmp[i][j]);
+                        }
+                    }
+                }
+            }
+        }
+        return dp[all - 1];
+    }
+
+    private int gcd(int x, int y) {
+        return y > 0 ? gcd(y, x % y) : x;
+    }
     //endregion---------------------------------------------------------------------------------
     //region -----------------------------------------背包DP-------------------------------------------
 //    背包问题的分类https://blog.csdn.net/weixin_45746505/article/details/124543411
@@ -5242,6 +5297,80 @@ public class Solutions2 {
             n -= 3;
         }
         return (int) (res * n % 1000000007);
+    }
+
+    // 面试题 17.13. 恢复空格
+    public int respace(String[] dictionary, String sentence) {
+        Set<String> dict = new HashSet<>(Arrays.asList(dictionary));
+        int n = sentence.length();
+        // 字符串前i个字符对应的最少匹配数
+        int[] dp = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            // i不参与匹配,dp[i]= 前i-1个最小匹配数+1
+            dp[i] = dp[i - 1] + 1;
+            //i对应的字符串[0,i-1]
+            for (int j = 0; j < i; j++) {
+                // [j,i-1]若在dict中(subString(j,i-1+1)),就匹配上,dp[i] 就等于 j-1对应的字符对应的结果=dp[j]
+                if (dict.contains(sentence.substring(j, i))) {
+                    dp[i] = Math.min(dp[i], dp[j]);
+                }
+            }
+        }
+        return dp[n];
+    }
+
+    public int respaceTrie(String[] dictionary, String sentence) {
+        int n = sentence.length();
+        SuffixTrie trie = new SuffixTrie();
+        for(String word:dictionary){
+            trie.insert(word);
+        }
+        // 字符串前i个字符对应的最少匹配数
+        int[] dp = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            dp[i] = dp[i - 1] + 1;
+            for(int j:trie.search(sentence,i-1)){
+                dp[i] = Math.min(dp[i],dp[j]);
+            }
+        }
+        return dp[n];
+    }
+
+    // 后缀树优化
+    class SuffixTrie {
+        SuffixTrie[] children;
+        boolean isEnd;
+
+        public SuffixTrie() {
+            children = new SuffixTrie[26];
+        }
+
+        public void insert(String word) {
+            SuffixTrie node = this;
+            int n = word.length();
+            char[] chars = word.toCharArray();
+            for (int i = n - 1; i >= 0; i--) {
+                if (node.children[chars[i] - 'a'] == null) {
+                    node.children[chars[i] - 'a'] = new SuffixTrie();
+                }
+                node = node.children[chars[i] - 'a'];
+            }
+            node.isEnd = true;
+        }
+
+        public List<Integer> search(String sentence, int endPos) {
+            SuffixTrie node = this;
+            List<Integer> idxes = new ArrayList<>();
+            for (int i = endPos; i >= 0; i--) {
+                int idx = sentence.charAt(i) - 'a';
+                if (node.children[idx] == null) {
+                    break;
+                }
+                node = node.children[idx];
+                if (node.isEnd) idxes.add(i);
+            }
+            return idxes;
+        }
     }
 
     //endregion-----------------------------------------------------------------------------------------------------
@@ -6220,15 +6349,15 @@ public class Solutions2 {
         }
         Arrays.sort(nums);
         int max = 1;
-        for(int num:nums){
+        for (int num : nums) {
             int cur = 1;
             int x = num;
-            while(set.contains(x*x)){
-                x*=x;
+            while (set.contains(x * x)) {
+                x *= x;
                 cur++;
             }
-            if(cur>1){
-                max = Math.max(max,cur);
+            if (cur > 1) {
+                max = Math.max(max, cur);
             }
         }
         return max == 1 ? -1 : max;
@@ -6292,6 +6421,7 @@ public class Solutions2 {
         }
         return idx;
     }
+
     //1691. 堆叠长方体的最大高度
     public int maxHeight(int[][] cuboids) {
         int n = cuboids.length;
@@ -6368,6 +6498,68 @@ public class Solutions2 {
             ans = Math.max(ans, dp[i]);
         }
         return ans;
+    }
+
+    //面试题 17.08. 马戏团人塔
+    // TLE O(n^2)
+    public int bestSeqAtIndex(int[] height, int[] weight) {
+        int n = height.length;
+        int[][] array = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            array[i] = new int[]{height[i], weight[i]};
+        }
+        Arrays.sort(array, (o1, o2) -> {
+            if (o1[0] != o2[0]) {
+                return o1[0] - o2[0];
+            }
+            return o2[1] - o1[1];
+        });
+        int[] dp = new int[n];
+        dp[0] = 1;
+        int max = 1;
+
+        for (int i = 1; i < n; i++) {
+            dp[i] = 1;
+            for (int j = 0; j < i; j++) {
+                if (array[j][1] < array[i][1]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+            max = Math.max(max, dp[i]);
+        }
+        return max;
+    }
+
+    // O(nlogn)
+    public int bestSeqAtIndex2(int[] height, int[] weight) {
+        int n = height.length;
+        int[][] array = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            array[i] = new int[]{height[i], weight[i]};
+        }
+        // h正序排,w倒序排,避免h相同时选多个h一样的人,w倒序时,选中一个w时,后面的w都小于该w,不可能同时被选
+        Arrays.sort(array, (o1, o2) -> {
+            if (o1[0] != o2[0]) {
+                return o1[0] - o2[0];
+            }
+            return o2[1] - o1[1];
+        });
+        int[] tails = new int[n];
+        int idx = 0;
+        for (int[] a : array) {
+            int l = 0, r = idx;
+            while (l < r) {
+                int mid = l + r >> 1;
+                if (tails[mid] >= a[1]) {
+                    r = mid;
+                } else {
+                    l = mid + 1;
+                }
+            }
+            tails[l] = a[1];
+            if (idx == l) idx++;
+        }
+        return idx;
     }
 
     //646. 最长数对链

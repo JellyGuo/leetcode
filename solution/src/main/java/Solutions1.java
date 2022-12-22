@@ -4706,6 +4706,39 @@ public class Solutions1 {
         return len;
     }
 
+    //面试题 17.05.  字母与数字
+    public String[] findLongestSubarray(String[] array) {
+        int n = array.length;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            char c = array[i].charAt(0);
+            if (Character.isDigit(c)) {
+                nums[i] = 1;
+            } else {
+                nums[i] = -1;
+            }
+        }
+        int[] sum = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            sum[i] = sum[i - 1] + nums[i-1];
+        }
+        Map<Integer, Integer> map = new HashMap<>();
+        map.put(0, 0);
+        int len = 0, l = 0;
+        for (int i = 1; i <= n; i++) {
+            if (map.containsKey(sum[i])) {
+                if (i - map.get(sum[i]) > len) {
+                    l = map.get(sum[i]);
+                    len = i - map.get(sum[i]);
+                }
+            } else {
+                map.put(sum[i], i);
+            }
+        }
+        String[] ans = new String[len];
+        System.arraycopy(array, l, ans, 0, len);
+        return ans;
+    }
 
     // 1248 统计优美子数组
 //给你一个整数数组 nums 和一个整数 k。如果某个连续子数组中恰好有 k 个奇数数字，我们就认为这个子数组是「优美子数组」。
@@ -4829,6 +4862,25 @@ public class Solutions1 {
         return new int[0];
     }
 
+    //面试题 16.21. 交换和
+    public int[] findSwapValues(int[] array1, int[] array2) {
+        int sum1 = 0, sum2 = 0;
+        Set<Integer> set = new HashSet<>();
+        for (int num : array1) {
+            sum1 += num;
+        }
+        for (int num : array2) {
+            sum2 += num;
+            set.add(num);
+        }
+        int diff = sum1 - sum2;
+        if (diff % 2 != 0) return new int[0];
+        diff /= 2;
+        for (int num : array1) {
+            if (set.contains(num - diff)) return new int[]{num, num - diff};
+        }
+        return new int[0];
+    }
     //653 BST两数之和
     public boolean findTarget2(TreeNode root, int k) {
         List<Integer> list = new ArrayList<>();
@@ -5293,6 +5345,151 @@ public class Solutions1 {
     // endregion ---------------------------------------------------------------------------------------------------
 
     //region  ---------------------------------------------图论BFS/DFS-----------------------------------------------
+    // 1971. 寻找图中是否存在路径
+    public boolean validPath(int n, int[][] edges, int source, int destination) {
+        if(source == destination) return true;
+        List<Integer>[] g= new List[n];
+        for(int i=0;i<n;i++){
+            g[i] = new ArrayList<>();
+        }
+        for(int[] edge:edges){
+            g[edge[0]].add(edge[1]);
+            g[edge[1]].add(edge[0]);
+        }
+        boolean[] visited = new boolean[n];
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.offer(source);
+        visited[source] = true;
+        while (!queue.isEmpty()){
+            int cur = queue.poll();
+            for(int near:g[cur]){
+                if(near == destination) return true;
+                if(!visited[near]){
+                    queue.offer(near);
+                    visited[near] = true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean validPathUnionFind(int n, int[][] edges, int source, int destination) {
+        UnionFind1 unionFind = new UnionFind1(n);
+        for (int[] edge : edges) {
+            unionFind.union(edge[0],edge[1]);
+        }
+        return unionFind.isConnect(source,destination);
+    }
+
+    //2059. 转化数字的最小运算数
+    public int minimumOperations(int[] nums, int start, int goal) {
+        if (start == goal) return 0;
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.offer(start);
+        int ops = 0;
+        // BFS求步数的问题，每一层步数一样，如果分层写，这里用set，最外层step
+        // 如果用map，可以不分层写，每次从map中取保留的step
+        Set<Integer> visited = new HashSet<>();
+        visited.add(start);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int cur = queue.poll();
+                for (int num : nums) {
+                    // 进队的都是满足条件的
+                    int[] result = new int[]{cur + num, cur - num, cur ^ num};
+                    for (int next : result) {
+                        if (next == goal) return ops + 1;
+                        // 不等于goal,又不满足条件，不用进队
+                        if (next < 0 || next > 1000) continue;
+                        if (visited.contains(next)) continue;
+                        queue.offer(next);
+                        visited.add(next);
+                    }
+                }
+            }
+            ops++;
+        }
+        return -1;
+    }
+
+    // 不分层写法
+    public int minimumOperations2(int[] nums, int s, int t) {
+        Deque<Integer> d = new ArrayDeque<>();
+        Map<Integer, Integer> map = new HashMap<>();
+        d.addLast(s);
+        map.put(s, 0);
+        while (!d.isEmpty()) {
+            int cur = d.pollFirst();
+            int step = map.get(cur);
+            for (int i : nums) {
+                int[] result = new int[]{cur + i, cur - i, cur ^ i};
+                for (int next : result) {
+                    if (next == t) return step + 1;
+                    if (next < 0 || next > 1000) continue;
+                    if (map.containsKey(next)) continue;
+                    map.put(next, step + 1);
+                    d.addLast(next);
+                }
+            }
+        }
+        return -1;
+    }
+    public int minimumOperationsDualBFS(int[] nums, int start, int goal) {
+        if (start == goal) return 0;
+        Queue<Long> startQueue = new ArrayDeque<>();
+        startQueue.offer((long) start);
+        Queue<Long> goalQueue = new ArrayDeque<>();
+        goalQueue.offer((long) goal);
+        // 双向BFS 要用map记录步数
+        Map<Long, Integer> startMap = new HashMap<>();
+        startMap.put((long) start, 0);
+        Map<Long, Integer> goalMap = new HashMap<>();
+        goalMap.put((long) goal, 0);
+        while (!startQueue.isEmpty() && !goalQueue.isEmpty()) {
+            if (startQueue.size() < goalQueue.size()) {
+                int size = startQueue.size();
+                for (int i = 0; i < size; i++) {
+                    long cur = startQueue.poll();
+                    int step = startMap.get(cur);
+                    // 当前值必须满足条件才能进行操作
+                    if (cur >= 0 && cur <= 1000) {
+                        for (int num : nums) {
+                            long[] result = new long[]{cur + num, cur - num, cur ^ num};
+                            for (long next : result) {
+                                if (goalMap.containsKey(next)) return step + 1 + goalMap.get(next);
+                                if (startMap.containsKey(next)) continue;
+                                startQueue.offer(next);
+                                startMap.put(next, step + 1);
+                            }
+                        }
+                    }
+                }
+            } else {
+                int size = goalQueue.size();
+                for (int i = 0; i < size; i++) {
+                    long cur = goalQueue.poll();
+                    int step = goalMap.get(cur);
+                    // 当前值是操作后的值
+                    for (int num : nums) {
+                        long[] result = new long[]{cur - num, cur + num, cur ^ num};
+                        for (long next : result) {
+                            // next是操作前的值,操作前必须满足条件才可以操作
+                            if (next < 0 || next > 1000) continue;
+                            // startMap中越界的值不可能进行操作,故这里next其实从startMap中未越界的值中找
+                            if (startMap.containsKey(next)) return step + 1 + startMap.get(next);
+                            if (goalMap.containsKey(next)) continue;
+                            goalMap.put(next, step + 1);
+                            goalQueue.offer(next);
+                        }
+                    }
+                }
+            }
+
+        }
+        return -1;
+    }
+
     // 126 单词接龙2
     public List<List<String>> findLadders(String beginWord, String endWord, List<String> wordList) {
         // 结果集
@@ -6369,6 +6566,37 @@ public class Solutions1 {
         dfs(image, x, y - 1, origin, color);
     }
 
+    //面试题 16.19. 水域大小
+    public int[] pondSizes(int[][] land) {
+        List<Integer> ans = new ArrayList<>();
+        int m = land.length, n = land[0].length;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (land[i][j] == 0) {
+                    ans.add(pondSizesDfs(land, i, j));
+                }
+            }
+        }
+        return ans.stream().sorted().mapToInt(p -> p).toArray();
+
+    }
+
+    private int pondSizesDfs(int[][] land, int x, int y) {
+        if (x >= land.length || x < 0 || y >= land[0].length || y < 0 || land[x][y] != 0) {
+            return 0;
+        }
+        land[x][y] = -1;
+        int ans = 1;
+        ans += pondSizesDfs(land, x + 1, y);
+        ans += pondSizesDfs(land, x - 1, y);
+        ans += pondSizesDfs(land, x, y + 1);
+        ans += pondSizesDfs(land, x, y - 1);
+        ans += pondSizesDfs(land, x + 1, y - 1);
+        ans += pondSizesDfs(land, x - 1, y - 1);
+        ans += pondSizesDfs(land, x + 1, y + 1);
+        ans += pondSizesDfs(land, x - 1, y + 1);
+        return ans;
+    }
 
     // 1034 边界着色
     // 存储边界list
@@ -7245,6 +7473,69 @@ public class Solutions1 {
         }
         return ans;
 
+    }
+
+    //面试题 17.07. 婴儿名字 字符串并查集
+    class UnionFindString {
+        Map<String, String> parents;
+        Map<String, Integer> frequency;
+
+        public UnionFindString(String[] names) {
+            parents = new HashMap<>();
+            frequency = new HashMap<>();
+            for (String s : names) {
+                String name = s.substring(0, s.indexOf('('));
+                int freq = Integer.parseInt(s.substring(s.indexOf('(') + 1, s.indexOf(')')));
+                parents.put(name, name);
+                frequency.put(name, freq);
+            }
+        }
+
+        public String find(String name) {
+            if (!parents.containsKey(name)){
+                parents.put(name,name);
+                frequency.put(name,0);
+                return name;
+            }
+            if (parents.get(name).equals(name)) return name;
+            parents.put(name, find(parents.get(name)));
+            return parents.get(name);
+        }
+
+        public void union(String name1, String name2) {
+            String root1 = find(name1);
+            String root2 = find(name2);
+            if (root1.equals(root2)) return;
+            int freq1 = frequency.get(root1);
+            int freq2 = frequency.get(root2);
+            if (root1.compareTo(root2) < 0) {
+                parents.put(root2, root1);
+                frequency.put(root1, freq1 + freq2);
+            } else {
+                parents.put(root1, root2);
+                frequency.put(root2, freq1 + freq2);
+            }
+        }
+
+        public int getFreq(String name) {
+            return frequency.get(find(name));
+        }
+    }
+
+    public String[] trulyMostPopular(String[] names, String[] synonyms) {
+        UnionFindString unionFind = new UnionFindString(names);
+        for (String synonym : synonyms) {
+            String[] ns = synonym.split(",");
+            unionFind.union(ns[0].substring(1), ns[1].substring(0, ns[1].length() - 1));
+        }
+        List<String> res = new ArrayList<>();
+        for (String s : names) {
+            String name = s.substring(0, s.indexOf('('));
+            if (name.equals(unionFind.find(name))) {
+                res.add(name + "(" + unionFind.getFreq(name) + ")");
+            }
+        }
+        return res.toArray(new String[0]);
     }
 
     // endregion -----------------------------------------------------------------------------------------
@@ -9064,6 +9355,82 @@ public class Solutions1 {
             }
             return ans;
         }
+    }
+
+    class T9WordsTrie {
+        T9WordsTrie[] children;
+        boolean isEnd;
+        char val;
+
+        public T9WordsTrie() {
+            children = new T9WordsTrie[26];
+        }
+
+        public void insert(String word,Map<Character, Character> map) {
+            T9WordsTrie node = this;
+            for (char c : word.toCharArray()) {
+                if (node.children[c - 'a'] == null) {
+                    node.children[c - 'a'] = new T9WordsTrie();
+                }
+                node = node.children[c - 'a'];
+                node.val = map.get(c);
+            }
+            node.isEnd = true;
+        }
+
+        public boolean search(String word, String num, Map<Character, Character> map) {
+            int numIdx = 0;
+            T9WordsTrie node = this;
+            for (char c : word.toCharArray()) {
+                if (node.children[c - 'a'] == null || node.children[c - 'a'].val != num.charAt(numIdx)) return false;
+                node = node.children[c - 'a'];
+                numIdx++;
+            }
+            return node.isEnd;
+        }
+    }
+
+    public List<String> getValidT9Words(String num, String[] words) {
+
+        Map<Character, Character> map = new HashMap<>();
+        map.put('a', '2');
+        map.put('b', '2');
+        map.put('c', '2');
+        map.put('d', '3');
+        map.put('e', '3');
+        map.put('f', '3');
+        map.put('g', '4');
+        map.put('h', '4');
+        map.put('i', '4');
+        map.put('j', '5');
+        map.put('k', '5');
+        map.put('l', '5');
+        map.put('m', '6');
+        map.put('n', '6');
+        map.put('o', '6');
+        map.put('p', '7');
+        map.put('q', '7');
+        map.put('r', '7');
+        map.put('s', '7');
+        map.put('t', '8');
+        map.put('u', '8');
+        map.put('v', '8');
+        map.put('w', '9');
+        map.put('x', '9');
+        map.put('y', '9');
+        map.put('z', '9');
+
+        List<String> result = new ArrayList<>();
+        T9WordsTrie trie = new T9WordsTrie();
+        for (String word : words) {
+            trie.insert(word,map);
+        }
+        for (String word : words) {
+            if (trie.search(word, num, map)) {
+                result.add(word);
+            }
+        }
+        return result;
     }
     // endregion--------------------------------------------------------------------------------------------------
 }

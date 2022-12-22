@@ -1066,7 +1066,7 @@ public class Solutions3 {
         return count;
     }
 
-    //6266. 使用质因数之和替换后可以取到的最小值
+    //2507. 使用质因数之和替换后可以取到的最小值
     public int smallestValue(int n) {
         int sum = n;
         while (!isPrime(sum)) {
@@ -1910,6 +1910,15 @@ public class Solutions3 {
         }
     }
 
+
+    public void rotate3(int[] nums, int k) {
+        k %= nums.length;
+        reverse(nums, 0, nums.length - 1);
+        reverse(nums, 0, k - 1);
+        reverse(nums, k, nums.length - 1);
+    }
+
+
     // 求最小公倍数
     private int lcm(int a, int b) {
         return a * b / gcd(a, b);
@@ -1938,12 +1947,6 @@ public class Solutions3 {
         return ans;
     }
 
-    public void rotate3(int[] nums, int k) {
-        k %= nums.length;
-        reverse(nums, 0, nums.length - 1);
-        reverse(nums, 0, k - 1);
-        reverse(nums, k, nums.length - 1);
-    }
 
     //offer 60 n个骰子
     //把n个骰子扔在地上，所有骰子朝上一面的点数之和为s。输入n，打印出s的所有可能的值出现的概率。
@@ -2170,6 +2173,7 @@ public class Solutions3 {
         }
         return -1;
     }
+
     //686. 重复叠加字符串匹配
     public int repeatedStringMatch(String a, String b) {
         int m = a.length(), n = b.length();
@@ -2273,6 +2277,111 @@ public class Solutions3 {
         }
         return -1;
     }
+
+    //1044. 最长重复子串 字符串哈希
+    //https://leetcode.cn/problems/longest-duplicate-substring/solution/zui-chang-zhong-fu-zi-chuan-by-leetcode-0i9rd/
+    //我们可以使用 Rabin-Karp 算法对固定长度的字符串进行编码。当两个字符串的编码相同时，则这两个字符串也相同。
+    // 在 s 中n−L+1 个长度为 L 的子串中，有两个子串的编码相同时，则说明存在长度为 L 的重复子串。具体步骤如下：
+    //首先，我们需要对 s 的每个字符进行编码，得到一个数组 arr。因为本题中 s 仅包含小写字母，
+    // 我们可按照arr[i] = (int)s.charAt(i) - (int)‘a’，将所有字母编码为 0−25 之间的数字。
+    // 比如字符串“abcde" 可以编码为数组 [0,1,2,3,4]。
+    //我们将子串看成一个 26 进制的数，它对应的 10 进制数就是它的编码。假设此时我们需要求长度为 3 的子串的编码。
+    // 那么第一个子串 “abc” 的编码就是:h0=0×26^2+1×26^1+2×26^0=28。
+    // 更一般地，设ci为 s 的第 i 个字符编码后的数字，a(a≥26) 为编码的进制，那么有
+    // h0=c0*a^L−1+c1*a^L−2+...+cL−1*a^1
+    //上一步我们只求了第一个子串 “abc” 的编码。当我们要求第二个子串 “bcd” 的编码时，也可以按照上一步的方法求：
+    // h1=1×26^2+2×26^1+3×26^0=731，但是这样时间复杂度是O(L)。我们可以在h0的基础上，更快地求出它的编码：
+    //h1=(h0−0×26^2)×26+3×26^0=731。更一般的表达式是：h1=(h0×a−c0×a^L)+c(L+1)
+    // 。这样，我们只需要在常数时间内就可以根据上一个子串的编码求出下一个子串的编码。我们用一个哈希表 \textit{seen}seen 来存储子串的编码。在求子串的编码时，如果某个子串的编码出现过，则表示存在长度为 LL 的重复子串，否则，我们将当前的编码放入 \textit{seen}seen 中。如果所有编码都不重复，则说明不存在长度为 LL 的重复子串。
+    //还有一点需要考虑的是，本题中 a^L会非常大。一般的做法是需要对编码进行取模来防止溢出，模一般选取编码的信息量的平方的数量级。而取模则会带来哈希碰撞。本题中为了避免碰撞，我们使用双哈希，即用两套进制和模的组合，来对字符串进行编码。只有两种编码都相同时，我们才认为字符串相同。
+    //本题要求返回最长重复子串而不是最长重复子串长度。因此，当存在长度为 LL 的子串时，我们的判断函数可以返回重复子串的起点。而当不存在时，可以返回 -1−1 用做区分。
+
+    int a1, a2;
+    int mod1, mod2;
+    int n;
+
+    private void init() {
+        Random random = new Random();
+        // 生成两个进制
+        a1 = random.nextInt(75) + 26;
+        a2 = random.nextInt(75) + 26;
+        // 生成两个模
+        mod1 = random.nextInt(Integer.MAX_VALUE - 1000000007 + 1) + 1000000007;
+        mod2 = random.nextInt(Integer.MAX_VALUE - 1000000007 + 1) + 1000000007;
+    }
+
+    public String longestDupSubstring(String s) {
+        this.n = s.length();
+        init();
+        // 先对所有字符进行编码
+        int[] arr = new int[n];
+        for (int i = 0; i < n; i++) {
+            arr[i] = s.charAt(i) - 'a';
+        }
+        // 对字符串长度进行二分,重复子串最短长度1,最长长度n-1,但是为了避免n-1=l的情况("aa"),l初始值取0
+        // 小于等于时的最大长度,大于时无重复子串=> 小于等于的最大值,右移l
+        int l = 0, r = n - 1;
+        int start = -1, len = 0;
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            int idx = check(mid, arr);
+            // 无重复子串,移动右边界
+            if (idx == -1) {
+                r = mid - 1;
+            } else {
+                // 有重复子串,收缩左边界
+                l = mid;
+                len = mid;
+                start = idx;
+            }
+        }
+        return start == -1 ? "" : s.substring(start, start + len);
+    }
+
+    private int check(int len, int[] arr) {
+        long aL1 = pow(a1, len, mod1);
+        long aL2 = pow(a2, len, mod2);
+        long h1 = 0, h2 = 0;
+        // ((arr[0])*a1+arr[1])*a1+arr[2] ...)*a1+arr[len-1] = arr[0]*a1^(len-1)+arr[1]*a1^(len-2)...+ arr[len-1]*a1^0
+        for (int i = 0; i < len; i++) {
+            h1 = (h1 * a1 % mod1 + arr[i]) % mod1;
+            if (h1 < 0) h1 += mod1;
+            h2 = (h2 * a2 % mod2 + arr[i]) % mod2;
+            if (h2 < 0) h2 += mod2;
+        }
+        // 存储一个编码组合是否出现过
+        Set<Long> seen = new HashSet<>();
+        long hash0 = h1 * mod2 + h2;
+        seen.add(hash0);
+        // h1 h2 滚动数组
+        for (int i = 1; i + len - 1 < n; i++) {
+            h1 = (h1 * a1 % mod1 - arr[i - 1] * aL1 % mod1 + arr[i + len - 1]) % mod1;
+            h2 = (h2 * a2 % mod2 - arr[i - 1] * aL2 % mod2 + arr[i + len - 1]) % mod2;
+            if (h1 < 0) h1 += mod1;
+            if (h2 < 0) h2 += mod2;
+            long hash = h1 * mod2 + h2;
+            // 如果重复，则返回重复串的起点
+            if (!seen.add(hash)) return i;
+        }
+        return -1;
+    }
+
+    // 快速幂
+    private long pow(int x, int n, int mod) {
+        long ans = 1;
+        long contribute = x;
+        while (n > 0) {
+            if ((n & 1) == 1) {
+                ans = ans * contribute % mod;
+                if (ans < 0) ans += mod;
+            }
+            contribute = contribute * contribute % mod;
+            if (contribute < 0) contribute += mod;
+            n /= 2;
+        }
+        return ans;
+    }
+
     // 961 在长度2N的数组中找出重复N次的元素
     // n+1个数,x重复了n次 => 其余数字出现1次
     public int repeatedNTimes(int[] nums) {
@@ -2301,6 +2410,16 @@ public class Solutions3 {
             count += (n == candidate) ? 1 : -1;
         }
         return candidate;
+    }
+
+    // 题目不一定有解的情况 [1,2,3]
+    public int majorityElement2(int[] nums) {
+        Integer candidate = majorityElement(nums);
+        int count = 0;
+        for (int num : nums) {
+            if (num == candidate) count++;
+        }
+        return count > nums.length / 2 ? candidate : -1;
     }
 
     //分治
@@ -2541,6 +2660,271 @@ public class Solutions3 {
         if (n == 1) return 2;
         else if (n == 2) return k == 1 ? 3 : 4;
         else return k == 1 ? 4 : k == 2 ? 7 : 8;
+    }
+
+    //1753. 移除石子的最大得分
+    // 设a<=b<=c
+    //1. 若a+b<=c,用c分别和a,b匹,直到把a,b取完,此时ans=a+b
+    //2. 若a+b>c, 理解1: c肯定能被取完,ans=c+ 每次取a,b 1次,共取k次 直到a+b<=c
+    // 递归做法
+    // 数学推导: 最后得分 :a-k+b-k+k=s a,b取k次得分k,满足a-k+b-k<=c时的得分a-k+b-k => k=a+b-s
+    //          a+b减了2k后比c小:a+b-2k<=c => k>=(a+b-c)/2
+    //  => a+b-s>=(a+b-c)/2   =>s<=(a+b+c)/2
+    // 理解2: c每次和a,b中多的一个匹配,这样匹配完的时候,a,b相等或相差1
+    // (c先和多的b的匹,直到b=a,下一次和a匹,这样a比b少1,再下一次和b匹,这样ab相等),
+    // a,b两两匹配得分是 (a_remain+b_remain)/2,设c和a匹了k1次,和b匹了k2次,k1+k2=c
+    // k1+k2+(a-k1+b-k2)/2 = s  => (a+b+c)/2 = s
+    public int maximumScore1(int a, int b, int c) {
+        int[] nums = new int[]{a, b, c};
+        Arrays.sort(nums);
+        if (nums[0] + nums[1] <= nums[2]) {
+            return nums[0] + nums[1];
+        }
+        return maximumScore1(nums[0] - 1, nums[1] - 1, nums[2]) + 1;
+    }
+
+    public int maximumScore(int a, int b, int c) {
+        int sum = a + b + c;
+        int max = Math.max(Math.max(a, b), c);
+        // sum-max = 较小的两数之和
+        return Math.min(sum / 2, sum - max);
+    }
+
+    public int maximumScorePriorityQueue(int a, int b, int c) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
+        pq.offer(a);
+        pq.offer(b);
+        pq.offer(c);
+        int ans = 0;
+        // pq是未空的堆的数量,>1说明空堆数小于2,不满足游戏结束条件
+        while (pq.size() > 1) {
+            int t1 = pq.poll();
+            int t2 = pq.poll();
+            t1--;
+            t2--;
+            ans++;
+            if (t1 > 0) pq.offer(t1);
+            if (t2 > 0) pq.offer(t2);
+        }
+        return ans;
+    }
+
+    //----------------------------------------------------- 数学--------------------------------------------
+
+    // a b 快速相乘
+    private long mul(long a, long b) {
+        long ans = 0;
+        while (b > 0) {
+            if ((b & 1) == 1) {
+                ans += a;
+            }
+            b >>= 1;
+            a += a;
+        }
+        return ans;
+    }
+
+    // 快速幂
+    private double quickMul2(double x, long n) {
+        double ans = 1.0;
+        while (n > 0) {
+            if ((n & 1) == 1) {
+                ans *= x;
+            }
+            n >>= 1;
+            x *= x;
+        }
+        return ans;
+    }
+
+    // 50 pow
+    public double myPowDFS(double x, int n) {
+        if (n == 0) return 1;
+        if (n == 1) return x;
+        if (n == -1) return 1 / x;
+        double half = myPowDFS(x, n / 2);
+        double mod = myPowDFS(x, n % 2);
+        return half * half * mod;
+    }
+
+    public double myPow(double x, int n) {
+        return (long) n >= 0 ? quickMul(x, (long) n) : 1.0 / quickMul(x, -(long) n);
+    }
+
+    // 次方快速相乘
+    private double quickMul(double x, long N) {
+        if (N == 0) {
+            return 1.0;
+        }
+        double y = quickMul(x, N / 2);
+        return N % 2 == 0 ? y * y : y * y * x;
+    }
+
+
+    //offer 64  不使用if for while 求累加
+    public int sumNums(int n) {
+        boolean flag = n > 0 && (n += sumNums(n - 1)) > 0;
+        return n;
+    }
+
+    // offer 65 不用加减乘除做加法
+    public int add(int a, int b) {
+        if (b == 0) return a;
+        return add(a ^ b, (a & b) << 1);
+    }
+
+
+    // 复数乘法
+    public String complexNumberMultiply(String a, String b) {
+        int num1a = Integer.parseInt(a.substring(0, a.indexOf('+')));
+        int num1b = Integer.parseInt(a.substring(a.indexOf('+') + 1, a.indexOf('i')));
+        int num2a = Integer.parseInt(b.substring(0, b.indexOf('+')));
+        int num2b = Integer.parseInt(b.substring(b.indexOf('+') + 1, b.indexOf('i')));
+        int resulta = num1a * num2a - num1b * num2b;
+        int resultb = num1a * num2b + num1b * num2a;
+        return resulta + "+" + resultb + 'i';
+    }
+    // 812 最大三角形面积
+    public double largestTriangleArea(int[][] points) {
+        int n = points.length;
+        double ans = 0;
+        for (int i = 0; i < n - 2; i++) {
+            for (int j = 0; j < n - 1; j++) {
+                for (int[] point : points) {
+                    ans = Math.max(ans, calcArea(points[i][0], points[i][1], points[j][0], points[j][1], point[0], point[1]));
+                }
+            }
+        }
+        return ans;
+    }
+
+    //https://leetcode.cn/problems/largest-triangle-area/solutions/1494969/by-fuxuemingzhu-czdh/
+    private double calcArea(int x1, int y1, int x2, int y2, int x3, int y3) {
+        return 0.5 * Math.abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+    }
+
+    // 223 矩形面积
+    public int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2) {
+        int area_a = (ay2 - ay1) * (ax2 - ax1);
+        int area_b = (by2 - by1) * (bx2 - bx1);
+        if (ax1 >= bx2 || ax2 <= bx1 || ay1 >= by2 || ay2 <= by1) {
+            return area_a + area_b;
+        }
+        int width = Math.min(Math.min(ax2 - ax1, bx2 - bx1), Math.min(ax2 - bx1, bx2 - ax1));
+        int height = Math.min(Math.min(ay2 - ay1, by2 - by1), Math.min(ay2 - by1, by2 - ay1));
+        return area_a + area_b - width * height;
+    }
+
+    // 593 有效的正方形
+    public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
+        if (Arrays.equals(p1, p2)) return false;
+        if (check(p1, p2, p3, p4)) return true;
+        if (Arrays.equals(p1, p3)) return false;
+        if (check(p1, p3, p2, p4)) return true;
+        if (Arrays.equals(p1, p4)) return true;
+        if (check(p1, p4, p2, p3)) return true;
+        return false;
+    }
+
+    private boolean check(int[] p1, int[] p2, int[] p3, int[] p4) {
+        int[] v1 = new int[]{p1[0] - p2[0], p1[1] - p2[1]};
+        int[] v2 = new int[]{p3[0] - p4[0], p3[1] - p4[1]};
+        return checkLength(v1, v2) && checkMidPoint(p1, p2, p3, p4) && validCos(v1, v2);
+    }
+
+    private boolean checkLength(int[] v1, int[] v2) {
+        return (v1[0] * v1[0] + v1[1] * v1[1]) == (v2[0] * v2[0] + v2[1] * v2[1]);
+    }
+
+    private boolean checkMidPoint(int[] p1, int[] p2, int[] p3, int[] p4) {
+        return (p1[0] + p2[0]) == (p3[0] + p4[0]) && (p1[1] + p2[1]) == (p3[1] + p4[1]);
+    }
+
+    private boolean validCos(int[] v1, int[] v2) {
+        return (v1[0] * v2[0] + v1[1] * v2[1]) == 0;
+    }
+
+
+    // 面试题 16.13. 平分正方形
+    public double[] cutSquares(int[] square1, int[] square2) {
+        //第一个正方形的中心点，x,y坐标及正方形边长
+        double x1 = square1[0] + square1[2] / 2.0;
+        double y1 = square1[1] + square1[2] / 2.0;
+        int d1 = square1[2];
+        //第二个正方形的中心点，x,y坐标及正方形边长
+        double x2 = square2[0] + square2[2] / 2.0;
+        double y2 = square2[1] + square2[2] / 2.0;
+        int d2 = square2[2];
+        //结果集
+        double[] res = new double[4];
+        //两个中心坐标在同一条x轴上，此时两条直线的斜率都是无穷大
+        if (x1 == x2) {
+            res[0] = x1;
+            res[1] = Math.min(square1[1], square2[1]);
+            res[2] = x1;
+            res[3] = Math.max(square1[1] + d1, square2[1] + d2);
+        } else {
+            //斜率存在，则计算斜率和系数，y = kx + b;
+            double k = (y1 - y2) / (x1 - x2);//斜率计算公式
+            double b = y1 - k * x1;
+            //斜率绝对值大于1，说明与正方形的上边和下边相交
+            if (Math.abs(k) > 1) {
+                //先计算底边，也就是两个正方形左下坐标y的最小值
+                res[1] = Math.min(square1[1], square2[1]);
+                res[0] = (res[1] - b) / k;
+                //再计算顶边，也就是两个正方形左下坐标y+边长的最大值
+                res[3] = Math.max(square1[1] + d1, square2[1] + d2);
+                res[2] = (res[3] - b) / k;
+            } else {
+                //斜率绝对值小于等于1，说明与正方形的左边和右边相交，同理
+                res[0] = Math.min(square1[0], square2[0]);
+                res[1] = res[0] * k + b;
+                res[2] = Math.max(square1[0] + d1, square2[0] + d2);
+                res[3] = res[2] * k + b;
+            }
+        }
+        //题目要求x1 < x2,如果结果不满足，我们交换两个点的坐标即可
+        if (res[0] > res[2]) {
+            swap(res, 0, 2);
+            swap(res, 1, 3);
+        }
+        return res;
+    }
+
+    public void swap(double[] res, int x, int y) {
+        double temp = res[x];
+        res[x] = res[y];
+        res[y] = temp;
+    }
+
+    // 面试16.14 最佳直线
+    // 两个点(a1,b1)和(a2,b2)的斜率k1=(b2-b1)/(a2-a1),记x1= a2-a1,y1=b2-b1 => k1=y1/x1
+    // 第三个点(a3,b3)和(a1,b1)的斜率k2=(b3-b1)/(a3-a1),记x2=a3-a1,y2=b3-b1 => k2=y2/x2
+    // 若三个点在直线上,则k1=k2 => x1y2=x2y1 乘法避免除数为0的情况
+    public int[] bestLine(int[][] points) {
+        int n = points.length;
+        int[] ans = new int[2];
+        int max = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int cnt = 2;
+                long x1 = points[i][0] - points[j][0];
+                long y1 = points[i][1] - points[j][1];
+                for (int k = j + 1; k < n; k++) {
+                    long x2 = points[i][0] - points[k][0];
+                    long y2 = points[i][1] - points[k][1];
+                    if (x1 * y2 == x2 * y1) {
+                        cnt++;
+                    }
+                }
+                if (cnt > max) {
+                    max = cnt;
+                    ans[0] = i;
+                    ans[1] = j;
+                }
+            }
+        }
+        return ans;
     }
     //endregion-----------------------------------------------------------------------------------------------
 
@@ -3187,7 +3571,7 @@ public class Solutions3 {
                 map.put(chars[j], map.getOrDefault(chars[j], 0) + 1);
                 max = Math.max(map.get(chars[j]), max);
                 min[0] = Integer.MAX_VALUE;
-                map.forEach((k,v)-> min[0] = Math.min(min[0],v));
+                map.forEach((k, v) -> min[0] = Math.min(min[0], v));
                 ans += max - min[0];
             }
         }
@@ -3491,6 +3875,98 @@ public class Solutions3 {
         return ((col & 1) == 1 && (row & 1) == 0) || ((col & 1) == 0 && (row & 1) == 1);
     }
 
+    //2506. 统计相似字符串对的数目
+    // 两两匹配
+    public int similarPairs(String[] words) {
+        boolean[][] w = new boolean[words.length][26];
+        for (int i = 0; i < words.length; i++) {
+            for (int j = 0; j < words[i].length(); j++) {
+                w[i][words[i].charAt(j) - 'a'] = true;
+            }
+        }
+        int res = 0;
+        for (int i = 0; i < w.length - 1; i++) {
+            for (int j = i + 1; j < w.length; j++) {
+                boolean flag = true;
+                for (int k = 0; k < 26; k++) {
+                    if (w[i][k] != w[j][k]) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    res++;
+                }
+            }
+        }
+        return res;
+    }
+
+    //面试题 16.18. 模式匹配
+    //输入： pattern = "abba", value = "dogcatcatdog"
+    //输出： true
+    public boolean patternMatching(String pattern, String value) {
+        int m = value.length(), n = pattern.length();
+        // pattern 为空,只能匹配value为空
+        if (n == 0) return m == 0;
+        int[] cnt = new int[2];
+        for (char c : pattern.toCharArray()) {
+            cnt[c - 'a']++;
+        }
+        // value为空,pattern只能有1个字符组成
+        if (m == 0) return cnt[0] == 0 || cnt[1] == 0;
+        // value不为空
+        // 1.pattern只有a或者b
+        if (cnt[0] == 0) return helper(value, cnt[1]);
+        if (cnt[1] == 0) return helper(value, cnt[0]);
+        // a,b都有
+        // 2.a或b其中一个匹配空
+        if (helper(value, cnt[0])) return true;
+        if (helper(value, cnt[1])) return true;
+        // 3.a,b都不匹配空, 枚举a, b匹配的长度，使得a * len_a + b * len_b = m; len_a唯一确定len_b，只需枚举len_a
+        for (int len_a = 1; len_a * cnt[0] <= m - cnt[1]; len_a++) {
+            if ((m - len_a * cnt[0]) % cnt[1] != 0) continue;
+            int len_b = (m - len_a * cnt[0]) / cnt[1];
+            if (check(pattern, value, len_a, len_b)) return true;
+        }
+        return false;
+    }
+
+    private boolean check(String pattern, String value, int len_a, int len_b) {
+        Map<Character, String> dict = new HashMap<>();
+        for (int i = 0, j = 0; i < pattern.length(); i++) {
+            if (pattern.charAt(i) == 'a') {
+                String word_a = value.substring(j, j + len_a);
+                if (!dict.containsKey('a')) {
+                    dict.put('a', word_a);
+                } else if (!dict.get('a').equals(word_a)) {
+                    return false;
+                }
+                j += len_a;
+            } else if (pattern.charAt(i) == 'b') {
+                String word_b = value.substring(j, j + len_b);
+                if (!dict.containsKey('b')) {
+                    dict.put('b', word_b);
+                } else if (!dict.get('b').equals(word_b)) {
+                    return false;
+                }
+                j += len_b;
+            }
+        }
+        return !dict.getOrDefault('a', "").equals(dict.getOrDefault('b', ""));
+    }
+
+    // value能不能被k次切分
+    private boolean helper(String value, int k) {
+        int m = value.length();
+        if (m % k != 0) return false;
+        int len = m / k;
+        String s = value.substring(0, len);
+        for (int i = len; i < m; i += len) {
+            if (!value.substring(i, i + len).equals(s)) return false;
+        }
+        return true;
+    }
 
     // 168 excel表列名称 XX进制模拟
     public String convertToTitle(int columnNumber) {
@@ -3667,68 +4143,6 @@ public class Solutions3 {
         long ans = sign ? l : -l;
         if (ans > Integer.MAX_VALUE || ans < Integer.MIN_VALUE) return Integer.MAX_VALUE;
         return (int) ans;
-    }
-
-    // a b 快速相乘
-    private long mul(long a, long b) {
-        long ans = 0;
-        while (b > 0) {
-            if ((b & 1) == 1) {
-                ans += a;
-            }
-            b >>= 1;
-            a += a;
-        }
-        return ans;
-    }
-
-    // 快速幂
-    private double quickMul2(double x, long n) {
-        double ans = 1.0;
-        while (n > 0) {
-            if ((n & 1) == 1) {
-                ans *= x;
-            }
-            n >>= 1;
-            x *= x;
-        }
-        return ans;
-    }
-
-    // 50 pow
-    public double myPowDFS(double x, int n) {
-        if (n == 0) return 1;
-        if (n == 1) return x;
-        if (n == -1) return 1 / x;
-        double half = myPowDFS(x, n / 2);
-        double mod = myPowDFS(x, n % 2);
-        return half * half * mod;
-    }
-
-    public double myPow(double x, int n) {
-        return (long) n >= 0 ? quickMul(x, (long) n) : 1.0 / quickMul(x, -(long) n);
-    }
-
-    // 次方快速相乘
-    private double quickMul(double x, long N) {
-        if (N == 0) {
-            return 1.0;
-        }
-        double y = quickMul(x, N / 2);
-        return N % 2 == 0 ? y * y : y * y * x;
-    }
-
-
-    //offer 64  不使用if for while 求累加
-    public int sumNums(int n) {
-        boolean flag = n > 0 && (n += sumNums(n - 1)) > 0;
-        return n;
-    }
-
-    // offer 65 不用加减乘除做加法
-    public int add(int a, int b) {
-        if (b == 0) return a;
-        return add(a ^ b, (a & b) << 1);
     }
 
     // 166 分数到小数
@@ -3923,16 +4337,6 @@ public class Solutions3 {
         return result;
     }
 
-    // 复数乘法
-    public String complexNumberMultiply(String a, String b) {
-        int num1a = Integer.parseInt(a.substring(0, a.indexOf('+')));
-        int num1b = Integer.parseInt(a.substring(a.indexOf('+') + 1, a.indexOf('i')));
-        int num2a = Integer.parseInt(b.substring(0, b.indexOf('+')));
-        int num2b = Integer.parseInt(b.substring(b.indexOf('+') + 1, b.indexOf('i')));
-        int resulta = num1a * num2a - num1b * num2b;
-        int resultb = num1a * num2b + num1b * num2a;
-        return resulta + "+" + resultb + 'i';
-    }
 
     // 728 自除数
     //自除数 是指可以被它包含的每一位数整除的数
@@ -4232,6 +4636,43 @@ public class Solutions3 {
         nums.push(ans);
     }
 
+    //面试题 16.26. 计算器 无括号
+    public int calculate3(String s) {
+        int n = s.length();
+        Stack<Integer> stack = new Stack<>();
+        char preSign = '+';
+        int num = 0;
+        char[] chars = s.toCharArray();
+        for (int i = 0; i < n; i++) {
+            if (Character.isDigit(chars[i])) {
+                num = num * 10 + (chars[i] - '0');
+            }
+            if (!Character.isDigit(chars[i]) && chars[i] != ' ' || i == n - 1) {
+                switch (preSign) {
+                    case '+':
+                        stack.push(num);
+                        break;
+                    case '-':
+                        stack.push(-num);
+                        break;
+                    case '*':
+                        stack.push(stack.pop() * num);
+                        break;
+                    case '/':
+                        stack.push(stack.pop() / num);
+                        break;
+                }
+                preSign = chars[i];
+                num = 0;
+            }
+        }
+        int ans = 0;
+        while (!stack.isEmpty()) {
+            ans += stack.pop();
+        }
+        return ans;
+    }
+
     // 273 整数转换英文表示
     // 单个数字，0，1，2，3，4，5，6，7，8，9
     private static String[] OneNum = {"", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"};
@@ -4342,65 +4783,6 @@ public class Solutions3 {
 //        }
     }
 
-    // 812 最大三角形面积
-    public double largestTriangleArea(int[][] points) {
-        int n = points.length;
-        double ans = 0;
-        for (int i = 0; i < n - 2; i++) {
-            for (int j = 0; j < n - 1; j++) {
-                for (int[] point : points) {
-                    ans = Math.max(ans, calcArea(points[i][0], points[i][1], points[j][0], points[j][1], point[0], point[1]));
-                }
-            }
-        }
-        return ans;
-    }
-
-    //https://leetcode.cn/problems/largest-triangle-area/solutions/1494969/by-fuxuemingzhu-czdh/
-    private double calcArea(int x1, int y1, int x2, int y2, int x3, int y3) {
-        return 0.5 * Math.abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
-    }
-
-    // 223 矩形面积
-    public int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2) {
-        int area_a = (ay2 - ay1) * (ax2 - ax1);
-        int area_b = (by2 - by1) * (bx2 - bx1);
-        if (ax1 >= bx2 || ax2 <= bx1 || ay1 >= by2 || ay2 <= by1) {
-            return area_a + area_b;
-        }
-        int width = Math.min(Math.min(ax2 - ax1, bx2 - bx1), Math.min(ax2 - bx1, bx2 - ax1));
-        int height = Math.min(Math.min(ay2 - ay1, by2 - by1), Math.min(ay2 - by1, by2 - ay1));
-        return area_a + area_b - width * height;
-    }
-
-    // 593 有效的正方形
-    public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
-        if (Arrays.equals(p1, p2)) return false;
-        if (check(p1, p2, p3, p4)) return true;
-        if (Arrays.equals(p1, p3)) return false;
-        if (check(p1, p3, p2, p4)) return true;
-        if (Arrays.equals(p1, p4)) return true;
-        if (check(p1, p4, p2, p3)) return true;
-        return false;
-    }
-
-    private boolean check(int[] p1, int[] p2, int[] p3, int[] p4) {
-        int[] v1 = new int[]{p1[0] - p2[0], p1[1] - p2[1]};
-        int[] v2 = new int[]{p3[0] - p4[0], p3[1] - p4[1]};
-        return checkLength(v1, v2) && checkMidPoint(p1, p2, p3, p4) && validCos(v1, v2);
-    }
-
-    private boolean checkLength(int[] v1, int[] v2) {
-        return (v1[0] * v1[0] + v1[1] * v1[1]) == (v2[0] * v2[0] + v2[1] * v2[1]);
-    }
-
-    private boolean checkMidPoint(int[] p1, int[] p2, int[] p3, int[] p4) {
-        return (p1[0] + p2[0]) == (p3[0] + p4[0]) && (p1[1] + p2[1]) == (p3[1] + p4[1]);
-    }
-
-    private boolean validCos(int[] v1, int[] v2) {
-        return (v1[0] * v2[0] + v1[1] * v2[1]) == 0;
-    }
 
     // 498 对角线遍历
     //输入：mat = [[1,2,3],
@@ -4484,6 +4866,39 @@ public class Solutions3 {
         int sz = d.size();
         int[] ans = new int[sz];
         while (!d.isEmpty()) ans[--sz] = d.pollLast();
+        return ans;
+    }
+
+    //面试题 16.15 珠玑妙算
+    public int[] masterMind(String solution, String guess) {
+        int[] res = new int[2];
+        Map<Character, Integer> map = new HashMap();
+        for (int i = 0; i < solution.length(); i++) {
+            if (solution.charAt(i) == guess.charAt(i)) {
+                res[0] = res[0] + 1;
+            } else {
+                map.put(solution.charAt(i), map.getOrDefault(solution.charAt(i), 0) + 1);
+            }
+        }
+
+        for (int i = 0; i < solution.length(); i++) {
+            if (solution.charAt(i) != guess.charAt(i) && map.containsKey(guess.charAt(i)) && map.get(guess.charAt(i)) > 0) {
+                map.put(guess.charAt(i), map.get(guess.charAt(i)) - 1);
+                res[1] = res[1] + 1;
+            }
+        }
+        return res;
+    }
+
+    //面试题 17.11. 单词距离
+    public int findClosest(String[] words, String word1, String word2) {
+        int n = words.length;
+        int ans = n, p = -1, q = -1;
+        for (int i = 0; i < n; i++) {
+            if (word1.equals(words[i])) p = i;
+            if (word2.equals(words[i])) q = i;
+            if (p != -1 && q != -1) ans = Math.min(ans, Math.abs(p - q));
+        }
         return ans;
     }
 
@@ -4787,7 +5202,7 @@ public class Solutions3 {
         return ans;
     }
 
-    //6268. 查询树中环的长度
+    //2509. 查询树中环的长度
     //    设 LCA 为 aa 和 bb 的最近公共祖先，那么环长等于LCA 到 a 的距离加 LCA 到 b 的距离加一。
 //    如何找 LCA？
 //    不断循环，每次循环比较 a 和 b 的大小：
@@ -4810,7 +5225,7 @@ public class Solutions3 {
         return ans;
     }
 
-    //6267. 添加边使所有节点度数都为偶数
+    //2508. 添加边使所有节点度数都为偶数
     // 分类讨论
     public boolean isPossible(int n, List<List<Integer>> edges) {
         int[] deg = new int[n];
@@ -4850,6 +5265,84 @@ public class Solutions3 {
 
     private boolean isConnected(int x, int y, List<Integer>[] g) {
         return g[x].contains(y);
+    }
+
+    //面试题 16.22. 兰顿蚂蚁
+    private class Position {
+
+        // 横坐标 x 纵坐标 y
+        int x, y;
+
+        public Position(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (!(obj instanceof Position)) return false;
+            Position o = (Position) obj;
+            return x == o.x && y == o.y;
+        }
+
+        // 改写哈希算法，使两个 Position 对象可以比较坐标而不是内存地址
+        @Override
+        public int hashCode() {
+            int result = x;
+            result = 31 * result + y;
+            return result;
+        }
+    }
+
+    public List<String> printKMoves(int K) {
+        char[] direction = {'L', 'U', 'R', 'D'};
+        // 用“向量”记录方向，顺序与上一行方向的字符顺序保持一致，每个元素的后一个元素都是可以90°向右变换得到的
+        int[][] offset = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+        // 蚂蚁的位置
+        Position antPos = new Position(0, 0);
+        // 蚂蚁方向的向量序号
+        int antDir = 2;
+        // 用集合存储所有黑块的坐标，一开始想再定义一个路径的坐标集合，发现可以直接用黑块+蚂蚁位置也能过
+        Set<Position> blackSet = new HashSet<>();
+        while (K > 0) {
+            // 新的坐标对象用于放入集合
+            Position t = new Position(antPos.x, antPos.y);
+            // 如果黑块集合能存入，说明脚下的块不在集合中，也就意味着是白色，方向序号循环自增1
+            if (blackSet.add(t)) antDir = (antDir + 1) % 4;
+            else {
+                // 否则说明脚下的块已经在集合中，也就意味着是黑色，方向序号循环自增3，相当于自减1，但是Math.floorMod取模可能消耗大？用+3替代
+                antDir = (antDir + 3) % 4;
+                // 别忘了删除，即将黑块变白
+                blackSet.remove(t);
+            }
+            // 蚂蚁移动位置
+            antPos.x += offset[antDir][0];
+            antPos.y += offset[antDir][1];
+            K--;
+        }
+        // 计算边界，即输出网格的行数和列数
+        int left = antPos.x, top = antPos.y, right = antPos.x, bottom = antPos.y;
+        for (Position pos : blackSet) {
+            left = pos.x < left ? pos.x : left;
+            top = pos.y < top ? pos.y : top;
+            right = pos.x > right ? pos.x : right;
+            bottom = pos.y > bottom ? pos.y : bottom;
+        }
+        char[][] grid = new char[bottom - top + 1][right - left + 1];
+        // 填充白块
+        for (char[] row : grid)
+            Arrays.fill(row, '_');
+        // 替换黑块
+        for (Position pos : blackSet)
+            grid[pos.y - top][pos.x - left] = 'X';
+        // 替换蚂蚁
+        grid[antPos.y - top][antPos.x - left] = direction[antDir];
+        // 利用网格生成字符串列表
+        List<String> result = new ArrayList<>();
+        for (char[] row : grid)
+            result.add(String.valueOf(row));
+        return result;
     }
 
     //endregion ----------------------------------------------------------------------------------------------
@@ -5205,7 +5698,7 @@ public class Solutions3 {
         }
         long diff = goal - sum;
         long ans = (Math.abs(diff) + limit - 1) / limit;
-        return (int)ans;
+        return (int) ans;
     }
 
     //1827. 最少操作使数组递增
@@ -6586,6 +7079,7 @@ public class Solutions3 {
             }
         }
     }
+
     // 三向切分+倒序重组
     private void threeWayPartition2(int[] nums, int median) {
         int l = 0, r = nums.length - 1, i = 0;
@@ -6602,7 +7096,7 @@ public class Solutions3 {
     }
 
     public int getIdx(int i) {
-        int n=0;
+        int n = 0;
         return (1 + 2 * (i)) % (n | 1);
     }
 
@@ -7782,6 +8276,39 @@ public class Solutions3 {
             }
         }
         return days + 1;
+    }
+
+    //1760. 袋子里最少数目的球
+    public int minimumSize(int[] nums, int maxOperations) {
+        int n = nums.length;
+        int max = 0;
+        for (int num : nums) {
+            max = Math.max(max, num);
+        }
+        // 给定 maxOperations  次操作次数，能否可以使得单个袋子里球数目的最大值不超过 开销y。
+        // y0>=y也满足,y1<y时不满足=>求最小的开销y
+        // l,r,mid 代表数组操作后不超过的上限值
+        // 上限值约大,所需操作数越少,希望在ops尽可能大时的最小ops
+        // ops>maxOps时 要减少ops 提升y;ops<=maxOps时,y已经满足条件,向左收缩,取最小的开销y
+        int l = 1, r = max;
+        while (l < r) {
+            int mid = l + r >> 1;
+            int ops = getOps(nums, mid);
+            if (ops <= maxOperations) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    private int getOps(int[] nums, int y) {
+        int ops = 0;
+        for (int num : nums) {
+            ops += (num - 1) / y;
+        }
+        return ops;
     }
 
     // 410 分割数组的最大值
