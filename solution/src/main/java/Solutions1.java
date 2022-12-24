@@ -5554,6 +5554,60 @@ public class Solutions1 {
         return res;
     }
 
+    public List<String> findLadders2(String beginWord, String endWord, List<String> wordList) {
+        List<String> result = new ArrayList<>();
+        if (beginWord.equals(endWord)) return result;
+        Set<String> dict = new HashSet<>(wordList);
+        if (!dict.contains(endWord)) return result;
+        Set<String> visited = new HashSet<>();
+        Queue<Deque<String>> queue = new ArrayDeque<>();
+        Deque<String> deque = new ArrayDeque<>();
+        deque.offerLast(beginWord);
+        queue.offer(deque);
+        visited.add(beginWord);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            Set<String> levelVisited = new HashSet<>();
+            for (int i = 0; i < size; i++) {
+                Deque<String> level = queue.poll();
+                String last = level.peekLast();
+                List<String> nears = getNear(last,dict);
+                for (String near : nears) {
+                    if (near.equals(endWord)){
+                        level.offerLast(near);
+                        return new ArrayList<>(level);
+                    }
+                    if (!visited.contains(near)) {
+                        Deque<String> newPath = new ArrayDeque<>(level);
+                        levelVisited.add(near);
+                        newPath.offerLast(near);
+                        queue.offer(newPath);
+                    }
+                }
+            }
+            visited.addAll(levelVisited);
+        }
+        return result;
+    }
+
+    private List<String> getNear(String word, Set<String> dict) {
+        char[] chars = word.toCharArray();
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < chars.length; i++) {
+            char origin = chars[i];
+            for (char c = 'a'; c <= 'z'; c++) {
+                if (c == origin) continue;
+                chars[i] = c;
+                String tmp = new String(chars);
+                if (dict.contains(tmp)) {
+                    result.add(tmp);
+                }
+                chars[i] = origin;
+            }
+        }
+        return result;
+    }
+
     // 双向BFS
     public List<List<String>> findLaddersBFS(String beginWord, String endWord, List<String> wordList) {
         // 结果集
@@ -9166,6 +9220,69 @@ public class Solutions1 {
                 total += trie.cnt;
             }
             return total;
+        }
+    }
+
+    //面试题 17.17. 多次搜索
+    public int[][] multiSearch(String big, String[] smalls) {
+        MultiSearchTrie trie = new MultiSearchTrie();
+        for (String small : smalls) {
+            trie.insert(small);
+        }
+        Map<String, List<Integer>> hits = new HashMap<>();
+        for (int i = 0; i < big.length(); i++) {
+            List<String> matches = trie.search(big.substring(i));
+            for (String match : matches) {
+                List<Integer> indexes = hits.getOrDefault(match, new ArrayList<>());
+                indexes.add(i);
+                hits.put(match, indexes);
+            }
+        }
+        int[][] ans = new int[smalls.length][];
+        for(int i=0;i<smalls.length;i++){
+            String small = smalls[i];
+            List<Integer> indexed = hits.getOrDefault(small,new ArrayList<>());
+            if(indexed.size()==0){
+                ans[i] = new int[0];
+            }
+            ans[i] = indexed.stream().mapToInt(p->p).toArray();
+        }
+        return ans;
+
+    }
+
+    class MultiSearchTrie {
+        MultiSearchTrie[] children;
+        String word;
+
+        public MultiSearchTrie() {
+            children = new MultiSearchTrie[26];
+        }
+
+        public void insert(String word) {
+            MultiSearchTrie node = this;
+            for (char c : word.toCharArray()) {
+                if (node.children[c - 'a'] == null) {
+                    node.children[c - 'a'] = new MultiSearchTrie();
+                }
+                node = node.children[c - 'a'];
+            }
+            node.word = word;
+        }
+
+        public List<String> search(String word) {
+            MultiSearchTrie node = this;
+            List<String> ans = new ArrayList<>();
+            for (char c : word.toCharArray()) {
+                if (node.children[c - 'a'] == null) {
+                    break;
+                }
+                node = node.children[c - 'a'];
+                if (node.word != null) {
+                    ans.add(node.word);
+                }
+            }
+            return ans;
         }
     }
 

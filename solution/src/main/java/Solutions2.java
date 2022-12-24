@@ -1262,6 +1262,42 @@ public class Solutions2 {
         return max;
     }
 
+    //面试题 17.18. 最短超串
+    public int[] shortestSeq(int[] big, int[] small) {
+        int n = small.length;
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : small) {
+            map.put(num, 1);
+        }
+        Map<Integer, Integer> map2 = new HashMap<>();
+        int min = Integer.MAX_VALUE;
+        int idx = -1;
+        int meets = 0;
+        for (int l = 0, r = 0; r < big.length; r++) {
+            if (map.containsKey(big[r])) {
+                map2.put(big[r], map2.getOrDefault(big[r], 0) + 1);
+                if (map.get(big[r]).intValue() == map2.get(big[r]).intValue()) {
+                    meets++;
+                }
+            }
+            while (meets == n) {
+                if (r - l + 1 < min) {
+                    idx = l;
+                    min = r - l + 1;
+                }
+                if (map.containsKey(big[l])) {
+                    map2.put(big[l], map2.get(big[l]) - 1);
+                    if (map2.get(big[l]) == 0) {
+                        map2.remove(big[l]);
+                        meets--;
+                    }
+                }
+                l++;
+            }
+        }
+        return idx == -1 ? new int[0] : new int[]{idx, idx + min - 1};
+    }
+
     // 713 乘积小于k 的子数组
     public int numSubarrayProductLessThanK(int[] nums, int k) {
         int res = 0;
@@ -3901,6 +3937,22 @@ public class Solutions2 {
         return dp[n];
     }
 
+    //面试题 17.16. 按摩师
+    public int massage(int[] nums) {
+        int n = nums.length;
+        if (n < 1) return 0;
+        if (n < 2) return nums[0];
+        int[] dp = new int[n];
+        dp[0] = nums[0];
+        dp[1] = Math.max(nums[0], nums[1]);
+        int max = Math.max(dp[0], dp[1]);
+        for (int i = 2; i < n; i++) {
+            dp[i] = Math.max(dp[i - 1], dp[i - 2] + nums[i]);
+            max = Math.max(dp[i], max);
+        }
+        return max;
+    }
+
     // 198 打家劫舍
     public int rob(int[] nums) {
         int[] dp = new int[nums.length + 1];
@@ -4023,6 +4075,25 @@ public class Solutions2 {
         return dp[n - 1];
     }
 
+    //313. 超级丑数 还有pq做法
+    public int nthSuperUglyNumberDP(int n, int[] primes) {
+        int[] dp = new int[n + 1];
+        int m = primes.length;
+        int[] pointers = new int[m];
+        int[] nums = new int[m];
+        Arrays.fill(nums, 1);
+        for (int i = 1; i <= n; i++) {
+            int minNum = Arrays.stream(nums).min().getAsInt();
+            dp[i] = minNum;
+            for (int j = 0; j < m; j++) {
+                if (nums[j] == minNum) {
+                    pointers[j]++;
+                    nums[j] = dp[pointers[j]] * primes[j];
+                }
+            }
+        }
+        return dp[n];
+    }
 
     //给定一个整数数组，a[1],a[2],...,a[n]，每一个元素a[i]可以和它右边的（a[i+1],a[i+2],...,a[n]）元素做差，
     // 求这个数组中最大的差值，例如a={0,3,9,1,3,5}这个数组最大的差值就是9-1=8;
@@ -5322,15 +5393,15 @@ public class Solutions2 {
     public int respaceTrie(String[] dictionary, String sentence) {
         int n = sentence.length();
         SuffixTrie trie = new SuffixTrie();
-        for(String word:dictionary){
+        for (String word : dictionary) {
             trie.insert(word);
         }
         // 字符串前i个字符对应的最少匹配数
         int[] dp = new int[n + 1];
         for (int i = 1; i <= n; i++) {
             dp[i] = dp[i - 1] + 1;
-            for(int j:trie.search(sentence,i-1)){
-                dp[i] = Math.min(dp[i],dp[j]);
+            for (int j : trie.search(sentence, i - 1)) {
+                dp[i] = Math.min(dp[i], dp[j]);
             }
         }
         return dp[n];
@@ -7074,6 +7145,33 @@ public class Solutions2 {
         return max * max;
     }
 
+    // 面试题 17.23. 最大黑方阵
+    public int[] findSquare(int[][] matrix) {
+        int n = matrix.length;
+        // 以i,j为左上角，向下[1]或向右[0]最多几个连续的0
+        int[][][] dp = new int[n][n][2];
+        int[] ans = new int[0];
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = n - 1; j >= 0; j--) {
+                if (matrix[i][j] == 0) {
+                    dp[i][j][1] = i == n - 1 ? 1 : dp[i + 1][j][1] + 1;
+                    dp[i][j][0] = j == n - 1 ? 1 : dp[i][j + 1][0] + 1;
+                    int len = Math.min(dp[i][j][0], dp[i][j][1]);
+                    while (ans.length == 0 || len >= ans[2]) {
+                        // [i,j]     ... [i,j+len-1] 判断[i,j+len-1]点向下[1]连续0的长度
+                        // ...
+                        // [i+len-1,j]判断[i,j+len-1]点向右[0]连续0的长度
+                        if (dp[i + len - 1][j][0] >= len && dp[i][j + len - 1][1] >= len) {
+                            ans = new int[]{i, j, len};
+                            break;
+                        }
+                        len--;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
 
     // 174 地下城游戏
     public int calculateMinimumHP(int[][] dungeon) {

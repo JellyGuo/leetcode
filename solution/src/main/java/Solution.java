@@ -448,10 +448,47 @@ public class Solution {
         }
         return true;
     }
-    
+
+    public int[] shortestSeq(int[] big, int[] small) {
+        int n = small.length;
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : small) {
+            map.put(num, 1);
+        }
+        Map<Integer, Integer> map2 = new HashMap<>();
+        int min = Integer.MAX_VALUE;
+        int idx = -1;
+        int meets = 0;
+        for (int l = 0, r = 0; r < big.length; r++) {
+            if (map.containsKey(big[r])) {
+                map2.put(big[r], map2.getOrDefault(big[r], 0) + 1);
+                if(map.get(big[r]).intValue() == map2.get(big[r]).intValue()){
+                    meets++;
+                }
+            }
+            while (meets == n) {
+                if (r - l + 1 < min) {
+                    idx = l;
+                    min = r - l + 1;
+                }
+                if (map.containsKey(big[l])) {
+                    map2.put(big[l], map2.get(big[l]) - 1);
+                    if (map2.get(big[l]) == 0) {
+                        map2.remove(big[l]);
+                        meets--;
+                    }
+                }
+                l++;
+            }
+        }
+        return idx == -1 ? new int[0] : new int[]{idx, idx + min - 1};
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
+        solution.shortestSeq(new int[]{526, 558, 125, 101, 573, 69, 28, 109, 307, 641, 496, 889, 476, 256, 301, 803, 680, 626, 254, 801, 270, 851, 229, 587, 674, 982, 203, 255, 305, 253, 50, 946, 575, 510, 189, 247, 117, 712, 283, 741, 389, 783, 1, 749, 288, 574, 945, 102, 822, 161, 682, 446, 987, 233, 497, 400, 775, 556, 914, 49, 537, 313, 506, 120, 161, 171, 959, 788, 342, 519, 201, 31, 236, 196, 801, 504, 295, 726, 690, 479, 649, 655, 963, 548, 834, 572, 974, 118, 221, 919, 39, 364, 30, 199, 888, 89, 229, 149, 109, 720},
+        new int[]{389, 803, 945, 295, 946, 479, 149, 283, 851, 89, 496, 497, 537, 256, 31, 342, 313, 626, 446, 801, 221, 109, 120, 504, 255, 914, 788, 720, 49, 726, 161, 69, 572, 236, 199, 575, 822, 712, 201, 558, 101, 649})
+        ;
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);
