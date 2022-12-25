@@ -2927,6 +2927,29 @@ public class Solutions3 {
         }
         return ans;
     }
+
+    //1739. 放置盒子
+    public int minimumBoxes(int n) {
+        int cur = 0,i=0,j=0;
+        // cur 总个数  i地面的个数  j每次地面增加的个数
+        // 1 + (1+2) + (1+2+3)
+        while(cur<n){
+            j++;
+            i+=j;
+            cur+=i;
+        }
+        if(cur == n) return i;
+        // 此时cur>n,先恢复到cur<n的情况
+        cur-=i;
+        i-=j;
+        j=0;
+        // 此时添加方块参考
+        while(cur<n){
+            j++;
+            cur+=j;
+        }
+        return i+j;
+    }
     //endregion-----------------------------------------------------------------------------------------------
 
     //region-----------------------------------------模拟---------------------------------------------------
@@ -4891,17 +4914,6 @@ public class Solutions3 {
         return res;
     }
 
-    //面试题 17.11. 单词距离
-    public int findClosest(String[] words, String word1, String word2) {
-        int n = words.length;
-        int ans = n, p = -1, q = -1;
-        for (int i = 0; i < n; i++) {
-            if (word1.equals(words[i])) p = i;
-            if (word2.equals(words[i])) q = i;
-            if (p != -1 && q != -1) ans = Math.min(ans, Math.abs(p - q));
-        }
-        return ans;
-    }
 
     //539 最小时间差
     public int findMinDifference(List<String> timePoints) {
@@ -5023,6 +5035,27 @@ public class Solutions3 {
             cost2 += distance[j];
         }
         return Math.min(cost1, cost2);
+    }
+
+    //6269. 到目标字符串的最短距离  环形下标技巧
+    //给你一个下标从 0 开始的 环形 字符串数组 words 和一个字符串 target 。环形数组 意味着数组首尾相连。
+    //形式上， words[i] 的下一个元素是 words[(i + 1) % n] ，
+    //而 words[i] 的前一个元素是 words[(i - 1 + n) % n] ，其中 n 是 words 的长度。
+    public int closetTarget(String[] words, String target, int startIndex) {
+        int n = words.length;
+        if (words[startIndex].equals(target)) return 0;
+        Set<String> dict = new HashSet<>(Arrays.asList(words));
+        if (!dict.contains(target)) return -1;
+        int dist1 = 1, idx1 = startIndex, dist2 = 1, idx2 = startIndex;
+        while (!words[(idx1 + 1) % n].equals(target)) {
+            idx1 = (idx1 + 1) % n;
+            dist1++;
+        }
+        while (!words[(idx2 - 1 + n) % n].equals(target)) {
+            idx2 = (idx2 - 1 + n) % n;
+            dist2++;
+        }
+        return Math.min(dist1, dist2);
     }
 
     // 1200最小绝对值差
@@ -5630,6 +5663,19 @@ public class Solutions3 {
             return ans;
         }
         return shortestDistance(wordsDict, word1, word2);
+    }
+
+
+    //面试题 17.11. 单词距离
+    public int findClosest(String[] words, String word1, String word2) {
+        int n = words.length;
+        int ans = n, p = -1, q = -1;
+        for (int i = 0; i < n; i++) {
+            if (word1.equals(words[i])) p = i;
+            if (word2.equals(words[i])) q = i;
+            if (p != -1 && q != -1) ans = Math.min(ans, Math.abs(p - q));
+        }
+        return ans;
     }
 
     // 605 种花问题
@@ -8486,6 +8532,38 @@ public class Solutions3 {
             ops += (num - 1) / y;
         }
         return ops;
+    }
+
+    // 6271. 礼盒的最大甜蜜度
+    public int maximumTastiness(int[] price, int k) {
+        Arrays.sort(price);
+        //  甜蜜度就是绝对值的差值 绝对值的差值d范围[0，price最大值]
+        // 求最大 甜蜜度，即满足k个的最大绝对值差值d
+        // d越小，cnt越多；d越大，cnt越少 当cnt小于k时说明d取得大了
+        // d在cnt>=k时向右收缩取最大
+        int l = 0, r = price[price.length - 1];
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            int cnt = getAbsCnt(price, mid);
+            if (cnt < k) {
+                r = mid - 1;
+            } else {
+                l = mid;
+            }
+        }
+        return l;
+    }
+
+    private int getAbsCnt(int[] price, int x) {
+        // 从前往后，先选取最小的，下一个可以选的数是第一个 ≥x+d 的数，依此类推，统计个数
+        int cnt = 1, k = 0;
+        for (int i = 1; i < price.length; i++) {
+            if (price[i] - price[k] >= x) {
+                cnt++;
+                k = i;
+            }
+        }
+        return cnt;
     }
 
     // 410 分割数组的最大值

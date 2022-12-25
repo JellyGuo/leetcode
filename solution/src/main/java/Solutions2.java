@@ -1373,6 +1373,34 @@ public class Solutions2 {
         return Arrays.stream(cardPoints).sum() - min;
     }
 
+    // 6270. 每种字符至少取 K 个
+    // 至少取k个=》剩余的最多保留cnt-k个
+    // 求取的长度最小=》剩余的长度最大
+    public int takeCharacters(String s, int k) {
+        int n = s.length();
+        char[] chars = s.toCharArray();
+        int[] cnt = new int[3];
+        for (char c : chars) {
+            cnt[c - 'a']++;
+        }
+        int ta = cnt[0] - k, tb = cnt[1] - k, tc = cnt[2] - k;
+        if (ta < 0 || tb < 0 || tc < 0) return -1;
+        int max = 0;
+        cnt = new int[3];
+        for (int l = 0, r = 0; r < n; r++) {
+            cnt[chars[r] - 'a']++;
+            while (!takeCharactersCheck(cnt,ta,tb,tc)) {
+                cnt[chars[l++] - 'a']--;
+            }
+            max = Math.max(max, r - l + 1);
+
+        }
+        return n-max;
+    }
+    private boolean takeCharactersCheck(int[] cnt,int ta,int tb,int tc){
+        return cnt[0] <= ta && cnt[1] <= tb && cnt[2] <= tc;
+    }
+
     // 1658 将x减到0的最小操作数 前后取转换为求当中连续的
     public int minOperations(int[] nums, int x) {
         int n = nums.length;
