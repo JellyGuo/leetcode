@@ -1423,6 +1423,54 @@ public class Solutions1 {
         visited[i][j] = false;
         result.deleteCharAt(result.length() - 1);
     }
+
+    // 面试题 17.25. 单词矩阵
+    TreeMap<Integer, Set<String>> map = new TreeMap<>((o1, o2) -> o2 - o1);
+    int maxArea = 0;
+    List<String> result = null;
+
+    public String[] maxRectangle(String[] words) {
+        Trie trie = new Trie();
+        for (String word : words) {
+            trie.insert(word);
+            map.putIfAbsent(word.length(), new HashSet<>());
+            map.get(word.length()).add(word);
+        }
+        for (int len : map.keySet()) {
+            // 长度为len的单词 每一位从上到下维护一个字典树
+            Trie[] nodes = new Trie[len];
+            for (int i = 0; i < len; i++) {
+                nodes[i] = trie;
+            }
+            Set<String> dict = map.get(len);
+            List<String> path = new ArrayList<>();
+            dfs(len, path, dict, nodes);
+        }
+        return result.toArray(new String[0]);
+    }
+
+    private void dfs(int len, List<String> path, Set<String> dict, Trie[] nodes) {
+        if (len * len <= maxArea || path.size() == len) return;
+        search:
+        for (String word : dict) {
+            Trie[] next = new Trie[len];
+            boolean allValid = true;
+            // 遍历word的每一位，每一位和从上一层带来的nodes连起来（纵向的）看是否在字典中
+            for (int i = 0; i < len; i++) {
+                int idx = word.charAt(i) - 'a';
+                if (nodes[i].children[idx] == null) continue search;
+                if (!nodes[i].children[idx].isEnd) allValid = false;
+                next[i] = nodes[i].children[idx];
+            }
+            path.add(word);
+            if (allValid && maxArea < len * path.size()) {
+                maxArea = len * path.size();
+                result = new ArrayList<>(path);
+            }
+            dfs(len, path, dict, next);
+            path.remove(path.size() - 1);
+        }
+    }
     //endregion
 
     //region---------------------------------------------------------BFS/DFS-----------------------------------------------------------
@@ -4299,6 +4347,38 @@ public class Solutions1 {
         return formNode(grid, 0, grid.length - 1, 0, grid.length - 1);
     }
 
+    // 968 监控二叉树
+    // 每个node3中状态
+    // 0 无覆盖
+    // 1 有摄像头
+    // 2 有覆盖
+    int result968=0;
+
+    public int minCameraCover(TreeNode root) {
+        int rootState = traversal(root);
+        if (rootState == 0) result968++;
+        return result968;
+    }
+
+    // 贪心判断：叶节点的父节点放置摄像头最少
+    // 后序遍历，已知两子状态来决定父的状态
+    private int traversal(TreeNode root) {
+        // 若空节点state=0,那么叶节点需放置
+        // 若空节点state=1,那么叶节点的父节点无需放置(因为叶节点已被覆盖,父节点无必要性)
+        if (root == null) return 2;
+        int left = traversal(root.left);
+        int right = traversal(root.right);
+        // 子有0的判断>子有1的判断 因为一旦有一个子是无覆盖，父一定是1
+        if (left == 0 || right == 0) {
+            result968++;
+            return 1;
+        }
+        // 子有一个有摄像头，且此时另一个子肯定至少被覆盖，父即使2
+        if (left == 1 || right == 1) return 2;
+        if (left == 2 && right == 2) return 0;
+        return -1;
+    }
+
     //427 建立四叉树
     public Node formNode(int[][] grid, int l, int r, int low, int high) {
         if (allSame(grid, l, r, low, high)) {
@@ -4520,6 +4600,90 @@ public class Solutions1 {
     public int getHash(int x, int y) {
         return (x << 16) ^ y;
     }
+
+    // 1569. 将子数组重新排序得到同一个二叉查找树的方案数 排列组合
+    // 根节点确定，左子树和右子树的元素互换位置，逐个插入，最终结果不变
+    // eg：[3,4,5,1,2]  3是根节点，左子树相对位置 [1 2]不变（左子树排列数=1） 右子树[4，5]相对位置不变（右子树排列数=1）
+    // 除去3后，从剩余4个位置里挑size(l)（左子树数量）个位置放左子树 C(size-1,size(l)) 剩下位置自然放右子树
+    // 如果左子树排列=F(l),右子树=F(r),在每个组合的位置内，分别乘各自组合数，最终F(3) = C(size-1,size(l))*F(l)*F(r)
+    // 最后-1 减去题干中的nums这一种组合
+    static final int MOD = 1000000007;
+    long[][] combinations;
+
+    public int numOfWays(int[] nums) {
+        int n = nums.length;
+        if (n == 1) {
+            return 0;
+        }
+
+        // 预处理 c[i][j]从i个中取j个的组合数 C(n,i) = C(n-1,i)+C(n-1,i-1)
+        // 从n个取i个=从n-1个取i个(不取第i个)+从n-1个取i-1个(再加取第i个这1个)
+        combinations = new long[n][n];
+        combinations[0][0] = 1;
+        for (int i = 1; i < n; ++i) {
+            combinations[i][0] = 1;
+            for (int j = 1; j < n; ++j) {
+                combinations[i][j] = (combinations[i - 1][j - 1] + combinations[i - 1][j]) % MOD;
+            }
+        }
+
+        TreeNode1569 root = new TreeNode1569(nums[0]);
+        for (int i = 1; i < n; ++i) {
+            int val = nums[i];
+            insert(root, val);
+        }
+
+        numOfWaysDfs(root);
+        return (root.ans - 1 + MOD) % MOD;
+    }
+
+    public void insert(TreeNode1569 root, int value) {
+        TreeNode1569 cur = root;
+        while (true) {
+            ++cur.size;
+            if (value < cur.value) {
+                if (cur.left == null) {
+                    cur.left = new TreeNode1569(value);
+                    return;
+                }
+                cur = cur.left;
+            } else {
+                if (cur.right == null) {
+                    cur.right = new TreeNode1569(value);
+                    return;
+                }
+                cur = cur.right;
+            }
+        }
+    }
+
+    public void numOfWaysDfs(TreeNode1569 node) {
+        if (node == null) {
+            return;
+        }
+        numOfWaysDfs(node.left);
+        numOfWaysDfs(node.right);
+        int lsize = node.left != null ? node.left.size : 0;
+        int rsize = node.right != null ? node.right.size : 0;
+        int lans = node.left != null ? node.left.ans : 1;
+        int rans = node.right != null ? node.right.ans : 1;
+        node.ans = (int) (combinations[lsize + rsize][lsize] % MOD * lans % MOD * rans % MOD);
+    }
+
+    class TreeNode1569 {
+        TreeNode1569 left;
+        TreeNode1569 right;
+        int value;
+        int size;
+        int ans;
+
+        TreeNode1569(int value) {
+            this.value = value;
+            this.size = 1;
+            this.ans = 0;
+        }
+    }
+
     //endregion
 
     //region --------------------------------------------前缀和-----------------------------------
@@ -4720,7 +4884,7 @@ public class Solutions1 {
         }
         int[] sum = new int[n + 1];
         for (int i = 1; i <= n; i++) {
-            sum[i] = sum[i - 1] + nums[i-1];
+            sum[i] = sum[i - 1] + nums[i - 1];
         }
         Map<Integer, Integer> map = new HashMap<>();
         map.put(0, 0);
@@ -4817,6 +4981,68 @@ public class Solutions1 {
         return ans;
     }
 
+    //面试题 17.24. 最大子矩阵   53的二维拓展
+    public int[] getMaxMatrix(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        int[] ans = new int[4];
+        int[] sum = new int[n];
+        int maxAns = matrix[0][0];
+        for (int i = 0; i < m; i++) {
+            Arrays.fill(sum, 0);
+            for (int j = i; j < m; j++) {
+                int maxSum = 0, start = -1;
+                for (int k = 0; k < n; k++) {
+                    sum[k] += matrix[j][k];
+                    if (maxSum > 0) {
+                        maxSum += sum[k];
+                    } else {
+                        maxSum = sum[k];
+                        start = k;
+                    }
+                    if (maxSum > maxAns) {
+                        ans[0] = i;
+                        ans[1] = start;
+                        ans[2] = j;
+                        ans[3] = k;
+                        maxAns = maxSum;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+
+    public int[] getMaxMatrix2(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        int[] ans = new int[4];
+        int[][] prefixSum = new int[m + 1][n + 1];
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                prefixSum[i][j] = prefixSum[i][j - 1] + prefixSum[i - 1][j] - prefixSum[i - 1][j - 1] + matrix[i - 1][j - 1];
+            }
+        }
+        int globalMax = Integer.MIN_VALUE;
+        for (int top = 1; top <= m; top++) {
+            for (int bottom = top; bottom <= m; bottom++) {
+                int localMax, left = 1;
+                for (int right = 1; right <= n; right++) {
+                    localMax = prefixSum[bottom][right] - prefixSum[bottom][left - 1] - prefixSum[top - 1][right] + prefixSum[top - 1][left - 1];
+                    if (localMax > globalMax) {
+                        ans[0] = top - 1;
+                        ans[1] = left - 1;
+                        ans[2] = bottom - 1;
+                        ans[3] = right - 1;
+                        globalMax = localMax;
+                    }
+                    if (localMax < 0) {
+                        localMax = 0;
+                        left = right + 1;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
 
     // 1 两数之和
     public int[] twoSum(int[] nums, int target) {
@@ -4881,6 +5107,7 @@ public class Solutions1 {
         }
         return new int[0];
     }
+
     //653 BST两数之和
     public boolean findTarget2(TreeNode root, int k) {
         List<Integer> list = new ArrayList<>();
@@ -5347,12 +5574,12 @@ public class Solutions1 {
     //region  ---------------------------------------------图论BFS/DFS-----------------------------------------------
     // 1971. 寻找图中是否存在路径
     public boolean validPath(int n, int[][] edges, int source, int destination) {
-        if(source == destination) return true;
-        List<Integer>[] g= new List[n];
-        for(int i=0;i<n;i++){
+        if (source == destination) return true;
+        List<Integer>[] g = new List[n];
+        for (int i = 0; i < n; i++) {
             g[i] = new ArrayList<>();
         }
-        for(int[] edge:edges){
+        for (int[] edge : edges) {
             g[edge[0]].add(edge[1]);
             g[edge[1]].add(edge[0]);
         }
@@ -5360,11 +5587,11 @@ public class Solutions1 {
         Queue<Integer> queue = new ArrayDeque<>();
         queue.offer(source);
         visited[source] = true;
-        while (!queue.isEmpty()){
+        while (!queue.isEmpty()) {
             int cur = queue.poll();
-            for(int near:g[cur]){
-                if(near == destination) return true;
-                if(!visited[near]){
+            for (int near : g[cur]) {
+                if (near == destination) return true;
+                if (!visited[near]) {
                     queue.offer(near);
                     visited[near] = true;
                 }
@@ -5376,9 +5603,9 @@ public class Solutions1 {
     public boolean validPathUnionFind(int n, int[][] edges, int source, int destination) {
         UnionFind1 unionFind = new UnionFind1(n);
         for (int[] edge : edges) {
-            unionFind.union(edge[0],edge[1]);
+            unionFind.union(edge[0], edge[1]);
         }
-        return unionFind.isConnect(source,destination);
+        return unionFind.isConnect(source, destination);
     }
 
     //2059. 转化数字的最小运算数
@@ -5435,6 +5662,7 @@ public class Solutions1 {
         }
         return -1;
     }
+
     public int minimumOperationsDualBFS(int[] nums, int start, int goal) {
         if (start == goal) return 0;
         Queue<Long> startQueue = new ArrayDeque<>();
@@ -5571,9 +5799,9 @@ public class Solutions1 {
             for (int i = 0; i < size; i++) {
                 Deque<String> level = queue.poll();
                 String last = level.peekLast();
-                List<String> nears = getNear(last,dict);
+                List<String> nears = getNear(last, dict);
                 for (String near : nears) {
-                    if (near.equals(endWord)){
+                    if (near.equals(endWord)) {
                         level.offerLast(near);
                         return new ArrayList<>(level);
                     }
@@ -5929,6 +6157,63 @@ public class Solutions1 {
         return result;
     }
 
+    //675. 为高尔夫比赛砍树
+    //砍树的路线唯一确定，当我们求出每两个相邻的砍树点最短路径，并进行累加即是答案（整条砍树路径的最少步数）
+    public int cutOffTree(List<List<Integer>> forest) {
+        int m = forest.size(), n = forest.get(0).size();
+        List<int[]> trees = new ArrayList<>();
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (forest.get(i).get(j) > 1) {
+                    trees.add(new int[]{forest.get(i).get(j), i, j});
+                }
+            }
+        }
+        trees.sort(Comparator.comparingInt(o -> o[0]));
+        int x = 0, y = 0;
+        int newX, newY;
+        int result = 0;
+        for (int[] tree : trees) {
+            newX = tree[1];
+            newY = tree[2];
+            int ans = bfs(x, y, newX, newY, forest);
+            if (ans == -1) return -1;
+            result += ans;
+            x = newX;
+            y = newY;
+        }
+        return result;
+    }
+
+    private int bfs(int sourceX, int sourceY, int targetX, int targetY, List<List<Integer>> forest) {
+        if (sourceX == targetX && sourceY == targetY) return 0;
+        int m = forest.size(), n = forest.get(0).size();
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{sourceX, sourceY});
+        boolean[][] visited = new boolean[m][n];
+        visited[sourceX][sourceY] = true;
+        int[][] directions = new int[][]{{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        int step = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            while (size-- > 0) {
+                int[] cell = queue.poll();
+                int x = cell[0], y = cell[1];
+                for (int[] dire : directions) {
+                    int newX = x + dire[0], newY = y + dire[1];
+                    if (newX < 0 || newX >= m || newY < 0 || newY >= n) continue;
+                    if (newX == targetX && newY == targetY) return step + 1;
+                    // 大于1的可以往返走
+                    if (visited[newX][newY] || forest.get(newX).get(newY) == 0) continue;
+                    visited[newX][newY] = true;
+                    queue.offer(new int[]{newX, newY});
+                }
+            }
+            step++;
+        }
+        return -1;
+    }
+
     //815 公交线路
     // 给你一个数组 routes ，表示一系列公交线路，其中每个 routes[i] 表示一条公交线路，第 i 辆公交车将会在上面循环行驶。
 //例如，路线 routes[0] = [1, 5, 7] 表示第 0 辆公交车会一直按序列 1 -> 5 -> 7 -> 1 -> 5 -> 7 -> 1-> ... 这样的车站路线行驶。
@@ -6034,8 +6319,10 @@ public class Solutions1 {
         // 三个属性分别为 idx, mask, dist
         Queue<int[]> queue = new LinkedList<>();
         // 节点编号及当前状态
+        // [i,mask] 从i出发已经遍历过mask
         boolean[][] seen = new boolean[n][1 << n];
         for (int i = 0; i < n; ++i) {
+            // 把0-n-1全部入队
             queue.offer(new int[]{i, 1 << i, 0});
             seen[i][1 << i] = true;
         }
@@ -6044,6 +6331,7 @@ public class Solutions1 {
         while (!queue.isEmpty()) {
             int[] tuple = queue.poll();
             int u = tuple[0], mask = tuple[1], dist = tuple[2];
+            // 所有节点依次BFS，哪个mask全部遍历完即是最短
             if (mask == (1 << n) - 1) {
                 ans = dist;
                 break;
@@ -6169,6 +6457,50 @@ public class Solutions1 {
         return -1;
     }
 
+    //2045. 到达目的地的第二短时间
+    public int secondMinimum(int n, int[][] edges, int time, int change) {
+        List<Integer>[] graph = new List[n + 1];
+        // path[i][0]是从1到i最短路径，path[i][1]是从1到i的次短路径
+        int[][] path = new int[n + 1][2];
+
+        for (int i = 0; i <= n; i++) {
+            graph[i] = new ArrayList<>();
+            Arrays.fill(path[i], Integer.MAX_VALUE);
+        }
+
+        for(int[] edge:edges){
+            graph[edge[0]].add(edge[1]);
+            graph[edge[1]].add(edge[0]);
+        }
+
+        path[1][0] = 0;
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{1, 0});
+        while (path[n][1] == Integer.MAX_VALUE) {
+            int[] cell = queue.poll();
+            int node = cell[0], len = cell[1];
+            int nextLen = len + 1;
+            for (int next : graph[node]) {
+                if (nextLen < path[next][0]) {
+                    path[next][0] = nextLen;
+                    queue.offer(new int[]{next, nextLen});
+                } else if (nextLen > path[next][0] && nextLen < path[next][1]) {
+                    path[next][1] = nextLen;
+                    queue.offer(new int[]{next, nextLen});
+                }
+            }
+        }
+        int ans = 0;
+        // [0,change) 可以走，[change-2change) 等待
+        for (int i = 0; i < path[n][1]; i++) {
+            if (ans % (2 * change) >= change) {
+                ans += ((2 * change) - ans % (2 * change));
+            }
+            ans += time;
+        }
+        return ans;
+
+    }
     //2146 价格范围内最高排名的k样物品
     public List<List<Integer>> highestRankedKItems(int[][] grid, int[] pricing, int[] start, int k) {
         List<int[]> result = new ArrayList<>();
@@ -7092,7 +7424,7 @@ public class Solutions1 {
         int min = Integer.MAX_VALUE;
         Queue<Integer> queue = new ArrayDeque<>();
         queue.offer(1);
-        boolean[] visited = new boolean[n+1];
+        boolean[] visited = new boolean[n + 1];
         while (!queue.isEmpty()) {
             int cur = queue.poll();
             for (int near : edges.getOrDefault(cur, new ArrayList<>())) {
@@ -7104,6 +7436,7 @@ public class Solutions1 {
         }
         return min;
     }
+
     private void add(Map<Integer, Integer> dist, Map<Integer, List<Integer>> edges, int x, int y, int d) {
         List<Integer> list = edges.getOrDefault(x, new ArrayList<>());
         list.add(y);
@@ -7546,9 +7879,9 @@ public class Solutions1 {
         }
 
         public String find(String name) {
-            if (!parents.containsKey(name)){
-                parents.put(name,name);
-                frequency.put(name,0);
+            if (!parents.containsKey(name)) {
+                parents.put(name, name);
+                frequency.put(name, 0);
                 return name;
             }
             if (parents.get(name).equals(name)) return name;
@@ -9239,13 +9572,13 @@ public class Solutions1 {
             }
         }
         int[][] ans = new int[smalls.length][];
-        for(int i=0;i<smalls.length;i++){
+        for (int i = 0; i < smalls.length; i++) {
             String small = smalls[i];
-            List<Integer> indexed = hits.getOrDefault(small,new ArrayList<>());
-            if(indexed.size()==0){
+            List<Integer> indexed = hits.getOrDefault(small, new ArrayList<>());
+            if (indexed.size() == 0) {
                 ans[i] = new int[0];
             }
-            ans[i] = indexed.stream().mapToInt(p->p).toArray();
+            ans[i] = indexed.stream().mapToInt(p -> p).toArray();
         }
         return ans;
 
@@ -9483,7 +9816,7 @@ public class Solutions1 {
             children = new T9WordsTrie[26];
         }
 
-        public void insert(String word,Map<Character, Character> map) {
+        public void insert(String word, Map<Character, Character> map) {
             T9WordsTrie node = this;
             for (char c : word.toCharArray()) {
                 if (node.children[c - 'a'] == null) {
@@ -9499,7 +9832,8 @@ public class Solutions1 {
             int numIdx = 0;
             T9WordsTrie node = this;
             for (char c : word.toCharArray()) {
-                if (node.children[c - 'a'] == null || node.children[c - 'a'].val != num.charAt(numIdx)) return false;
+                if (node.children[c - 'a'] == null || node.children[c - 'a'].val != num.charAt(numIdx))
+                    return false;
                 node = node.children[c - 'a'];
                 numIdx++;
             }
@@ -9540,7 +9874,7 @@ public class Solutions1 {
         List<String> result = new ArrayList<>();
         T9WordsTrie trie = new T9WordsTrie();
         for (String word : words) {
-            trie.insert(word,map);
+            trie.insert(word, map);
         }
         for (String word : words) {
             if (trie.search(word, num, map)) {

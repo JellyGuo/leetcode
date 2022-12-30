@@ -1144,6 +1144,19 @@ public class Solutions2 {
         return sb.toString();
     }
 
+    //1750. 删除字符串两端相同字符后的最短长度
+    public int minimumLength(String s) {
+        char[] chars = s.toCharArray();
+        int l = 0, r = chars.length - 1;
+        while (l < r) {
+            if (chars[l] != chars[r]) break;
+            char c = chars[l];
+            while (l <= r && chars[l] == c) l++;
+            while (l < r && chars[r] == c) r--;
+        }
+        return r - l + 1;
+    }
+
     // 481 神奇字符串
     public int magicalString(int n) {
         if (n < 4) {
@@ -1373,7 +1386,7 @@ public class Solutions2 {
         return Arrays.stream(cardPoints).sum() - min;
     }
 
-    // 6270. 每种字符至少取 K 个
+    // 2516. 每种字符至少取 K 个
     // 至少取k个=》剩余的最多保留cnt-k个
     // 求取的长度最小=》剩余的长度最大
     public int takeCharacters(String s, int k) {
@@ -1389,15 +1402,16 @@ public class Solutions2 {
         cnt = new int[3];
         for (int l = 0, r = 0; r < n; r++) {
             cnt[chars[r] - 'a']++;
-            while (!takeCharactersCheck(cnt,ta,tb,tc)) {
+            while (!takeCharactersCheck(cnt, ta, tb, tc)) {
                 cnt[chars[l++] - 'a']--;
             }
             max = Math.max(max, r - l + 1);
 
         }
-        return n-max;
+        return n - max;
     }
-    private boolean takeCharactersCheck(int[] cnt,int ta,int tb,int tc){
+
+    private boolean takeCharactersCheck(int[] cnt, int ta, int tb, int tc) {
         return cnt[0] <= ta && cnt[1] <= tb && cnt[2] <= tc;
     }
 
@@ -1514,6 +1528,20 @@ public class Solutions2 {
             max = Math.max(max, r - l + 1);
         }
         return max;
+    }
+
+    //1759. 统计同构子字符串的数目
+    public int countHomogenous(String s) {
+        int mod = (int) 1e9 + 7;
+        int n = s.length();
+        long ans = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            while (s.charAt(l) != s.charAt(r)) {
+                l++;
+            }
+            ans = (ans + (r - l + 1) % mod) % mod;
+        }
+        return (int) ans;
     }
 
     // 485 最大连续1的个数
@@ -4550,6 +4578,66 @@ public class Solutions2 {
         return sell;
     }
 
+    // 376. 摆动序列
+    public int wiggleMaxLength(int[] nums) {
+        int n = nums.length;
+        int[] up = new int[n];//表示以前 i 个元素中的某一个为结尾的最长的「上升摆动序列」的长度。
+        int[] down = new int[n];//表示以前 i 个元素中的某一个为结尾的最长的「下降摆动序列」的长度。
+        up[0] = 1;
+        down[0] = 1;
+        for (int i = 1; i < n; i++) {
+            if (nums[i] > nums[i - 1]) {
+                //up[i]由up[i-1]转移：up是上升序列，nums[i]>nums[i-1]，对上升无贡献
+                //设nums[j]是up[i-1]前最后一个上升的数
+                //若nums[j]<=nums[i-1] 那么nums[i-1]是最后一个上升的数nums[i-1]代替nums[j]，由于nums[i]>nums[i-1],nums[i]代替nums[i-1],up[i]长度不变
+                //若nums[j]>nums[i-1]，如果nums[j]>nums[i],nums[i]构成的up长度还是以j结尾up[i] = up[i-1],如果nums[j]<=nums[i]，nums[i]可以代替nums[j],长度不变
+                //up[i]由down[i-1]转移：
+                //设nums[j]是down[i-1]前最后一个下降的数
+                //若nums[j]>=nums[i-1],nums[i-1]可代替nums[j]作为最后一个下降的数(down[i-1]=down[j])，nums[i]>nums[i-1]作为上升的数，up[i] = down[i-1]+1
+                //若nums[j]<nums[i-1],nums[i-1]可以作为最后一个上升的数（此时down[i-1]不变=down[j],因为nums[i-1]是上升），nums[i]也可以作为最后一个上升的数，从nums[j](最后一个下降的)到nums[i]上升+1
+                up[i] = Math.max(up[i - 1], down[i - 1] + 1);
+                //nums[i-1]<nums[i],所以i对down的贡献可以完全由i-1替代
+                down[i] = down[i - 1];
+            } else if (nums[i] < nums[i - 1]) {
+                up[i] = up[i - 1];
+                down[i] = Math.max(up[i - 1] + 1, down[i - 1]);
+            } else {
+                up[i] = up[i - 1];
+                down[i] = down[i - 1];
+            }
+        }
+        return Math.max(up[n - 1], down[n - 1]);
+    }
+
+    public int wiggleMaxLength2(int[] nums) {
+        int n = nums.length;
+        int up = 1;
+        int down = 1;
+        for (int i = 1; i < n; i++) {
+            if (nums[i] > nums[i - 1]) {
+                up = down + 1;
+            }
+            if (nums[i] < nums[i - 1]) {
+                down = up + 1;
+            }
+        }
+        return Math.max(up, down);
+    }
+
+    public int wiggleMaxLengthGreedy(int[] nums) {
+        int n = nums.length;
+        if (n < 2) return n;
+        int preDiff = nums[1] - nums[0];
+        int ans = preDiff == 0 ? 1 : 2;
+        for (int i = 2; i < n; i++) {
+            int diff = nums[i] - nums[i - 1];
+            if ((diff > 0 && preDiff <= 0) || (diff < 0 && preDiff >= 0)) {
+                ans++;
+                preDiff = diff;
+            }
+        }
+        return ans;
+    }
 
     // 801 使序列递增的最小交换次数
     public int minSwap(int[] nums1, int[] nums2) {
@@ -7391,20 +7479,137 @@ public class Solutions2 {
         }
         return ans;
     }
+    //--------------------数位DP模板------------------------------------------------
 
-// 902 最大为N的数字组合
-//给定一个按 非递减顺序 排列的数字数组 digits 。你可以用任意次数 digits[i] 来写的数字。例如，如果 digits = ['1','3','
-//5']，我们可以写数字，如 '13', '551', 和 '1351315'。
-// 返回 可以生成的小于或等于给定整数 n 的正整数的个数 。
-//输入：digits = ["1","3","5","7"], n = 100 输出：20 解释：可写出的 20 个数字是：
-//1, 3, 5, 7, 11, 13, 15, 17, 31, 33, 35, 37, 51, 53, 55, 57, 71, 73, 75, 77.
+    public int countDigitOneDP2(int n) {
+        char[] s = String.valueOf(n).toCharArray();
+        int m = s.length;
+        int[][] memo = new int[m][m];
+        for (int[] array : memo) Arrays.fill(array, -1);
+        return f233(0, 0, true, s, memo);
+    }
+
+    private int f233(int i, int cnt1, boolean isLimit, char[] s, int[][] memo) {
+        if (i == s.length) return cnt1;
+        if (!isLimit && memo[i][cnt1] > 0) return memo[i][cnt1];
+        int ans = 0;
+        for (int d = 0, up = isLimit ? s[i] - '0' : 9; d <= up; d++) {
+            ans += f233(i + 1, cnt1 + (d == 1 ? 1 : 0), isLimit && d == up, s, memo);
+        }
+        if (!isLimit) memo[i][cnt1] = ans;
+        return ans;
+    }
+
+    //面试题 17.06 2出现的次数
+    //将 n 转换成字符串 s，定义 f(i,cnt2,isLimit,isNum)  表示构造从左往右第 i 位及其之后数位中的 2 的个数，
+    // 其余参数的含义为：
+    //
+    //cnt2  表示前面填了多少个 2。
+    //isLimit  表示当前是否受到了 n 的约束。若为真，则第 i 位填入的数字至多为 s[i]，否则可以是 9。如果在受到约束的情况下填了 s[i]，那么后续填入的数字仍会受到 n 的约束。
+    //isNum  表示 i 前面的数位是否填了数字。若为假，则当前位可以跳过（不填数字），或者要填入的数字至少为 1；若为真，则要填入的数字可以从 0 开始。
+    public int numberOf2sInRange(int n) {
+        char[] s = Integer.toString(n).toCharArray();
+        int m = s.length;
+        // 从左到右第i位前已经填充cnt个2的个数时的个数
+        // 从左往右一共m位，2的个数范围从0到m
+        // eg:  0   1    进入个位的时候，前面填充了多少2，0和1的处理时等价的，所以用memo做记忆化
+        //      0  0-9  memo[1][0]=0
+        //      1  0-9
+        //      2  0-9  memo[1][1] = 11
+        //      3  0-3
+        int[][] memo = new int[m][m];
+        for (int i = 0; i < m; i++) Arrays.fill(memo[i], -1);
+        return f(0, 0, true, s, memo);
+    }
+
+    int f(int i, int cnt2, boolean isLimit, char[] s, int[][] memo) {
+        if (i == s.length) return cnt2;
+        if (!isLimit && memo[i][cnt2] >= 0) return memo[i][cnt2];
+        int res = 0;
+        // 当前第i位，当不等于up时，后续的位数可以取到9(i是Limit=false)
+        // cnt2时i前面2的个数，eg 22 i指向个位的2时，cnt2=1,i指向m时cnt2加上了个位的2(即cnt2=2)
+        for (int d = 0, up = isLimit ? s[i] - '0' : 9; d <= up; ++d) // 枚举要填入的数字 d
+            res += f(i + 1, cnt2 + (d == 2 ? 1 : 0), isLimit && d == up, s, memo);
+        if (!isLimit) memo[i][cnt2] = res;
+        return res;
+    }
+
+    //600. 不含连续1的非负整数
+    public int findIntegers(int n) {
+        // 二进制位数从高到低
+        char[] s = Integer.toBinaryString(n).toCharArray();
+        int m = s.length;
+        int[][] memo = new int[m][2];
+        for (int[] array : memo) Arrays.fill(array, -1);
+        return f600(0, false, true, s, memo);
+    }
+
+    /**
+     * @param i       当前第i位
+     * @param prev1   前一位是否是1
+     * @param isLimit 当前位是否有上限
+     * @param s
+     * @param memo
+     * @return
+     */
+    private int f600(int i, boolean prev1, boolean isLimit, char[] s, int[][] memo) {
+        if (i == s.length) return 1;
+        if (!isLimit && memo[i][prev1 ? 1 : 0] > 0) return memo[i][prev1 ? 1 : 0];
+        // 当前位的上限
+        int up = isLimit ? s[i] - '0' : 1;
+        // 当前位最多两个选择 [0,up]
+        // 当前位填充0
+        int res = f600(i + 1, false, isLimit && up == 0, s, memo);
+        // 前一个不是1，且上限是1时，可以填充1
+        if (!prev1 && up == 1) res += f600(i + 1, true, isLimit, s, memo);
+        if (!isLimit) memo[i][prev1 ? 1 : 0] = res;
+        return res;
+    }
+
+    // 902 最大为N的数字组合
+    //给定一个按 非递减顺序 排列的数字数组 digits 。你可以用任意次数 digits[i] 来写的数字。例如，如果 digits = ['1','3','
+    //5']，我们可以写数字，如 '13', '551', 和 '1351315'。
+    // 返回 可以生成的小于或等于给定整数 n 的正整数的个数 。
+    //输入：digits = ["1","3","5","7"], n = 100 输出：20 解释：可写出的 20 个数字是：
+    //1, 3, 5, 7, 11, 13, 15, 17, 31, 33, 35, 37, 51, 53, 55, 57, 71, 73, 75, 77.
+    public int atMostNGivenDigitSet(String[] digits, int n) {
+        char[] s = Integer.toString(n).toCharArray();
+        int m = s.length;
+        //对于一个固定的 i，它受到 isLimit 或 isNum 的约束在整个递归过程中至多会出现一次 eg:某一位前面不填数字；n=234，当前面填23时，i=2就受限最大为4
+        int[] memo = new int[m];
+        Arrays.fill(memo, -1);
+        return f902(0, true, false, s, memo, digits);
+    }
+
+    private int f902(int i, boolean isLimit, boolean isNum, char[] s, int[] memo, String[] digits) {
+        if (i == s.length) return isNum ? 1 : 0; // 前面填了数字，才为1种合法结果，不然就是"" 所有位都没填
+        // 当i收到限制时，所求结果不能直接返回
+        if (!isLimit && isNum && memo[i] > 0) return memo[i];
+        int ans = 0;
+        // 前面不填数字，那么可以跳过当前数位，也不填数字
+        // isLimit 改为 false，因为没有填数字，位数都比 n 要短，自然不会受到 n 的约束
+        // isNum 仍然为 false，因为没有填任何数字
+        if (!isNum) ans = f902(i + 1, false, false, s, memo, digits);
+        char up = isLimit ? s[i] : '9';
+        // 注意：对于一般的题目而言，如果此时 isNum 为 false，则必须从 1 开始枚举，由于本题 digits 没有 0，所以无需处理这种情况
+        for (String d : digits) {
+            char c = d.charAt(0);
+            if (c > up) break;// d 超过上限，由于 digits 是有序的，后面的 d 都会超过上限，故退出循环
+            // isLimit：如果当前受到 n 的约束，且填的数字等于上限，那么后面仍然会受到 n 的约束
+            // isNum 为 true，因为填了数字
+            ans += f902(i + 1, isLimit && c == up, true, s, memo, digits);
+        }
+        if (!isLimit && isNum) memo[i] = ans;
+        return ans;
+    }
+
 
     //    我们称满足 X <= N 且仅包含 D 中出现的数字的 X 为合法的。我们的目标是找出所有合法的 X 的个数。
 //    设 N 是一个 K 位数，那么对于任意一个小于 K（假设有 k 位，即 k < K）的数，如果它仅包含 D 中出现的数字，那么它就是合法的，并且 k 位数中，合法的数一共有 |D|^k∣个。
 //    考虑完位数小于 K 的数，我们接下来考虑位数等于 K 的数，我们用 N = 2345 作为例子来考虑所有合法的 K = 4 位数。
 //    如果第 1 个数位比 N 中对应的第 1 个数位（即 2）小，那么剩下的 3 个数位我们可以使用 D 中的任何一个数字，因此有 |D|^{k-1}个合法的数。
 //    如果第 1 个数位和 N 中对应的第 1 个数位（即 2）相等，那么从第 2 个数位开始，它既可以比 N 中对应的第 2 个数位（即 3）小，也可以相等。此时相当于我们在考虑一个 K - 1 位数的问题。
-    public int atMostNGivenDigitSet(String[] D, int N) {
+    public int atMostNGivenDigitSet2(String[] D, int N) {
         String S = String.valueOf(N);
         int K = S.length();
         int[] dp = new int[K + 1];
@@ -7427,6 +7632,13 @@ public class Solutions2 {
     }
 
     int[] nums;
+
+    public int atMostNGivenDigitSetDP2(String[] digits, int max) {
+        int n = digits.length;
+        nums = new int[n];
+        for (int i = 0; i < n; i++) nums[i] = Integer.parseInt(digits[i]);
+        return dp(max);
+    }
 
     int dp(int x) {
         List<Integer> list = new ArrayList<>();
@@ -7463,13 +7675,163 @@ public class Solutions2 {
         return ans;
     }
 
-    public int atMostNGivenDigitSetDP2(String[] digits, int max) {
-        int n = digits.length;
-        nums = new int[n];
-        for (int i = 0; i < n; i++) nums[i] = Integer.parseInt(digits[i]);
-        return dp(max);
+
+    // 788. 旋转数字
+    static int[] diff = {0, 0, 1, -1, -1, 1, 1, -1, 0, 1};
+
+    public int rotatedDigits(int n) {
+        char[] s = Integer.toString(n).toCharArray();
+        int m = s.length;
+        int[][] memo = new int[m][2];
+        for (int[] array : memo) Arrays.fill(array, -1);
+        return f788(0, 0, true, s, memo);
     }
 
+    private int f788(int i, int hasDiff, boolean isLimit, char[] s, int[][] memo) {
+        if (i == s.length) return hasDiff; // 有2/3/5/9 才算好数
+        if (!isLimit && memo[i][hasDiff] >= 0) return memo[i][hasDiff];
+        int ans = 0;
+        for (int d = 0, up = isLimit ? s[i] - '0' : 9; d <= up; d++) {
+            if (diff[d] == -1) continue;
+            // 用|关系把hasDiff带入下一位
+            ans += f788(i + 1, hasDiff | diff[d], isLimit && d == up, s, memo);
+        }
+        if (!isLimit) memo[i][hasDiff] = ans;
+        return ans;
+    }
+
+    public int rotatedDigits2(int n) {
+        int ans = 0;
+        for (int i = 1; i <= n; ++i) {
+            String num = String.valueOf(i);
+            boolean valid = true, isDiff = false;
+            for (int j = 0; j < num.length(); ++j) {
+                char ch = num.charAt(j);
+                if (diff[ch - '0'] == -1) {
+                    valid = false;
+                } else if (diff[ch - '0'] == 1) {
+                    isDiff = true;
+                }
+            }
+            if (valid && isDiff) {
+                ++ans;
+            }
+        }
+        return ans;
+    }
+
+    //1012. 至少有 1 位重复的数字  n-600的结果
+    public int numDupDigitsAtMostN(int n) {
+        char[] s = Integer.toString(n).toCharArray();
+        int m = s.length;
+        int[][] memo = new int[m][1 << 10];
+        for (int[] array : memo) Arrays.fill(array, -1);
+        return n - f1012(0, 0, true, false, s, memo);
+    }
+
+    private int f1012(int i, int mask, boolean isLimit, boolean isNum, char[] s, int[][] memo) {
+        if (i == s.length) return isNum ? 1 : 0;
+        if (!isLimit && isNum && memo[i][mask] >= 0) return memo[i][mask];
+        int ans = 0;
+        if (!isNum) ans = f1012(i + 1, mask, false, false, s, memo);
+        for (int d = isNum ? 0 : 1, up = isLimit ? s[i] - '0' : 9; d <= up; d++) {
+            if ((mask >> d & 1) == 0) {
+                ans += f1012(i + 1, mask | (1 << d), isLimit && d == up, true, s, memo);
+            }
+        }
+        if (!isLimit && isNum) memo[i][mask] = ans;
+        return ans;
+    }
+
+    //2376. 统计特殊整数
+    public int countSpecialNumbers(int n) {
+        char[] s = Integer.toString(n).toCharArray();
+        int m = s.length;
+        // mask 0-9 10位数
+        int[][] memo = new int[m][1 << 10];
+        for (int[] array : memo) Arrays.fill(array, -1);
+        return f2376(0, 0, true, false, s, memo);
+    }
+
+    private int f2376(int i, int mask, boolean isLimit, boolean isNum, char[] s, int[][] memo) {
+        if (i == s.length) return isNum ? 1 : 0;
+        if (!isLimit && isNum && memo[i][mask] >= 0) return memo[i][mask];
+        int ans = 0;
+        if (!isNum) ans = f2376(i + 1, mask, false, false, s, memo);
+        for (int d = isNum ? 0 : 1, up = isLimit ? s[i] - '0' : 9; d <= up; d++) {
+            if ((mask >> d & 1) == 0) { // 当前要填入的d不在之前的数中
+                ans += f2376(i + 1, mask | (1 << d), isLimit && d == up, true, s, memo);
+            }
+        }
+        if(!isLimit && isNum) memo[i][mask] = ans;
+        return ans;
+    }
+    //1397. 找到所有好字符串
+    // KMP+数位DP   KMP是算法的皇冠明珠，此题是KMP题目的巅峰
+    char[] down;
+    char[] up;
+    char[] evil_chars;
+    int[] next;
+    int[][] memo1397;
+    public int findGoodStrings(int n, String s1, String s2, String evil) {
+        this.n = n;
+        down = s1.toCharArray();
+        up = s2.toCharArray();
+        evil_chars = evil.toCharArray();
+        next = getNext(evil);
+        memo1397 = new int[n][evil.length()];
+        for (int[] array : memo1397) Arrays.fill(array, -1);
+        return f1397(0, 0, true, true);
+    }
+
+    private int f1397(int i, int matchEvil, boolean downLimit, boolean upLimit) {
+        int mod = (int) 1e9 + 7;
+        if (i == n) return 1;
+        if (!downLimit && !upLimit && memo1397[i][matchEvil] >= 0) return memo1397[i][matchEvil];
+        int ans = 0;
+        char min = downLimit ? down[i] : 'a';
+        char max = upLimit ? up[i] : 'z';
+        for (char c = min; c <= max; c++) {
+            int matchEvilLen = getLen(c, matchEvil);
+            if (matchEvilLen == evil_chars.length) continue;
+            ans = (ans + f1397(i + 1, matchEvilLen, downLimit && c == min, upLimit && c == max) % mod) % mod;
+        }
+        if (!downLimit && !upLimit) memo1397[i][matchEvil] = ans;
+        return ans;
+    }
+
+    private int getLen(char c, int matchEvil) {
+        if (c == evil_chars[matchEvil]) {
+            return matchEvil + 1;
+        }
+        while (next[matchEvil] > 0 && evil_chars[next[matchEvil]] != c) {
+            matchEvil = next[matchEvil];
+        }
+        if (evil_chars[next[matchEvil]] == c) {
+            matchEvil = next[matchEvil] + 1;
+        } else {
+            matchEvil = 0;
+        }
+        return matchEvil;
+    }
+
+
+    public int[] getNext(String ps) {
+        char[] p = ps.toCharArray();
+        int[] next = new int[p.length];
+        next[0] = -1;
+        int j = 0;
+        int k = -1;
+        while (j < p.length - 1) {
+            if (k == -1 || p[j] == p[k]) {
+                next[++j] = ++k;
+            } else {
+                k = next[k];
+            }
+        }
+        next[0] = 0;
+        return next;
+    }
     //endregion---------------------------------------------------------------------------------
     //region-------------------------树状DP---------------------------------------------------
     // 6243. 到达首都的最少油耗
@@ -9201,6 +9563,60 @@ public class Solutions2 {
             index += step;
         }
         return sb.toString();
+    }
+
+    // 1801. 积压订单中的订单总数
+    public int getNumberOfBacklogOrders(int[][] orders) {
+        int mod = (int) 1e9 + 7;
+        PriorityQueue<int[]> sellOrders = new PriorityQueue<>((o1, o2) -> o1[0] - o2[0]);
+        PriorityQueue<int[]> buyOrders = new PriorityQueue<>((o1, o2) -> o2[0] - o1[0]);
+        for (int[] order : orders) {
+            if (order[2] == 0) {//buy
+                if (sellOrders.isEmpty() || sellOrders.peek()[0] > order[0]) {
+                    buyOrders.offer(order);
+                    continue;
+                }
+                while (!sellOrders.isEmpty() && sellOrders.peek()[0] <= order[0] && order[1] > 0) {
+                    int[] sellOrder = sellOrders.poll();
+                    if (sellOrder[1] > order[1]) {
+                        sellOrder[1] -= order[1];
+                        order[1] = 0;
+                        sellOrders.offer(sellOrder);
+                    } else {
+                        order[1] -= sellOrder[1];
+                    }
+                }
+                if (order[1] > 0) {
+                    buyOrders.offer(order);
+                }
+            } else {
+                if (buyOrders.isEmpty() || buyOrders.peek()[0] < order[0]) {
+                    sellOrders.offer(new int[]{order[0], order[1]});
+                    continue;
+                }
+                while (!buyOrders.isEmpty() && buyOrders.peek()[0] >= order[0] && order[1] > 0) {
+                    int[] buyOrder = buyOrders.poll();
+                    if (buyOrder[1] > order[1]) {
+                        buyOrder[1] -= order[1];
+                        order[1] = 0;
+                        buyOrders.offer(buyOrder);
+                    } else {
+                        order[1] -= buyOrder[1];
+                    }
+                }
+                if (order[1] > 0) {
+                    sellOrders.offer(order);
+                }
+            }
+        }
+        int ans = 0;
+        while (!sellOrders.isEmpty()) {
+            ans = (ans + sellOrders.poll()[1]) % mod;
+        }
+        while (!buyOrders.isEmpty()) {
+            ans = (ans + buyOrders.poll()[1]) % mod;
+        }
+        return ans;
     }
 
     //1687. 从仓库到码头运输箱子

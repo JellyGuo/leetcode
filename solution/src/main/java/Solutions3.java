@@ -672,6 +672,28 @@ public class Solutions3 {
         return -1;
     }
 
+    //2032. 至少在两个数组中出现的值  倒排索引
+    public List<Integer> twoOutOfThree(int[] nums1, int[] nums2, int[] nums3) {
+        Map<Integer, Set<Integer>> map = new HashMap<>();
+        for(int num:nums1){
+            Set<Integer> set = map.computeIfAbsent(num,k->new HashSet<>());
+            set.add(1);
+        }
+        for(int num:nums2){
+            Set<Integer> set = map.computeIfAbsent(num,k->new HashSet<>());
+            set.add(2);
+        }
+        for(int num:nums3){
+            Set<Integer> set = map.computeIfAbsent(num,k->new HashSet<>());
+            set.add(3);
+        }
+        List<Integer> result = new ArrayList<>();
+        for(Map.Entry<Integer,Set<Integer>> entry:map.entrySet()){
+            if(entry.getValue().size()>=2) result.add(entry.getKey());
+        }
+        return result;
+    }
+
     //172 阶乘后的0
     // n的阶乘中有几个5相乘 5!只有1个  10! 有2个 25！有6个
     public int trailingZeroes(int n) {
@@ -2633,7 +2655,7 @@ public class Solutions3 {
 
 
     //endregion -------------------------------------------------------------------end--------------------------------
-    //region----------------------------------------博弈论----------------------------------------------------
+    //region----------------------------------------博弈论/数学----------------------------------------------------
     // 292 nim游戏，后手只有在4的倍数时才赢
     public boolean canWinNim(int n) {
         return n % 4 != 0;
@@ -2652,6 +2674,58 @@ public class Solutions3 {
 //你应该返回 1，因为只有一个灯泡还亮着。
     public int bulbSwitch(int n) {
         return (int) Math.sqrt(n);
+    }
+
+    // 458. 可怜的小猪  香农熵 lg(n)/lg(t+1)<=k
+    // 8 只砝码 7轻1重,最多2次称重一定找出重的 lg(8)/lg(2+1)<=2 3 3 2
+    // 只有1轮，1只猪 死 / 不死 2种状态，x只 2^x种状态，验证2^x桶水
+    // 2轮 1只猪  第一轮死 / 第二轮死 / 不死 3种状态，x只 3^x
+    // t轮 1只 t+1种状态，x只 (t+1)^x >= buckets  => ln(buckets)/ln(t+1)<=x
+    public int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
+        int turns = minutesToTest / minutesToDie;
+        int k = turns + 1;
+        return (int) Math.ceil(Math.log(buckets) / Math.log(k) - 1e-5);
+    }
+    // 2只小猪 4轮一共可以校验5^2 = 25桶水
+    //       t1  t2  t3  t4  不喝
+    //  t1    1   2   3   4    5
+    //  t2    6   7   8   9   10
+    //  t3   11  12  13  14   15
+    //  t4   16  17  18  19   20
+    //  不喝  21  22  23  24  25
+    // 每一轮，猪1按行对应的桶号喝，猪2按列对应的行号喝，各喝4轮
+    // 如果8有毒 猪1t2死，猪2 t3死
+    // 排列组合
+    public int poorPigsDP(int buckets, int minutesToDie, int minutesToTest) {
+        if (buckets == 1) {
+            return 0;
+        }
+        int[][] combinations = new int[buckets + 1][buckets + 1];
+        combinations[0][0] = 1;
+        int iterations = minutesToTest / minutesToDie;
+        int[][] f = new int[buckets][iterations + 1];
+        for (int i = 0; i < buckets; i++) {
+            f[i][0] = 1;
+        }
+        for (int j = 0; j <= iterations; j++) {
+            f[0][j] = 1;
+        }
+        for (int i = 1; i < buckets; i++) {
+            combinations[i][0] = 1;
+            combinations[i][i] = 1;
+            for (int j = 1; j < i; j++) {
+                combinations[i][j] = combinations[i - 1][j - 1] + combinations[i - 1][j];
+            }
+            for (int j = 1; j <= iterations; j++) {
+                for (int k = 0; k <= i; k++) {
+                    f[i][j] += f[k][j - 1] * combinations[i][i - k];
+                }
+            }
+            if (f[i][iterations] >= buckets) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     // 672 灯泡开关2
@@ -2926,6 +3000,66 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //面试题 16.03. 交点
+    double[] ans = new double[0];
+
+    public double[] intersection(int[] start1, int[] end1, int[] start2, int[] end2) {
+        int x1 = start1[0], y1 = start1[1];
+        int x2 = end1[0], y2 = end1[1];
+        int x3 = start2[0], y3 = start2[1];
+        int x4 = end2[0], y4 = end2[1];
+
+        // 判断 (x1, y1)~(x2, y2) 和 (x3, y3)~(x4, y4) 是否平行
+        if ((y4 - y3) * (x2 - x1) == (y2 - y1) * (x4 - x3)) {
+            // 若平行，则判断 (x3, y3) 是否在「直线」(x1, y1)~(x2, y2) 上
+            if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) {
+                // 判断 (x3, y3) 是否在「线段」(x1, y1)~(x2, y2) 上
+                if (inside(x1, y1, x2, y2, x3, y3)) {
+                    update(x3, y3);
+                }
+                // 判断 (x4, y4) 是否在「线段」(x1, y1)~(x2, y2) 上
+                if (inside(x1, y1, x2, y2, x4, y4)) {
+                    update(x4, y4);
+                }
+                // 判断 (x1, y1) 是否在「线段」(x3, y3)~(x4, y4) 上
+                if (inside(x3, y3, x4, y4, x1, y1)) {
+                    update(x1, y1);
+                }
+                // 判断 (x2, y2) 是否在「线段」(x3, y3)~(x4, y4) 上
+                if (inside(x3, y3, x4, y4, x2, y2)) {
+                    update(x2, y2);
+                }
+            }
+            // 在平行时，其余的所有情况都不会有交点
+        } else {
+            // 联立方程得到 t1 和 t2 的值
+            double t1 = (double) (x3 * (y4 - y3) + y1 * (x4 - x3) - y3 * (x4 - x3) - x1 * (y4 - y3)) / ((x2 - x1) * (y4 - y3) - (x4 - x3) * (y2 - y1));
+            double t2 = (double) (x1 * (y2 - y1) + y3 * (x2 - x1) - y1 * (x2 - x1) - x3 * (y2 - y1)) / ((x4 - x3) * (y2 - y1) - (x2 - x1) * (y4 - y3));
+            // 判断 t1 和 t2 是否均在 [0, 1] 之间
+            if (t1 >= 0.0 && t1 <= 1.0 && t2 >= 0.0 && t2 <= 1.0) {
+                ans = new double[]{x1 + t1 * (x2 - x1), y1 + t1 * (y2 - y1)};
+            }
+        }
+        return ans;
+    }
+
+    // 判断 (xk, yk) 是否在「线段」(x1, y1)~(x2, y2) 上
+    // 这里的前提是 (xk, yk) 一定在「直线」(x1, y1)~(x2, y2) 上
+    public boolean inside(int x1, int y1, int x2, int y2, int xk, int yk) {
+        // 若与 x 轴平行，只需要判断 x 的部分
+        // 若与 y 轴平行，只需要判断 y 的部分
+        // 若为普通线段，则都要判断
+        return (x1 == x2 || (Math.min(x1, x2) <= xk && xk <= Math.max(x1, x2))) && (y1 == y2 || (Math.min(y1, y2) <= yk && yk <= Math.max(y1, y2)));
+    }
+
+    public void update(double xk, double yk) {
+        // 将一个交点与当前 ans 中的结果进行比较
+        // 若更优则替换
+        if (ans.length == 0 || xk < ans[0] || (xk == ans[0] && yk < ans[1])) {
+            ans = new double[]{xk, yk};
+        }
     }
 
     //1739. 放置盒子
@@ -5037,7 +5171,7 @@ public class Solutions3 {
         return Math.min(cost1, cost2);
     }
 
-    //6269. 到目标字符串的最短距离  环形下标技巧
+    //2515. 到目标字符串的最短距离  环形下标技巧
     //给你一个下标从 0 开始的 环形 字符串数组 words 和一个字符串 target 。环形数组 意味着数组首尾相连。
     //形式上， words[i] 的下一个元素是 words[(i + 1) % n] ，
     //而 words[i] 的前一个元素是 words[(i - 1 + n) % n] ，其中 n 是 words 的长度。
@@ -5734,6 +5868,18 @@ public class Solutions3 {
             ans[idx++] = s.charAt(i) == 'I' ? l++ : r--;
         }
         ans[idx] = l;
+        return ans;
+    }
+    //2027. 转换字符串的最少操作次数
+    public int minimumMoves(String s) {
+        int ans = 0;
+        int covered = -1;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == 'X' && i > covered) {
+                ans++;
+                covered = i + 2;
+            }
+        }
         return ans;
     }
 
@@ -7636,6 +7782,34 @@ public class Solutions3 {
         return ans;
     }
 
+    //面试题 17.26. 稀疏相似度  倒排索引
+    public List<String> computeSimilarities(int[][] docs) {
+        List<String> ans = new ArrayList<>();
+        int n = docs.length;
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        // 计数
+        int[][] help = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < docs[i].length; j++) {
+                List<Integer> docIds = map.getOrDefault(docs[i][j], new ArrayList<>());
+                // 对于具体的某个单词docs[i][j]，i文档与哪些文档有交集，help[i][docId]++;
+                for (int docId : docIds) {
+                    help[i][docId]++;
+                }
+                docIds.add(i);
+                map.put(docs[i][j], docIds);
+            }
+            for (int docId = 0; docId < n; docId++) {
+                // help的顺序性：docId从小到大遍历，遍历小doc时的单词没有其余doc，遍历大的doc的单词时，map中存了小doc的id，help是偏下的一个矩阵
+                if (help[i][docId] > 0) {
+                    ans.add(docId + "," + i + ": " + String.format("%.4f", (double) help[i][docId] / (docs[i].length + docs[docId].length - help[i][docId])));
+                }
+            }
+        }
+        return ans;
+
+    }
+
     //endregion---------------------------------------------------------------------------------------------
 
     //region---------------------------------------------------二分-----------------------------------------------
@@ -8534,7 +8708,7 @@ public class Solutions3 {
         return ops;
     }
 
-    // 6271. 礼盒的最大甜蜜度
+    // 2517. 礼盒的最大甜蜜度
     public int maximumTastiness(int[] price, int k) {
         Arrays.sort(price);
         //  甜蜜度就是绝对值的差值 绝对值的差值d范围[0，price最大值]

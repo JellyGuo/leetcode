@@ -502,9 +502,70 @@ public class Solution {
     }
 
 
+    public int  shortestPathLength(int[][] graph) {
+        int n = graph.length;
+        // 1.初始化队列及标记数组，存入起点
+        // 三个属性分别为 idx, mask, dist
+        Queue<int[]> queue = new LinkedList<>();
+        // 节点编号及当前状态
+        // [i,mask] 从i出发已经遍历过mask
+        boolean[][] seen = new boolean[n][1 << n];
+        for (int i = 0; i < n; ++i) {
+            // 把0-n-1全部入队
+            queue.offer(new int[]{i, 1 << i, 0});
+            seen[i][1 << i] = true;
+        }
+
+        int ans = 0;
+        while (!queue.isEmpty()) {
+            int[] tuple = queue.poll();
+            int u = tuple[0], mask = tuple[1], dist = tuple[2];
+            // 所有节点依次BFS，哪个mask全部遍历完即是最短
+            if (mask == (1 << n) - 1) {
+                ans = dist;
+                break;
+            }
+            // 搜索相邻的节点
+            for (int v : graph[u]) {
+                // 将 mask 的第 v 位置为 1
+                int maskV = mask | (1 << v);
+                if (!seen[v][maskV]) {
+                    queue.offer(new int[]{v, maskV, dist + 1});
+                    seen[v][maskV] = true;
+                }
+            }
+        }
+        return ans;
+    }
+
+    public int shortestPathLength2(int[][] graph) {
+        int n = graph.length;
+        Queue<int[]> queue = new ArrayDeque<>();
+        boolean[][] seen = new boolean[n][1 << n];
+        for (int i = 0; i < n; i++) {
+            queue.offer(new int[]{i, i << i, 0});
+            seen[i][1 << i] = true;
+        }
+        while (!queue.isEmpty()) {
+            int[] cur = queue.poll();
+            int v = cur[0], mask = cur[1], dist = cur[2];
+            if (mask == ((1 << n) - 1)) {
+                return dist;
+            }
+            for (int u : graph[v]) {
+                int maskU = mask | (1 << u);
+                if (!seen[u][maskU]) {
+                    seen[u][maskU] = true;
+                    queue.offer(new int[]{u, maskU, dist + 1});
+                }
+            }
+        }
+        return 0;
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
+        solution.shortestPathLength(new int[][]{{1,2,3},{0},{0},{0}});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);
