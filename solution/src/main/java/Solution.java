@@ -502,7 +502,7 @@ public class Solution {
     }
 
 
-    public int  shortestPathLength(int[][] graph) {
+    public int shortestPathLength(int[][] graph) {
         int n = graph.length;
         // 1.初始化队列及标记数组，存入起点
         // 三个属性分别为 idx, mask, dist
@@ -565,7 +565,7 @@ public class Solution {
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.shortestPathLength(new int[][]{{1,2,3},{0},{0},{0}});
+        solution.shortestPathLength(new int[][]{{1, 2, 3}, {0}, {0}, {0}});
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);
