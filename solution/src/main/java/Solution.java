@@ -423,6 +423,10 @@ public class Solution {
 
     private List<Integer> fac(int n) {
         List<Integer> ans = new ArrayList<>();
+        if (isPrime(n)) {
+            ans.add(n);
+            return ans;
+        }
         for (int i = 2; i <= Math.sqrt(n); i++) {
             if (isPrime(i)) {
                 while (n % i == 0) {
@@ -563,9 +567,52 @@ public class Solution {
         return 0;
     }
 
+    public int countDigits(int num) {
+        int c = num;
+        int cnt = 0;
+        while (c > 0) {
+            int d = c % 10;
+            if (num % d == 0) cnt++;
+            c /= 10;
+        }
+        return cnt;
+    }
+
+    public int distinctPrimeFactors(int[] nums) {
+        Set<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.addAll(fac(num));
+        }
+        return set.size();
+    }
+
+
+
+
+    public int[] closestPrimes(int left, int right) {
+        Integer prev = null;
+        int min = Integer.MAX_VALUE;
+        int[] ans = new int[]{-1, -1};
+        for (int i = left; i <= right; i++) {
+            if (isPrime(i)) {
+                if (prev != null) {
+                    if (i - prev < min) {
+                        ans[0] = prev;
+                        ans[1] = i;
+                        min = i - prev;
+                    }
+                }
+                prev = i;
+            }
+        }
+        return ans;
+    }
+
+
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.shortestPathLength(new int[][]{{1, 2, 3}, {0}, {0}, {0}});
+        solution.closestPrimes(10, 19);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);

@@ -675,21 +675,21 @@ public class Solutions3 {
     //2032. 至少在两个数组中出现的值  倒排索引
     public List<Integer> twoOutOfThree(int[] nums1, int[] nums2, int[] nums3) {
         Map<Integer, Set<Integer>> map = new HashMap<>();
-        for(int num:nums1){
-            Set<Integer> set = map.computeIfAbsent(num,k->new HashSet<>());
+        for (int num : nums1) {
+            Set<Integer> set = map.computeIfAbsent(num, k -> new HashSet<>());
             set.add(1);
         }
-        for(int num:nums2){
-            Set<Integer> set = map.computeIfAbsent(num,k->new HashSet<>());
+        for (int num : nums2) {
+            Set<Integer> set = map.computeIfAbsent(num, k -> new HashSet<>());
             set.add(2);
         }
-        for(int num:nums3){
-            Set<Integer> set = map.computeIfAbsent(num,k->new HashSet<>());
+        for (int num : nums3) {
+            Set<Integer> set = map.computeIfAbsent(num, k -> new HashSet<>());
             set.add(3);
         }
         List<Integer> result = new ArrayList<>();
-        for(Map.Entry<Integer,Set<Integer>> entry:map.entrySet()){
-            if(entry.getValue().size()>=2) result.add(entry.getKey());
+        for (Map.Entry<Integer, Set<Integer>> entry : map.entrySet()) {
+            if (entry.getValue().size() >= 2) result.add(entry.getKey());
         }
         return result;
     }
@@ -1106,6 +1106,10 @@ public class Solutions3 {
     // 质因数分解
     private List<Integer> fac(int n) {
         List<Integer> ans = new ArrayList<>();
+        if (isPrime(n)) {
+            ans.add(n);
+            return ans;
+        }
         for (int i = 2; i <= Math.sqrt(n); i++) {
             if (isPrime(i)) {
                 while (n % i == 0) {
@@ -1143,6 +1147,35 @@ public class Solutions3 {
         }
         if (n != 1) sum += n;
         return sum;
+    }
+
+    //6279. 数组乘积中的不同质因数数目 考察质因数分解
+    public int distinctPrimeFactors(int[] nums) {
+        Set<Integer> set = new HashSet<>();
+        for(int num:nums){
+            set.addAll(fac(num));
+        }
+        return set.size();
+    }
+
+    //6280. 范围内最接近的两个质数  考察质数
+    public int[] closestPrimes(int left, int right) {
+        Integer prev = null;
+        int min = Integer.MAX_VALUE;
+        int[] ans = new int[]{-1, -1};
+        for (int i = left; i <= right; i++) {
+            if (isPrime(i)) {
+                if (prev != null) {
+                    if (i - prev < min) {
+                        ans[0] = prev;
+                        ans[1] = i;
+                        min = i - prev;
+                    }
+                }
+                prev = i;
+            }
+        }
+        return ans;
     }
 
     // 258 各位相加
@@ -2686,6 +2719,7 @@ public class Solutions3 {
         int k = turns + 1;
         return (int) Math.ceil(Math.log(buckets) / Math.log(k) - 1e-5);
     }
+
     // 2只小猪 4轮一共可以校验5^2 = 25桶水
     //       t1  t2  t3  t4  不喝
     //  t1    1   2   3   4    5
@@ -3064,25 +3098,25 @@ public class Solutions3 {
 
     //1739. 放置盒子
     public int minimumBoxes(int n) {
-        int cur = 0,i=0,j=0;
+        int cur = 0, i = 0, j = 0;
         // cur 总个数  i地面的个数  j每次地面增加的个数
         // 1 + (1+2) + (1+2+3)
-        while(cur<n){
+        while (cur < n) {
             j++;
-            i+=j;
-            cur+=i;
+            i += j;
+            cur += i;
         }
-        if(cur == n) return i;
+        if (cur == n) return i;
         // 此时cur>n,先恢复到cur<n的情况
-        cur-=i;
-        i-=j;
-        j=0;
+        cur -= i;
+        i -= j;
+        j = 0;
         // 此时添加方块参考
-        while(cur<n){
+        while (cur < n) {
             j++;
-            cur+=j;
+            cur += j;
         }
-        return i+j;
+        return i + j;
     }
     //endregion-----------------------------------------------------------------------------------------------
 
@@ -5870,6 +5904,7 @@ public class Solutions3 {
         ans[idx] = l;
         return ans;
     }
+
     //2027. 转换字符串的最少操作次数
     public int minimumMoves(String s) {
         int ans = 0;
@@ -6195,6 +6230,27 @@ public class Solutions3 {
         if (diffIdx.size() == 0) return true;
         if (diffIdx.size() != 2) return false;
         return s1.charAt(diffIdx.get(0)) == s2.charAt(diffIdx.get(1)) && s1.charAt(diffIdx.get(1)) == s2.charAt(diffIdx.get(0));
+    }
+
+    //6196. 将字符串分割成值不超过 K 的子字符串  记忆化搜索搜minimumPartition
+    public int minimumPartitionGreedy(String s, int k) {
+        int n = s.length();
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            if (c - '0' > k) return -1;
+        }
+        int d = String.valueOf(k).length();
+        int prev = 0, i = 0;
+        int cnt = 0;
+        while (i < n) {
+            long num = Long.parseLong(s.substring(prev, i + 1));
+            if (num > k || i - prev >= d) {
+                prev = i;
+                cnt++;
+            }
+            i++;
+        }
+        return cnt;
     }
 
     //334 递增的三元子序列 O(n)

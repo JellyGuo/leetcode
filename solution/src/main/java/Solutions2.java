@@ -3070,6 +3070,60 @@ public class Solutions2 {
         return memo[r][c];
     }
 
+    //6196. 将字符串分割成值不超过 K 的子字符串  贪心算法搜minimumPartitionGreedy
+    // TLE
+    int ans6196 = Integer.MAX_VALUE;
+
+    public int minimumPartition(String s, int k) {
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            if (c - '0' > k) return -1;
+        }
+        backtrack(chars, k, 0, 0);
+        return ans6196;
+    }
+
+    private void backtrack(char[] chars, int k, int idx, int curCnt) {
+        if (idx == chars.length) {
+            ans6196 = Math.min(ans6196, curCnt);
+            return;
+        }
+        int num = 0;
+        for (int i = idx; i < chars.length; i++) {
+            num = num * 10 + chars[i] - '0';
+            if (num > k) break;
+            backtrack(chars, k, i + 1, curCnt + 1);
+        }
+    }
+
+    public int minimumPartition2(String s, int k) {
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            if (c - '0' > k) return -1;
+        }
+        Map<Integer, Integer> memo = new HashMap<>();
+        int d = String.valueOf(k).length();
+        return backtrack(s, k, d, 0, memo);
+    }
+
+    private int backtrack(String s, int k, int d, int idx, Map<Integer, Integer> memo) {
+        if (idx == s.length()) {
+            return 0;
+        }
+        if (memo.containsKey(idx)) return memo.get(idx);
+        int ans = Integer.MAX_VALUE;
+        for (int i = idx; i < Math.min(s.length(), idx + d); i++) {
+            if (i - idx + 1 > d) break;
+            int num = Integer.parseInt(s.substring(idx, i + 1));
+            if (num > k) break;
+            ans = Math.min(ans, 1 + backtrack(s, k, d, i + 1, memo));
+        }
+        memo.put(idx, ans);
+        return ans;
+    }
+
+
+
     // 688 骑士在棋盘上的概率
     int[][] directions = new int[][]{{1, 2}, {-1, 2}, {1, -2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
 
