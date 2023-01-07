@@ -1386,6 +1386,30 @@ public class Solutions2 {
         return Arrays.stream(cardPoints).sum() - min;
     }
 
+    // 1658 将x减到0的最小操作数 前后取转换为求当中连续的
+    public int minOperations(int[] nums, int x) {
+        int n = nums.length;
+        int sum = 0;
+        for (int num : nums) {
+            sum += num;
+        }
+        int target = sum - x;
+        if (target < 0) return -1;
+        if (target == 0) return n;
+        sum = 0;
+        int max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            sum += nums[r];
+            while (sum > target) {
+                sum -= nums[l++];
+            }
+            if (sum == target) {
+                max = Math.max(max, r - l + 1);
+            }
+        }
+        return max == 0 ? -1 : n - max;
+    }
+
     // 2516. 每种字符至少取 K 个
     // 至少取k个=》剩余的最多保留cnt-k个
     // 求取的长度最小=》剩余的长度最大
@@ -1413,30 +1437,6 @@ public class Solutions2 {
 
     private boolean takeCharactersCheck(int[] cnt, int ta, int tb, int tc) {
         return cnt[0] <= ta && cnt[1] <= tb && cnt[2] <= tc;
-    }
-
-    // 1658 将x减到0的最小操作数 前后取转换为求当中连续的
-    public int minOperations(int[] nums, int x) {
-        int n = nums.length;
-        int sum = 0;
-        for (int num : nums) {
-            sum += num;
-        }
-        int target = sum - x;
-        if (target < 0) return -1;
-        if (target == 0) return n;
-        sum = 0;
-        int max = 0;
-        for (int l = 0, r = 0; r < n; r++) {
-            sum += nums[r];
-            while (sum > target) {
-                sum -= nums[l++];
-            }
-            if (sum == target) {
-                max = Math.max(max, r - l + 1);
-            }
-        }
-        return max == 0 ? -1 : n - max;
     }
 
     // 1052 爱生气的书店老板

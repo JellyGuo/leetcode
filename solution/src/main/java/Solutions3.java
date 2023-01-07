@@ -662,6 +662,24 @@ public class Solutions3 {
         return n + 1;
     }
 
+    //1803. 统计异或值在范围内的数对有多少
+    public int countPairs(int[] nums, int low, int high) {
+        int ans = 0;
+        Map<Integer,Integer> cnt = new HashMap<>();
+        for (int x : nums) cnt.put(x, cnt.getOrDefault(x, 0) + 1);
+        for (++high; high > 0; high >>= 1, low >>= 1) {
+            Map<Integer,Integer> nxt = new HashMap<>();
+            for (Map.Entry<Integer,Integer> e : cnt.entrySet()) {
+                int x = e.getKey(), c = e.getValue();
+                ans += c * (high % 2 * cnt.getOrDefault((high - 1) ^ x, 0) -
+                        low % 2 * cnt.getOrDefault((low - 1) ^ x, 0));
+                nxt.put(x >> 1, nxt.getOrDefault(x >> 1, 0) + c);
+            }
+            cnt = nxt;
+        }
+        return ans / 2;
+    }
+
     // 面试题08.03 魔术索引 跳跃查询
     public int findMagicIndex(int[] nums) {
         int n = nums.length;
@@ -5319,6 +5337,41 @@ public class Solutions3 {
         return ans;
     }
 
+    //2180. 统计各位数字之和为偶数的整数个数
+    public int countEven(int num) {
+        int cnt = 0;
+        for (int i = 1; i <= num; i++) {
+            int x = i;
+            int sum = 0;
+            while (x > 0) {
+                sum += x % 10;
+                x /= 10;
+            }
+            if ((sum & 1) == 0) cnt++;
+        }
+        return cnt;
+    }
+
+    //2042. 检查句子中的数字是否递增
+    public boolean areNumbersAscending(String s) {
+        int n = s.length();
+        char[] chars = s.toCharArray();
+        int i = 0;
+        Integer prev = null;
+        while (i < n) {
+            while (i < n && !Character.isDigit(chars[i])) i++;
+            if (i == n) return true;
+            int num = 0;
+            while (i < n && Character.isDigit(chars[i])) {
+                num = num * 10 + chars[i++] - '0';
+            }
+            if (prev != null) {
+                if (num <= prev) return false;
+            }
+            prev = num;
+        }
+        return true;
+    }
 
     //6152. 赢得比赛需要的最少训练时长
     public int minNumberOfHours(int initialEnergy, int initialExperience, int[] energy, int[] experience) {
@@ -8774,6 +8827,37 @@ public class Solutions3 {
             ops += (num - 1) / y;
         }
         return ops;
+    }
+
+    //1802. 有界数组中指定下标处的最大值
+    public int maxValue(int n, int index, int maxSum) {
+        int l = 1, r = maxSum;
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            long sum = getSum(mid, n, index);
+            if (sum > maxSum) {
+                r = mid - 1;
+            } else {
+                l = mid;
+            }
+        }
+        return l;
+    }
+
+    private long getSum(int mid, int n, int index) {
+        int left = index;
+        int right = n - index - 1;
+        return (long) mid + cal(mid, left) + cal(mid, right);
+    }
+
+    private long cal(int big, int length) {
+        if (length + 1 < big) {
+            int small = big - length;
+            return (long) (big - 1 + small) * length / 2;
+        } else {
+            int ones = length - (big - 1);
+            return (long) big * (big - 1) / 2 + ones;
+        }
     }
 
     // 2517. 礼盒的最大甜蜜度

@@ -587,8 +587,6 @@ public class Solution {
     }
 
 
-
-
     public int[] closestPrimes(int left, int right) {
         Integer prev = null;
         int min = Integer.MAX_VALUE;
@@ -608,7 +606,25 @@ public class Solution {
         return ans;
     }
 
-
+    public int minOperations(int[] nums, int x) {
+        int n = nums.length;
+        int sum = 0;
+        for (int num : nums) {
+            sum += num;
+        }
+        int t = sum - x;
+        if (t < 0) return -1;
+        if (t == 0) return n;
+        int s = 0, max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            s += nums[r];
+            while (s > t) {
+                s -= nums[l++];
+            }
+            if (s == t) max = Math.max(r - l + 1, max);
+        }
+        return max == 0 ? -1 : n - max;
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
