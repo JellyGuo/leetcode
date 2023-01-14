@@ -1157,6 +1157,35 @@ public class Solutions2 {
         return r - l + 1;
     }
 
+    //1807. 替换字符串中的括号内容
+    public String evaluate(String s, List<List<String>> knowledge) {
+        Map<String, String> dict = new HashMap<>();
+        for (List<String> ls : knowledge) {
+            dict.put(ls.get(0), ls.get(1));
+        }
+        Deque<String> deque = new ArrayDeque<>();
+        int n = s.length();
+        for (int l = 0, r = 0; r < n; ) {
+            if (s.charAt(r) == ')') {
+                String key = s.substring(l + 1, r);
+                deque.offerLast(dict.getOrDefault(key, "?"));
+                r++;
+                l = r;
+            } else if (s.charAt(l) == '(') {
+                r++;
+            } else {
+                deque.offerLast("" + s.charAt(r));
+                l++;
+                r++;
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String ss : deque) {
+            sb.append(ss);
+        }
+        return sb.toString();
+    }
+
     // 481 神奇字符串
     public int magicalString(int n) {
         if (n < 4) {
@@ -3121,7 +3150,6 @@ public class Solutions2 {
         memo.put(idx, ans);
         return ans;
     }
-
 
 
     // 688 骑士在棋盘上的概率
@@ -7817,9 +7845,10 @@ public class Solutions2 {
                 ans += f2376(i + 1, mask | (1 << d), isLimit && d == up, true, s, memo);
             }
         }
-        if(!isLimit && isNum) memo[i][mask] = ans;
+        if (!isLimit && isNum) memo[i][mask] = ans;
         return ans;
     }
+
     //1397. 找到所有好字符串
     // KMP+数位DP   KMP是算法的皇冠明珠，此题是KMP题目的巅峰
     char[] down;
@@ -7827,6 +7856,7 @@ public class Solutions2 {
     char[] evil_chars;
     int[] next;
     int[][] memo1397;
+
     public int findGoodStrings(int n, String s1, String s2, String evil) {
         this.n = n;
         down = s1.toCharArray();
@@ -7886,6 +7916,7 @@ public class Solutions2 {
         next[0] = 0;
         return next;
     }
+
     //endregion---------------------------------------------------------------------------------
     //region-------------------------树状DP---------------------------------------------------
     // 6243. 到达首都的最少油耗
@@ -8350,7 +8381,7 @@ public class Solutions2 {
         return ans;
     }
 
-    // 单调队列
+    // 单调队列  找i左边最高和右边最高 i处的储水量 = min(h[l],h[r])-h[i]
     public int trap3(int[] height) {
         int n = height.length;
         Deque<Integer> deque = new ArrayDeque<>();
@@ -8380,8 +8411,31 @@ public class Solutions2 {
         return ans;
     }
 
-    //单调栈
+    //单调栈 找i左边第一个高，右边第一个高 统计高于i处的横向的储水量 = (min(h[l],h[r])-h[i]) * (r-l+1-2)
     public int trap4(int[] height) {
+        int n = height.length;
+        int[] left = new int[n];
+        int[] right = new int[n];
+        Arrays.fill(right, n);
+        Stack<Integer> stack = new Stack<>();
+        for (int i = 0; i < n; i++) {
+            while (!stack.isEmpty() && height[i] > height[stack.peek()]) {
+                right[stack.pop()] = i;
+            }
+            left[i] = stack.isEmpty() ? -1 : stack.peek();
+            stack.push(i);
+        }
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            int l = left[i], r = right[i];
+            if (l == -1 || r == n) continue;
+            int h = Math.min(height[l], height[r]) - height[i];
+            ans += h * (r - l + 1 - 2);
+        }
+        return ans;
+    }
+
+    public int trap5(int[] height) {
         int n = height.length;
         int ans = 0;
         Deque<Integer> d = new ArrayDeque<>();

@@ -626,6 +626,77 @@ public class Solution {
         return max == 0 ? -1 : n - max;
     }
 
+    public int prefixCount(String[] words, String pref) {
+        int cnt = 0;
+        for (String word : words) {
+            if (isPrefix(word, pref)) cnt++;
+        }
+        return cnt;
+    }
+
+    private boolean isPrefix(String word, String pref) {
+        if (pref.length() > word.length()) return false;
+        for (int i = 0; i < pref.length(); i++) {
+            if (word.charAt(i) != pref.charAt(i)) return false;
+        }
+        return true;
+    }
+
+    public int maximumCount(int[] nums) {
+        int ct1 = 0, ct2 = 0;
+        for (int num : nums) {
+            if (num > 0) ct1++;
+            if (num < 0) ct2++;
+        }
+        return Math.max(ct1, ct2);
+    }
+
+    public long maxKelements(int[] nums, int k) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
+        for (int num : nums) {
+            pq.offer(num);
+        }
+        long score = 0;
+        while (k-- > 0 && !pq.isEmpty()) {
+            int num = pq.poll();
+            score += num;
+            pq.offer((num + 3 - 1) / 3);
+        }
+        return score;
+    }
+
+    //2531. 使字符串总不同字符的数目相等
+    public boolean isItPossible(String word1, String word2) {
+        int[] cnt1 = new int[26];
+        int[] cnt2 = new int[26];
+        int diff1 = 0, diff2 = 0;
+        for (char c : word1.toCharArray()) {
+            if (cnt1[c - 'a'] == 0) diff1++;
+            cnt1[c - 'a']++;
+        }
+        for (char c : word2.toCharArray()) {
+            if (cnt2[c - 'a'] == 0) diff2++;
+            cnt2[c - 'a']++;
+        }
+        for (int i = 0; i < 26; i++) {
+            for (int j = 0; j < 26; j++) {
+                cnt1[i]--;
+                cnt1[j]++;
+                cnt2[i]++;
+                cnt2[j]--;
+                int d1 = diff1 + (cnt1[i] == 0 ? -1 : 0) + (cnt1[j] == 1 ? 1 : 0);
+                int d2 = diff2+(cnt2[i]==1?1:0)+(cnt2[j] == 0?-1:0);
+                if(d1 == d2) return true;
+                cnt1[i]++;
+                cnt1[j]--;
+                cnt2[i]--;
+                cnt2[j]++;
+            }
+        }
+        return false;
+    }
+
+
     public static void main(String[] args) {
         Solution solution = new Solution();
         solution.closestPrimes(10, 19);

@@ -665,11 +665,11 @@ public class Solutions3 {
     //1803. 统计异或值在范围内的数对有多少
     public int countPairs(int[] nums, int low, int high) {
         int ans = 0;
-        Map<Integer,Integer> cnt = new HashMap<>();
+        Map<Integer, Integer> cnt = new HashMap<>();
         for (int x : nums) cnt.put(x, cnt.getOrDefault(x, 0) + 1);
         for (++high; high > 0; high >>= 1, low >>= 1) {
-            Map<Integer,Integer> nxt = new HashMap<>();
-            for (Map.Entry<Integer,Integer> e : cnt.entrySet()) {
+            Map<Integer, Integer> nxt = new HashMap<>();
+            for (Map.Entry<Integer, Integer> e : cnt.entrySet()) {
                 int x = e.getKey(), c = e.getValue();
                 ans += c * (high % 2 * cnt.getOrDefault((high - 1) ^ x, 0) -
                         low % 2 * cnt.getOrDefault((low - 1) ^ x, 0));
@@ -1170,7 +1170,7 @@ public class Solutions3 {
     //6279. 数组乘积中的不同质因数数目 考察质因数分解
     public int distinctPrimeFactors(int[] nums) {
         Set<Integer> set = new HashSet<>();
-        for(int num:nums){
+        for (int num : nums) {
             set.addAll(fac(num));
         }
         return set.size();
@@ -3136,6 +3136,34 @@ public class Solutions3 {
         }
         return i + j;
     }
+
+    //1819. 序列中不同最大公约数的数目
+    public int countDifferentSubsequenceGCDs(int[] nums) {
+        int maxVal = Arrays.stream(nums).max().getAsInt();
+        boolean[] occured = new boolean[maxVal + 1];
+        for (int num : nums) {
+            occured[num] = true;
+        }
+        int ans = 0;
+        for (int i = 1; i <= maxVal; i++) {
+            int subGcd = 0;
+            for (int j = i; j <= maxVal; j += i) {
+                if (occured[j]) {
+                    if (subGcd == 0) {
+                        subGcd = j;
+                    } else {
+                        subGcd = gcd(subGcd, j);
+                    }
+                    if (subGcd == i) {
+                        ans++;
+                        break;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+
     //endregion-----------------------------------------------------------------------------------------------
 
     //region-----------------------------------------模拟---------------------------------------------------
@@ -3804,6 +3832,94 @@ public class Solutions3 {
         return false;
     }
 
+    //2185. 统计包含给定前缀的字符串
+    public int prefixCount(String[] words, String pref) {
+        int cnt = 0;
+        for (String word : words) {
+            if (isPrefix(word, pref)) cnt++;
+        }
+        return cnt;
+    }
+
+    private boolean isPrefix(String word, String pref) {
+        if (pref.length() > word.length()) return false;
+        for (int i = 0; i < pref.length(); i++) {
+            if (word.charAt(i) != pref.charAt(i)) return false;
+        }
+        return true;
+    }
+
+    //2283. 判断一个数的数字计数是否等于数位的值
+    public boolean digitCount(String num) {
+        int n = num.length();
+        Map<Integer, Integer> cnt = new HashMap<>();
+        for (char c : num.toCharArray()) {
+            cnt.put(c - '0', cnt.getOrDefault(c - '0', 0) + 1);
+        }
+        for (int i = 0; i < n; i++) {
+            if (cnt.getOrDefault(i, 0) != num.charAt(i) - '0') return false;
+        }
+        return true;
+    }
+
+    //2287. 重排字符形成目标字符串
+    public int rearrangeCharacters(String s, String target) {
+        int[] cnt = new int[26];
+        for (char c : target.toCharArray()) {
+            cnt[c - 'a']++;
+        }
+        int[] cnt2 = new int[26];
+        for (char c : s.toCharArray()) {
+            cnt2[c - 'a']++;
+        }
+        int ans = Integer.MAX_VALUE;
+        for (int i = 0; i < 26; i++) {
+            if (cnt[i] > 0) ans = Math.min(ans, cnt2[i] / cnt[i]);
+        }
+        return ans;
+    }
+
+    //2529. 正整数和负整数的最大计数
+    public int maximumCount(int[] nums) {
+        int ct1 = 0, ct2 = 0;
+        for (int num : nums) {
+            if (num > 0) ct1++;
+            if (num < 0) ct2++;
+        }
+        return Math.max(ct1, ct2);
+    }
+
+    //2531. 使字符串总不同字符的数目相等
+    public boolean isItPossible(String word1, String word2) {
+        int[] cnt1 = new int[26];
+        int[] cnt2 = new int[26];
+        int diff1 = 0, diff2 = 0;
+        for (char c : word1.toCharArray()) {
+            if (cnt1[c - 'a'] == 0) diff1++;
+            cnt1[c - 'a']++;
+        }
+        for (char c : word2.toCharArray()) {
+            if (cnt2[c - 'a'] == 0) diff2++;
+            cnt2[c - 'a']++;
+        }
+        for (int i = 0; i < 26; i++) {
+            for (int j = 0; j < 26; j++) {
+                cnt1[i]--;
+                cnt1[j]++;
+                cnt2[i]++;
+                cnt2[j]--;
+                int d1 = diff1 + (cnt1[i] == 0 ? -1 : 0) + (cnt1[j] == 1 ? 1 : 0);
+                int d2 = diff2 + (cnt2[i] == 1 ? 1 : 0) + (cnt2[j] == 0 ? -1 : 0);
+                if (d1 == d2) return true;
+                cnt1[i]++;
+                cnt1[j]--;
+                cnt2[i]--;
+                cnt2[j]++;
+            }
+        }
+        return false;
+    }
+
     // 1742 盒子中小球的最大数量
     public int countBalls(int lowLimit, int highLimit) {
         Map<Integer, Integer> map = new HashMap<>();
@@ -3888,6 +4004,42 @@ public class Solutions3 {
         }
         return set.size();
     }
+
+    //1806. 还原排列的最少操作步数
+    public int reinitializePermutation(int n) {
+        int[] perm = new int[n];
+        for (int i = 0; i < n; i++) {
+            perm[i] = i;
+        }
+        int[] arr = perm.clone();
+        int cnt = 0;
+        do {
+            int[] tmp = arr.clone();
+            for (int i = 0; i < n; i++) {
+                if (i % 2 == 0) arr[i] = tmp[i / 2];
+                else arr[i] = tmp[n / 2 + (i - 1) / 2];
+            }
+            cnt++;
+        } while (!check(arr, perm));
+        return cnt;
+    }
+
+    private boolean check(int[] array1, int[] array2) {
+        for (int i = 0; i < array1.length; i++) {
+            if (array1[i] != array2[i]) return false;
+        }
+        return true;
+    }
+
+    public int reinitializePermutationMath(int n) {
+        int i = 1, step = 1;
+        while (true) {
+            i = i % 2 == 0 ? i / 2 : (n - 1 + i) / 2;
+            if (i == 1) return step;
+            step++;
+        }
+    }
+
 
     //1582. 二进制矩阵中的特殊位置
     public int numSpecial(int[][] mat) {
@@ -5678,6 +5830,16 @@ public class Solutions3 {
         return false;
     }
 
+    public boolean canJump2(int[] nums) {
+        int max = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if (i > max) return false;
+            if (max >= nums.length - 1) return true;
+            max = Math.max(max, i + nums[i]);
+        }
+        return false;
+    }
+
     // 135 分发糖果
     public int candy1(int[] ratings) {
         int n = ratings.length;
@@ -7142,6 +7304,21 @@ public class Solutions3 {
             type = Character.isDigit(content.charAt(0)) ? 1 : 0;
 
         }
+    }
+
+    //2530. 执行 K 次操作后的最大分数
+    public long maxKelements(int[] nums, int k) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
+        for (int num : nums) {
+            pq.offer(num);
+        }
+        long score = 0;
+        while (k-- > 0 && !pq.isEmpty()) {
+            int num = pq.poll();
+            score += num;
+            pq.offer((num + 3 - 1) / 3);
+        }
+        return score;
     }
 
     //endregion--------------------------------------------------------------------

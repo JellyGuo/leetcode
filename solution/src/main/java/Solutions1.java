@@ -9363,6 +9363,75 @@ public class Solutions1 {
     }
 
     //endregion------------------------------------------------------------------------------------------------------
+    //region------------------------------------------------欧拉回路------------------------------------------
+    //753. 破解保险箱
+    // n位数，每位范围是k，那么一共有k^n个数
+    // 先把n-1位数当作点，共有k^(n-1)个点，让每个点有k个出边，k个入边，边上连着[0,k)的一位数，
+    // eg：点a1a2..an-1的第 x 条出边就连向数a2..an-1ax 这样我们从一个节点顺着第 x 条边走到另一个节点，就相当于输入了数字 x
+    //在某个节点对应的数的末尾放上它的某条出边的编号，就形成了一个 n 位数，并且每个节点都能用这样的方式形成 k 个 n 位数。
+    //这样共计有 k^(n-1)*k  个 n 位数，恰好就是所有可能的密码。
+
+    //欧拉回路: 即可以从任意一个节点开始，一次性不重复地走完所有的边且回到该节点
+    //我们可以用 Hierholzer  算法找出这条欧拉回路：
+    //设起始节点对应的数为 u，欧拉回路中每条边的编号为 x1x2x3...  ，那么最终的字符串即为ux1x2x3...
+    //Hierholzer  算法如下：
+    //我们从节点 u 开始，任意地经过还未经过的边，直到我们「无路可走」。此时我们一定回到了节点 u，这是因为所有节点的入度和出度都相等。
+    //回到节点 u 之后，我们得到了一条从 u 开始到 u 结束的回路，这条回路上仍然有些节点有未经过的出边。我么从某个这样的节点 v 开始，继续得到一条从 v 开始到 v 结束的回路，再嵌入之前的回路中，即
+    //u...v...u
+    //变为
+    //u...v...v...u
+    //以此类推，直到没有节点有未经过的出边，此时我们就找到了一条欧拉回路。
+    Set<Integer> seen = new HashSet<Integer>();
+    StringBuffer ans753 = new StringBuffer();
+    int highest;
+    int k;
+
+    public String crackSafe(int n, int k) {
+        highest = (int) Math.pow(10, n - 1);
+        this.k = k;
+        dfs(0);
+        for (int i = 1; i < n; i++) {
+            ans753.append('0');
+        }
+        return ans753.toString();
+    }
+
+    public void dfs(int node) {
+        for (int x = 0; x < k; ++x) {
+            int nei = node * 10 + x;
+            if (!seen.contains(nei)) {
+                seen.add(nei);
+                dfs(nei % highest);
+                ans753.append(x);
+            }
+        }
+    }
+
+    //332. 重新安排行程
+    Map<String, PriorityQueue<String>> map332= new HashMap<>();
+    List<String> itinerary = new LinkedList<>();
+
+    public List<String> findItinerary(List<List<String>> tickets) {
+        for (List<String> ticket : tickets) {
+            String src = ticket.get(0), dst = ticket.get(1);
+            if (!map332.containsKey(src)) {
+                map332.put(src, new PriorityQueue<>());
+            }
+            map332.get(src).offer(dst);
+        }
+        dfs("JFK");
+        Collections.reverse(itinerary);
+        return itinerary;
+    }
+
+    public void dfs(String curr) {
+        while (map332.containsKey(curr) && map332.get(curr).size() > 0) {
+            String tmp = map332.get(curr).poll();
+            dfs(tmp);
+        }
+        itinerary.add(curr);
+    }
+    //endregion
     //region ------------------------------------------------------字典树---------------------------------------------------
     // 720 词典中最长的单词
     //返回 words 中最长的一个单词，该单词是由 words 词典中其他单词逐步添加一个字母组成
