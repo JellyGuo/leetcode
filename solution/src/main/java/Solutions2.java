@@ -2138,6 +2138,47 @@ public class Solutions2 {
         return ans;
     }
 
+    //6293. 统计好子数组的数目
+    public long countGood(int[] nums, int k) {
+        int n = nums.length;
+        long ans = 0;
+        for (int l = 0; l < n; l++) {
+            Map<Integer, Integer> map = new HashMap<>();
+            map.put(nums[l], 1);
+            int cnt = 0;
+            for (int r = l + 1; r < n; r++) {
+                if (map.containsKey(nums[r])) cnt += map.get(nums[r]);
+                map.put(nums[r], map.getOrDefault(nums[r], 0) + 1);
+                if (cnt >= k) {
+                    ans += n - r;
+                    break;
+                }
+            }
+        }
+        return ans;
+    }
+
+    public long countGoodSW(int[] nums, int k) {
+        int n = nums.length;
+        long ans = 0;
+        Map<Integer, Integer> map = new HashMap<>();
+        int cnt = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            if (map.containsKey(nums[r])) cnt += map.get(nums[r]);
+            map.put(nums[r], map.getOrDefault(nums[r], 0) + 1);
+            while (cnt >= k) {
+                ans += n - r;
+                cnt -= map.get(nums[l]) - 1;
+                map.put(nums[l], map.get(nums[l]) - 1);
+                if (map.get(nums[l]) == 0) {
+                    map.remove(nums[l]);
+                }
+                l++;
+            }
+        }
+        return ans;
+    }
+
     // 1703 得到连续K个1的最少相邻交换次数 Hard toreview
     //https://leetcode.cn/problems/minimum-adjacent-swaps-for-k-consecutive-ones/solution/duo-tu-xin-shou-jiao-cheng-yi-bu-bu-dai-6bps4/
     public int minMoves(int[] nums, int k) {
@@ -8330,6 +8371,43 @@ public class Solutions2 {
             }
             return ans;
         }
+    }
+
+    //6292. 子矩阵元素加 1  二维差分
+    //https://leetcode.cn/problems/increment-submatrices-by-one/solution/er-wei-cha-fen-tu-jie-by-newhar-4tch/
+    // 前缀和矩阵[x1,y1]的值就是差分矩阵[0,0]-[x1,y1]的和
+    // 使矩阵[x1,y1]-[x2,y2]都+n,则使差分矩阵[x1,y1]+n,[x1+1,y1]-n,[x2,y1+1]-n,[x2+1,y2+1]+n
+    public int[][] rangeAddQueries(int n, int[][] queries) {
+        int[][] matrix = new int[n][n];
+        for (int[] query : queries) {
+            for (int i = query[0]; i <= query[2]; i++) {
+                for (int j = query[1]; j <= query[3]; j++) {
+                    matrix[i][j]++;
+                }
+            }
+        }
+        return matrix;
+    }
+
+    public int[][] rangeAddQueriesDiff(int n, int[][] queries) {
+        int[][] diff = new int[n + 1][n + 1];
+        int[][] matrix = new int[n][n];
+        for (int[] query : queries) {
+            int x1 = query[0], y1 = query[1], x2 = query[2] + 1, y2 = query[3] + 1;
+            diff[x1][y1]++;
+            diff[x2][y1]--;
+            diff[x1][y2]--;
+            diff[x2][y2]++;
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                matrix[i][j] = diff[i][j];
+                if (i != 0) matrix[i][j] += matrix[i - 1][j];
+                if (j != 0) matrix[i][j] += matrix[i][j - 1];
+                if (i != 0 && j != 0) matrix[i][j] -= matrix[i - 1][j - 1];
+            }
+        }
+        return matrix;
     }
 
     //endregion------------------------------------------------------------------------------------------

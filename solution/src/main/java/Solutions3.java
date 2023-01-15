@@ -3943,6 +3943,25 @@ public class Solutions3 {
         return sum;
     }
 
+    //6291. 数组元素和与数字和的绝对差
+    public int differenceOfSum(int[] nums) {
+        int sum1 = 0, sum2 = 0;
+        for (int num : nums) {
+            sum1 += num;
+            sum2 += digitSum(num);
+        }
+        return Math.abs(sum1 - sum2);
+    }
+
+    private int digitSum(int x) {
+        int sum = 0;
+        while (x != 0) {
+            sum += x % 10;
+            x /= 10;
+        }
+        return sum;
+    }
+
     // 1260 二维网格迁移
     public List<List<Integer>> shiftGrid(int[][] grid, int k) {
         int m = grid.length, n = grid[0].length;
