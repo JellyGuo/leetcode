@@ -920,6 +920,24 @@ public class Solutions2 {
         return ans;
     }
 
+    //1813. 句子相似性 III
+    public boolean areSentencesSimilar(String sentence1, String sentence2) {
+        String[] s1 = sentence1.split(" ");
+        String[] s2 = sentence2.split(" ");
+        int m = s1.length, n = s2.length;
+        if (m > n) return areSentencesSimilar(sentence2, sentence1);
+        int i = 0;
+        while (i < m && s1[i].equals(s2[i])) {
+            i++;
+        }
+        if (i == m) return true;
+        int j = 0;
+        while (j < m - i && s1[m - 1 - j].equals(s2[n - 1 - j])) {
+            j++;
+        }
+        return i + j == m;
+    }
+
     // 6246 追加字符以获得子序列
     public int appendCharacters(String s, String t) {
         int m = s.length(), n = t.length();
@@ -2138,7 +2156,7 @@ public class Solutions2 {
         return ans;
     }
 
-    //6293. 统计好子数组的数目
+    //2537. 统计好子数组的数目
     public long countGood(int[] nums, int k) {
         int n = nums.length;
         long ans = 0;
@@ -7990,6 +8008,69 @@ public class Solutions2 {
         }
         return curPeople;
     }
+
+    //1245. 树的直径
+    //2246. 相邻字符不同的最长路径
+    List<Integer>[] g2246;
+    String s;
+    int ans2246;
+
+    public int longestPath(int[] parent, String s) {
+        this.s = s;
+        int n = parent.length;
+        g2246 = new ArrayList[n];
+        Arrays.setAll(g2246, e -> new ArrayList<>());
+        for (int i = 1; i < n; i++) g2246[parent[i]].add(i);
+
+        dfs2246(0);
+        return ans2246 + 1;
+    }
+
+    int dfs2246(int x) {
+        int maxLen = 0;
+        for (int y : g2246[x]) {
+            int len = dfs2246(y) + 1;
+            if (s.charAt(y) != s.charAt(x)) {
+                ans2246 = Math.max(ans2246, maxLen + len);
+                maxLen = Math.max(maxLen, len);
+            }
+        }
+        return maxLen;
+    }
+
+    //2538. 最大价值和与最小价值和的差值
+    private List<Integer>[] g2538;
+    private int[] price;
+    private long ans1;
+
+    public long maxOutput(int n, int[][] edges, int[] price) {
+        this.price = price;
+        g2538 = new ArrayList[n];
+        Arrays.setAll(g2538, e -> new ArrayList<>());
+        for (int[] e : edges) {
+            int x = e[0], y = e[1];
+            g2538[x].add(y);
+            g2538[y].add(x); // 建树
+        }
+        dfs(0, -1);
+        return ans1;
+    }
+
+    // 返回带叶子的最大路径和，不带叶子的最大路径和
+    private long[] dfs(int x, int fa) {
+        long p = price[x], max_s1 = p, max_s2 = 0;
+        for (int y : g2538[x])
+            if (y != fa) {
+                long[] res = dfs(y, x);
+                long s1 = res[0], s2 = res[1];
+                // 前面最大带叶子的路径和 + 当前不带叶子的路径和
+                // 前面最大不带叶子的路径和 + 当前带叶子的路径和
+                ans1 = Math.max(ans1, Math.max(max_s1 + s2, max_s2 + s1));
+                max_s1 = Math.max(max_s1, s1 + p);
+                max_s2 = Math.max(max_s2, s2 + p);
+            }
+        return new long[]{max_s1, max_s2};
+    }
     //endregion
 //region-----------------------------------折半搜索meet in middle------------------------------------
 //    这里整理一下 [ 在数组中选取子集，达到某一目标 ] 这类问题的通用解法。
@@ -8373,7 +8454,7 @@ public class Solutions2 {
         }
     }
 
-    //6292. 子矩阵元素加 1  二维差分
+    //2536. 子矩阵元素加 1  二维差分
     //https://leetcode.cn/problems/increment-submatrices-by-one/solution/er-wei-cha-fen-tu-jie-by-newhar-4tch/
     // 前缀和矩阵[x1,y1]的值就是差分矩阵[0,0]-[x1,y1]的和
     // 使矩阵[x1,y1]-[x2,y2]都+n,则使差分矩阵[x1,y1]+n,[x1+1,y1]-n,[x2,y1+1]-n,[x2+1,y2+1]+n
@@ -8408,6 +8489,40 @@ public class Solutions2 {
             }
         }
         return matrix;
+    }
+
+    //2132. 用邮票贴满网格图
+    public boolean possibleToStamp(int[][] grid, int h, int w) {
+        int m = grid.length, n = grid[0].length;
+        int[][] sum = new int[m + 1][n + 1];
+        int[][] diff = new int[m + 1][n + 1];
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                sum[i][j] = sum[i][j - 1] + sum[i - 1][j] - sum[i - 1][j - 1] + grid[i - 1][j - 1];
+            }
+        }
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 0) {
+                    int x = i + h, y = j + w; // x2=i+h-1 y2=j+w-1
+                    if (x <= m && y <= n && (sum[x][y] - sum[x][j] - sum[i][y] + sum[i][j] == 0)) {
+                        diff[i][j]++;
+                        diff[i][y]--;
+                        diff[x][j]--;
+                        diff[x][y]++;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i != 0) diff[i][j] += diff[i - 1][j];
+                if (j != 0) diff[i][j] += diff[i][j - 1];
+                if (i != 0 && j != 0) diff[i][j] -= diff[i - 1][j - 1];
+                if (diff[i][j] == 0 && grid[i][j] == 0) return false;
+            }
+        }
+        return true;
     }
 
     //endregion------------------------------------------------------------------------------------------

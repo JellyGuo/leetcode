@@ -3920,6 +3920,22 @@ public class Solutions3 {
         return false;
     }
 
+    //2293. 极大极小游戏
+    public int minMaxGame(int[] nums) {
+        int n = nums.length;
+        if(n==1) return nums[0];
+        int len = n/2;
+        int[] newNums = new int[len];
+        for(int i=0;i<len;i++){
+            if(i%2==0){
+                newNums[i] = Math.min(nums[2*i],nums[2*i+1]);
+            }else{
+                newNums[i] = Math.max(nums[2*i],nums[2*i+1]);
+            }
+        }
+        return minMaxGame(newNums);
+    }
+
     // 1742 盒子中小球的最大数量
     public int countBalls(int lowLimit, int highLimit) {
         Map<Integer, Integer> map = new HashMap<>();
@@ -3943,7 +3959,7 @@ public class Solutions3 {
         return sum;
     }
 
-    //6291. 数组元素和与数字和的绝对差
+    //2535. 数组元素和与数字和的绝对差
     public int differenceOfSum(int[] nums) {
         int sum1 = 0, sum2 = 0;
         for (int num : nums) {
@@ -4254,6 +4270,38 @@ public class Solutions3 {
         int col = coordinates.charAt(0) - 'a';
         int row = coordinates.charAt(1) - '1';
         return ((col & 1) == 1 && (row & 1) == 0) || ((col & 1) == 0 && (row & 1) == 1);
+    }
+
+    //1814. 统计一个数组中好对子的数目
+    public int countNicePairs(int[] nums) {
+        final int MOD = 1000000007;
+        int res = 0;
+        Map<Integer, Integer> h = new HashMap<Integer, Integer>();
+        for (int i : nums) {
+            int temp = i, j = 0;
+            while (temp > 0) {
+                j = j * 10 + temp % 10;
+                temp /= 10;
+            }
+            res = (res + h.getOrDefault(i - j, 0)) % MOD;
+            h.put(i - j, h.getOrDefault(i - j, 0) + 1);
+        }
+        return res;
+    }
+
+    //1817. 查找用户活跃分钟数
+    public int[] findingUsersActiveMinutes(int[][] logs, int k) {
+        int[] ans = new int[k];
+        Map<Integer, Set<Integer>> cnt = new HashMap<>();
+        for (int[] log : logs) {
+            Set<Integer> set = cnt.getOrDefault(log[0], new HashSet<>());
+            set.add(log[1]);
+            cnt.put(log[0], set);
+        }
+        for (Map.Entry<Integer, Set<Integer>> entry : cnt.entrySet()) {
+            ans[entry.getValue().size() - 1]++;
+        }
+        return ans;
     }
 
     //2506. 统计相似字符串对的数目
