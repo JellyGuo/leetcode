@@ -5016,6 +5016,32 @@ public class Solutions2 {
         return ans;
     }
 
+    //1824. 最少侧跳次数
+    public int minSideJumps(int[] obstacles) {
+        int n = obstacles.length - 1;
+        int[][] dp = new int[n + 1][3];
+        for (int[] array : dp) {
+            Arrays.fill(array, Integer.MAX_VALUE);
+        }
+        dp[0][1] = 0;
+        dp[0][0] = dp[0][2] = 1;
+        for (int i = 1; i <= n; i++) {
+            int min = Integer.MAX_VALUE;
+            for (int j = 0; j < 3; j++) {
+                if (obstacles[i] - 1 != j) {
+                    dp[i][j] = dp[i - 1][j];
+                }
+                min = Math.min(min, dp[i][j]);
+            }
+            for (int j = 0; j < 3; j++) {
+                if (obstacles[i] - 1 != j) {
+                    dp[i][j] = Math.min(dp[i][j], min + 1);
+                }
+            }
+        }
+        return Math.min(dp[n][0], Math.min(dp[n][1], dp[n][2]));
+    }
+
     // 799 香槟塔 分酒
     public double champagneTower(int k, int n, int m) {
         double[][] f = new double[n + 10][n + 10];
