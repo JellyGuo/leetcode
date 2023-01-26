@@ -642,162 +642,49 @@ public class Solution {
         return true;
     }
 
-    public int maximumCount(int[] nums) {
-        int ct1 = 0, ct2 = 0;
-        for (int num : nums) {
-            if (num > 0) ct1++;
-            if (num < 0) ct2++;
-        }
-        return Math.max(ct1, ct2);
-    }
-
-    public long maxKelements(int[] nums, int k) {
-        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
-        for (int num : nums) {
-            pq.offer(num);
-        }
-        long score = 0;
-        while (k-- > 0 && !pq.isEmpty()) {
-            int num = pq.poll();
-            score += num;
-            pq.offer((num + 3 - 1) / 3);
-        }
-        return score;
-    }
-
-    //2531. 使字符串总不同字符的数目相等
-    public boolean isItPossible(String word1, String word2) {
-        int[] cnt1 = new int[26];
-        int[] cnt2 = new int[26];
-        int diff1 = 0, diff2 = 0;
-        for (char c : word1.toCharArray()) {
-            if (cnt1[c - 'a'] == 0) diff1++;
-            cnt1[c - 'a']++;
-        }
-        for (char c : word2.toCharArray()) {
-            if (cnt2[c - 'a'] == 0) diff2++;
-            cnt2[c - 'a']++;
-        }
-        for (int i = 0; i < 26; i++) {
-            for (int j = 0; j < 26; j++) {
-                cnt1[i]--;
-                cnt1[j]++;
-                cnt2[i]++;
-                cnt2[j]--;
-                int d1 = diff1 + (cnt1[i] == 0 ? -1 : 0) + (cnt1[j] == 1 ? 1 : 0);
-                int d2 = diff2 + (cnt2[i] == 1 ? 1 : 0) + (cnt2[j] == 0 ? -1 : 0);
-                if (d1 == d2) return true;
-                cnt1[i]++;
-                cnt1[j]--;
-                cnt2[i]--;
-                cnt2[j]++;
-            }
-        }
-        return false;
-    }
-
-
-    public long countGood(int[] nums, int k) {
-        int n = nums.length;
-        long ans = 0;
-        for (int l = 0; l < n; l++) {
-            Map<Integer, Integer> map = new HashMap<>();
-            map.put(nums[l], 1);
-            int cnt = 0;
-            for (int r = l + 1; r < n; r++) {
-                if (map.containsKey(nums[r])) cnt += map.get(nums[r]);
-                if (cnt >= k) ans++;
-                map.put(nums[r], map.getOrDefault(nums[r], 0) + 1);
-            }
+    public int alternateDigitSum(int n) {
+        int size = String.valueOf(n).length();
+        boolean flag = size % 2 != 0;
+        int ans = 0;
+        while (n != 0) {
+            ans += (flag ? 1 : -1) * n % 10;
+            flag = !flag;
+            n /= 10;
         }
         return ans;
     }
 
-    public long countGood2(int[] nums, int k) {
-        int n = nums.length;
-        long ans = 0;
-        Map<Integer, Integer> map = new HashMap<>();
-        int cnt = 0;
-        for (int l = 0, r = 0; r < n; r++) {
-            if (map.containsKey(nums[r])) cnt += map.get(nums[r]);
-            map.put(nums[r], map.getOrDefault(nums[r], 0) + 1);
-            while (cnt >= k) {
-                ans += n - r;
-                cnt -= map.get(nums[l]) - 1;
-                map.put(nums[l], map.get(nums[l]) - 1);
-                if (map.get(nums[l]) == 0) {
-                    map.remove(nums[l]);
-                }
-                l++;
-            }
+    public int[][] sortTheStudents(int[][] score, int k) {
+        Arrays.sort(score, (o1, o2) -> o2[k] - o1[k]);
+        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[k] - o1[k]);
+        for (int[] sc : score) {
+            pq.offer(sc);
+        }
+        int[][] ans = new int[score.length][score[0].length];
+        int idx = 0;
+        while (!pq.isEmpty()) {
+            ans[idx++] = pq.poll();
         }
         return ans;
     }
 
-    public long maxOutput(int n, int[][] edges, int[] price) {
-        Map<Integer, Set<Integer>> map = new HashMap<>();
-        for (int[] edge : edges) {
-            Set<Integer> set = map.getOrDefault(edge[0], new HashSet<>());
-            set.add(edge[1]);
-            map.put(edge[0], set);
-            Set<Integer> set2 = map.getOrDefault(edge[1], new HashSet<>());
-            set2.add(edge[0]);
-            map.put(edge[1], set2);
+    //00011 01010
+    public boolean makeStringsEqual(String s, String target) {
+        int n = s.length();
+        int idx1 = n - 1, idx2 = n - 1;
+        while (idx1 >= 0 && s.charAt(idx1) == '0') {
+            idx1--;
         }
-        long ans = 0;
-        Queue<Integer> queue = new ArrayDeque<>();
-        long[] dist = new long[n];
-        boolean[] visited = new boolean[n];
-        for (int i = 0; i < n; i++) {
-            queue.offer(i);
-            dist[i] = price[i];
-            visited[i] = true;
-            long max = 0;
-            while (!queue.isEmpty()) {
-                int cur = queue.poll();
-                for (int near : map.getOrDefault(cur, new HashSet<>())) {
-                    if (visited[near]) continue;
-                    visited[near] = true;
-                    dist[near] = dist[cur] + price[near];
-                    max = Math.max(dist[near], max);
-                    queue.offer(near);
-                }
-            }
-            ans = Math.max(ans, max - price[i]);
-            queue.clear();
-            Arrays.fill(dist, 0);
+        while (idx2 >= 0 && target.charAt(idx2) == '0') {
+            idx2--;
         }
-        return ans;
-    }
-
-    public int minSideJumps(int[] obstacles) {
-        int n = obstacles.length - 1;
-        int[][] dp = new int[n + 1][3];
-        for (int[] array : dp) {
-            Arrays.fill(array, Integer.MAX_VALUE);
-        }
-        dp[0][1] = 0;
-        dp[0][0] = dp[0][2] = 1;
-        for (int i = 1; i <= n; i++) {
-            int min = Integer.MAX_VALUE;
-            for (int j = 0; j < 3; j++) {
-                if (obstacles[i] - 1 != j) {
-                    dp[i][j] = dp[i - 1][j];
-                }
-                min = Math.min(min, dp[i][j]);
-            }
-            for (int j = 0; j < 3; j++) {
-                if (obstacles[i] - 1 != j) {
-                    dp[i][j] = Math.min(dp[i][j], min + 1);
-                }
-            }
-        }
-        return Math.min(dp[n][0], Math.min(dp[n][1], dp[n][2]));
+        if (idx1 > idx2) return false;
+        return true;
     }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.maxOutput(4, new int[][]{{0, 1}, {1, 2}, {1, 3}, {3, 4}, {3, 5}}, new int[]{9, 8, 7, 6, 10, 5});
+        solution.makeStringsEqual("00011", "01010");
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);

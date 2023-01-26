@@ -247,6 +247,11 @@ public class Solutions3 {
         return cnt;
     }
 
+    //2546. 执行逐位运算使字符串相等
+    public boolean makeStringsEqual(String s, String target) {
+        return s.contains("1") == target.contains("1");
+    }
+
     // 面试 05.06 //整数转换。编写一个函数，确定需要改变几个位才能将整数A转成整数B。
     public int convertInteger(int A, int B) {
         int n = A ^ B;
@@ -2942,6 +2947,22 @@ public class Solutions3 {
         return area_a + area_b - width * height;
     }
 
+    //1828. 统计一个圆中点的数目
+    public int[] countPoints(int[][] points, int[][] queries) {
+        int m = points.length, n = queries.length;
+        int[] ans = new int[n];
+        for (int i = 0; i < n; ++i) {
+            int cx = queries[i][0], cy = queries[i][1], cr = queries[i][2];
+            for (int j = 0; j < m; ++j) {
+                int px = points[j][0], py = points[j][1];
+                if ((cx - px) * (cx - px) + (cy - py) * (cy - py) <= cr * cr) {
+                    ++ans[i];
+                }
+            }
+        }
+        return ans;
+    }
+
     // 593 有效的正方形
     public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
         if (Arrays.equals(p1, p2)) return false;
@@ -3832,6 +3853,17 @@ public class Solutions3 {
         return false;
     }
 
+    //2303. 计算应缴税款总额
+    public double calculateTax(int[][] brackets, int income) {
+        double tax = 0;
+        for (int i = 0; i < brackets.length; i++) {
+            int base = (Math.min(income, brackets[i][0])) - (i > 0 ? brackets[i - 1][0] : 0);
+            tax += base * brackets[i][1] / 100d;
+            if (income <= brackets[i][0]) break;
+        }
+        return tax;
+    }
+
     //2185. 统计包含给定前缀的字符串
     public int prefixCount(String[] words, String pref) {
         int cnt = 0;
@@ -3923,17 +3955,30 @@ public class Solutions3 {
     //2293. 极大极小游戏
     public int minMaxGame(int[] nums) {
         int n = nums.length;
-        if(n==1) return nums[0];
-        int len = n/2;
+        if (n == 1) return nums[0];
+        int len = n / 2;
         int[] newNums = new int[len];
-        for(int i=0;i<len;i++){
-            if(i%2==0){
-                newNums[i] = Math.min(nums[2*i],nums[2*i+1]);
-            }else{
-                newNums[i] = Math.max(nums[2*i],nums[2*i+1]);
+        for (int i = 0; i < len; i++) {
+            if (i % 2 == 0) {
+                newNums[i] = Math.min(nums[2 * i], nums[2 * i + 1]);
+            } else {
+                newNums[i] = Math.max(nums[2 * i], nums[2 * i + 1]);
             }
         }
         return minMaxGame(newNums);
+    }
+
+    //2544. 交替数字和
+    public int alternateDigitSum(int n) {
+        int size = String.valueOf(n).length();
+        boolean flag = size % 2 != 0;
+        int ans = 0;
+        while (n != 0) {
+            ans += (flag ? 1 : -1) * n % 10;
+            flag = !flag;
+            n /= 10;
+        }
+        return ans;
     }
 
     // 1742 盒子中小球的最大数量
@@ -6200,6 +6245,17 @@ public class Solutions3 {
         return ans;
     }
 
+    //1663. 具有给定数值的最小字符串
+    public String getSmallestString(int n, int k) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= n; i++) {
+            int lower = Math.max(1, k - (n - i) * 26);
+            k -= lower;
+            sb.append((char) ('a' + lower - 1));
+        }
+        return sb.toString();
+    }
+
     //1754. 构造字典序最大的合并字符串
     public String largestMerge(String word1, String word2) {
         int m = word1.length(), n = word2.length();
@@ -7385,6 +7441,12 @@ public class Solutions3 {
             score += num;
             pq.offer((num + 3 - 1) / 3);
         }
+        return score;
+    }
+
+    //2545. 根据第 K 场考试的分数排序
+    public int[][] sortTheStudents(int[][] score, int k) {
+        Arrays.sort(score, (o1, o2) -> o2[k] - o1[k]);
         return score;
     }
 
