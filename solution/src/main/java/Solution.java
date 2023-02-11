@@ -682,9 +682,88 @@ public class Solution {
         return true;
     }
 
+    public long pickGifts(int[] gifts, int k) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
+        long sum = 0;
+        for (int gift : gifts) {
+            pq.offer(gift);
+            sum += gift;
+        }
+        long take = 0;
+        while (k-- > 0 && !pq.isEmpty()) {
+            int max = pq.poll();
+            int remain = (int) Math.sqrt(max);
+            take += max - remain;
+            pq.offer(remain);
+        }
+        return sum - take;
+    }
+
+    public int[] vowelStrings(String[] words, int[][] queries) {
+        int n = words.length;
+        int[] prefixSum = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            prefixSum[i] = prefixSum[i - 1] + (check(words[i - 1]) ? 1 : 0);
+        }
+        int[] ans = new int[queries.length];
+        int idx = 0;
+        for (int[] query : queries) {
+            ans[idx++] = prefixSum[query[1] + 1] - prefixSum[query[0]];
+        }
+        return ans;
+    }
+
+    private boolean check(String word) {
+        Set<Character> a = new HashSet<>();
+        a.add('a');
+        a.add('e');
+        a.add('i');
+        a.add('o');
+        a.add('u');
+        return a.contains(word.charAt(0)) && a.contains(word.charAt(word.length() - 1));
+    }
+
+    //[24,1,55,46,4,61,21,52]
+    //3
+    // 21
+    //[24,109,117,142,98,94,91,130,73,48,107,77]
+    //5
+    //98
+    public int minCapability(int[] nums, int k) {
+        int n = nums.length;
+        int min = Integer.MAX_VALUE;
+        if (k == 1) {
+            for (int num : nums) {
+                min = Math.min(num, min);
+            }
+            return min;
+        }
+        for (int i = 0; i+2*(k-1) < n; i++) {
+
+            int f = 2;
+            while (f<n){
+                PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
+                pq.offer(nums[i]);
+                int j = i;
+                for (int p = 0; p < k - 2; p++) {
+                    j += f;
+                    if (j >= n) break;
+                    pq.offer(nums[j]);
+                }
+                j += 2;
+                while (j < n) {
+                    min = Math.min(Math.max(nums[j++], pq.peek()), min);
+                }
+                f++;
+            }
+
+        }
+        return min;
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.makeStringsEqual("00011", "01010");
+        solution.minCapability(new int[]{24,1,55,46,4,61,21,52},3);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);

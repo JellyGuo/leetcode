@@ -208,6 +208,27 @@ public class Solutions2 {
         return head.next;
     }
 
+    //1669. 合并两个链表
+    public ListNode mergeInBetween(ListNode list1, int a, int b, ListNode list2) {
+        ListNode dummy = new ListNode();
+        dummy.next = list1;
+        ListNode first = dummy;
+        ListNode second = list1;
+        while (a-- > 0) {
+            first = first.next;
+        }
+        while (b-- > 0) {
+            second = second.next;
+        }
+        ListNode tail = list2;
+        while (tail.next!=null){
+            tail = tail.next;
+        }
+        first.next = list2;
+        tail.next = second.next;
+        return dummy.next;
+    }
+
     // 25 K个一组反转链表
     public ListNode reverseKGroup2(ListNode head, int k) {
         if (head == null || head.next == null) {
@@ -4853,6 +4874,37 @@ public class Solutions2 {
         return Math.min(dp[n - 1][0], dp[n - 1][1]);
     }
 
+    //1664. 生成平衡数组的方案数
+    public int waysToMakeFair(int[] nums) {
+        int n = nums.length;
+        int allOdd = 0, allEven = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if ((i & 1) == 0) {
+                allEven += nums[i];
+            } else {
+                allOdd += nums[i];
+            }
+        }
+        int oddPrefix = 0, evenPrefix = 0;
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            if ((i & 1) == 0) {
+                // 移除i后所有奇数位置和odd：i是偶数，后面的奇偶位置改变，i后面的奇数和=所有偶数-i前面的偶数-i这个偶数=i后面的偶数和
+                int odd = oddPrefix + allEven - evenPrefix - nums[i];
+                // 移除i后所有偶数位置和even：i是偶数，后面的奇偶位置改变，i后面的偶数和=所有奇数-i前面的奇数和=i后面的奇数和
+                int even = evenPrefix + allOdd - oddPrefix;
+                if (odd == even) ans++;
+                evenPrefix += nums[i];
+            } else {
+                int odd = oddPrefix + allEven - evenPrefix;
+                int even = evenPrefix + allOdd - oddPrefix - nums[i];
+                if (odd == even) ans++;
+                oddPrefix += nums[i];
+            }
+        }
+        return ans;
+    }
+
     //2369. 检查数组是否存在有效划分
     public boolean validPartition(int[] nums) {
         int n = nums.length;
@@ -6720,7 +6772,98 @@ public class Solutions2 {
         return ans;
     }
 
-    //6258. 数组中最长的方波
+//1223. 掷骰子模拟  高维dp
+// 首先，我们创建一个二维dp数组。
+//  dp[i][j]表示第i次掷出骰子时，数字j出现的可能的序列总数。
+// （也就是说，第i次掷出的骰子数字是 j 所有可能的序列数)
+// 其中 1 <= i <= n    1 <= j <= 6
+//
+// 明显，dp[1][1],dp[1][2]... dp[1][6]均为 1
+// 所以，最后结果有效序列总数就是 sum (dp[n][1] + dp[n][2] + ... + dp[n][6])  | sum为求和函数
+//
+// 那么，如何计算第i次骰子掷出时，掷出数字为j的序列总数为多少呢?
+// 仔细思考一下dp[i][j]和什么有关?
+//
+// 第一: dp[i][j] 和dp[i-1][j]有关，不仅如此，dp[i][j] 和 dp[i-1][1], dp[i-1][2],...dp[i-1][6]都有关
+// 第二: 由于连续数字限制，dp[i][j]还和 dp[i-rollMax[j-1]][1],...,dp[i-rollMax[j-1]][6]均有关
+// 即， 第i次掷出骰子的序列总数只和第i-1次掷出骰子的序列总数，以及第i-rollMax[j-1]次掷出骰子的序列总数有关。
+//
+// --------------------------------------------------举例----------------------------------------------------------------
+//
+// 这么说 可能还是不够清楚， 举个例子
+//
+// 假如现在是第 5 次掷出骰子， 且掷出的数字是 6, 而最多能连续出现 3 次 6， dp[5][6]如何计算?
+//
+// 序列  ___  ___  ___   ___   6
+// 次数   1    2    3     4    5
+//
+//① 如果第 4 次掷出的数字是 1，2，3，4，5 中的一种， 会不会对第 5 次掷出的 6 产生影响?
+//  答案是 不会，因为如果第 4 次不是 6，那么第 5 次掷出的 6 肯定是第一个 6， 肯定不会连续。
+//  所以不用考虑限制数组rollMax。
+//  也就是说，可以直接将 dp[4][1]，dp[4][2]，dp[4][3]，dp[4][4]，dp[4][5]加入到 dp[5][6] 中。
+//
+//  5种可能
+//  序列  ___  ___  ___    1   6       序列  ___  ___  ___    2   6  ...  序列  ___  ___  ___    5   6
+//  次数   1    2    3     4   5       次数   1    2    3     4   5  ...  次数   1    2    3     4   5
+//
+//② 如果第 4 次掷出的数字是 6 ，会不会对第 5 次掷出的 6 产生影响?
+//  答案是 不一定。为什么是不一定? 因为第 4 次掷出的 6 加上第五次掷出的 6 可能都还没达到rollMax中所设置的上限。
+//  那么，可以先将dp[4][6] 加入到dp[5][6]中去。只是后面需要去除不合法的序列罢了。（注意）
+//
+//  类似这种
+//  序列  ___  ___  ___    6   6      // 序列  ___  ___   6    6   6
+//  次数   1    2    3     4   5      // 次数   1    2    3    4   5
+//
+//③ 好的，第②步中我们多加了一些不合法的序列数目，那么，我们要将其减掉。那么到底需要减去多少呢?
+//
+//  我们先思考一个问题， 第 5 次掷出数字 6 时，掷出之前连续 6 的数量最大有多少?
+//  答案是 rollMax[5]（数字 6 的上限），不可能超过该数字 ，
+//  因为如果超过了rollMax[5]（6的上限），在第 4 次肯定就已经被处理了。
+//
+//  那么，现在又存在两种情况：
+//  a. 第 5 次掷出数字 6 之前连续 6 的数量 < rollMax[5] （6的上限）
+//  b. 第 5 次掷出数字 6 之前连续 6 的数量 == rollMax[5] （6的上限）
+//  情况a. 我们不需要过多考虑，因为还没有达到上限，直接将dp[4][6]加入dp[5][6] 即可（前面已经加入）
+//  情况b. 在第 5 次掷出之前连续 6 的数量就已经到达了上限，那么第 5 次掷出 6 是非法的，
+//  这种情况下的序列数目就是我们步骤②中需要减去的数量
+//
+//  情况a. （合法的）                             情况b. （不合法的）
+//  序列  ___  ___   ___   6   6                 序列  ___   6    6    6   6
+//  次数   1    2     3    4   5                 次数   1    2    3    4   5
+
+    //  仔细分析一下情况 b.
+//  在第 5 次掷出之前连续 6 的数量就已经到达了上限，说明第 2 次，第 3 次，第 4 次掷出的数字一定都是6，
+//  而且，第1次掷出的数字一定不是6。
+//  结果也就很明显了吧，第 1 次不是 6 ，那就是 1，2，3，4，5 中的一种呗!!!
+//  需要减去的序列数量为: sum (dp[1][1] + dp[1][2] + dp[1][3] + dp[1][4] + dp[1][5])
+//  情况b.2 （不合法的）
+//  序列   6    6     6    6   6
+//  次数   1    2     3    4   5
+//  情况b.2 rollMax[5] = 4
+//  idx = i-1-rollMax[5] = 0，此时-1（即1234全是6这一种情况）即可
+    public int dieSimulator(int n, int[] rollMax) {
+        int mod = (int) 1e9 + 7;
+        long[][] dp = new long[n + 1][6];
+        long[] sum = new long[n + 1];
+        Arrays.fill(dp[1], 1);
+        sum[1] = 6;
+        for (int i = 2; i <= n; i++) {
+            for (int j = 0; j < 6; j++) {
+                int idx = i - rollMax[j] - 1;
+                if (idx > 0) {
+                    dp[i][j] = ((((sum[i - 1] - sum[idx]) % mod + mod) % mod + dp[idx][j]) % mod + mod) % mod;
+                } else if (idx == 0) {
+                    dp[i][j] = (sum[i - 1] - 1) % mod;
+                } else {
+                    dp[i][j] = sum[i - 1] % mod;
+                }
+                sum[i] = (sum[i] + dp[i][j]) % mod;
+            }
+        }
+        return (int) (sum[n] % mod);
+    }
+
+    //2501. 数组中最长的方波
     public int longestSquareStreak(int[] nums) {
         int n = nums.length;
         Set<Integer> set = new HashSet<>();
@@ -10042,6 +10185,43 @@ public class Solutions2 {
             dp[i] = q.peekFirst()[1] + dif;
         }
         return dp[n];
+    }
+
+    //2558 从数量最多的堆取走礼物
+    public long pickGifts(int[] gifts, int k) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2-o1);
+        long sum = 0;
+        for(int gift:gifts){
+            pq.offer(gift);
+            sum+=gift;
+        }
+        long take=0;
+        while (k-->0 && !pq.isEmpty()){
+            int max = pq.poll();
+            int remain = (int) Math.sqrt(max);
+            take+=max-remain;
+            pq.offer(remain);
+        }
+        return sum-take;
+    }
+
+    //2551. 将珠子放入背包中
+    public long putMarbles(int[] weights, int k) {
+        int n = weights.length;
+        PriorityQueue<Integer> small = new PriorityQueue<>();
+        PriorityQueue<Integer> large = new PriorityQueue<>((o1, o2) -> o2 - o1);
+        // 所有挡板数=n-1,分成k个背包,只需取k-1个挡板
+        // n-1个和入队
+        for (int i = 0; i < n - 1; i++) {
+            small.offer(weights[i] + weights[i + 1]);
+            large.offer(weights[i] + weights[i + 1]);
+        }
+        long ans = 0;
+        // k-1个挡板(k个背包)和相减
+        while (--k > 0) {
+            ans += large.poll() - small.poll();
+        }
+        return ans;
     }
 
     //endregion--------------------------------------------------------------------------------------------------------

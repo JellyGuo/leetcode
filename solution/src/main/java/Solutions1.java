@@ -1838,6 +1838,23 @@ public class Solutions1 {
         return Math.max(height(root.right), height(root.left)) + 1;
     }
 
+    //2331. 计算布尔二叉树的值
+    public boolean evaluateTree(TreeNode root) {
+        return dfs2331(root);
+    }
+
+    private boolean dfs2331(TreeNode root) {
+        if (root.left == null && root.right == null) {
+            return root.val == 1;
+        }
+        boolean left = dfs2331(root.left);
+        boolean right = dfs2331(root.right);
+        if (root.val == 2) {
+            return left || right;
+        }
+        return left && right;
+    }
+
 
     // 98 验证BST
     long prev = Long.MIN_VALUE;
@@ -2029,6 +2046,29 @@ public class Solutions1 {
         maxSum = Math.max(maxSum, cnt);
         map.put(val, cnt);
         return val;
+    }
+
+    //1145. 二叉树着色游戏
+    // 以x为根节点的左子树和右子树大小
+    int xLeftSize;
+    int xRightSize;
+    int x1145;
+
+    public boolean btreeGameWinningMove(TreeNode root, int n, int x) {
+        this.x1145 = x;
+        dfs1145(root);
+        return Math.max(Math.max(xLeftSize, xRightSize), n - 1 - xLeftSize - xRightSize) * 2 > n;
+    }
+
+    private int dfs1145(TreeNode root) {
+        if (root == null) return 0;
+        int lf = dfs1145(root.left);
+        int rt = dfs1145(root.right);
+        if (root.val == x1145) {
+            xLeftSize = lf;
+            xRightSize = rt;
+        }
+        return lf + rt + 1;
     }
 
     //   272 给定一个不为空的二叉搜索树和一个目标值 target，请在该二叉搜索树中找到最接近目标值 target 的 k 个值。
@@ -3458,6 +3498,65 @@ public class Solutions1 {
             result.add(node);
         }
         return string;
+    }
+
+    //1233. 删除子文件夹
+    public List<String> removeSubfolders1(String[] folder) {
+        Arrays.sort(folder);
+        List<String> ans = new ArrayList<>();
+        ans.add(folder[0]);
+        for (int i = 1; i < folder.length; i++) {
+            String prev = ans.get(ans.size() - 1);
+            String cur = folder[i];
+            if (prev.length() < cur.length()
+                    && prev.equals(cur.substring(0, prev.length()))
+                    && cur.charAt(prev.length()) == '/') {
+                continue;
+            }
+            ans.add(cur);
+        }
+        return ans;
+    }
+
+    public List<String> removeSubfolders2(String[] folder) {
+        List<String> ans = new ArrayList<>();
+        Trie1233 trie = new Trie1233();
+        for (int i = 0; i < folder.length; i++) {
+            List<String> path = Arrays.asList(folder[i].split("/"));
+            trie.insert(path, i);
+        }
+        dfs(trie, folder, ans);
+
+        return ans;
+    }
+
+    private void dfs(Trie1233 trie, String[] folder, List<String> ans) {
+        if (trie.ref > -1) {
+            ans.add(folder[trie.ref]);
+            return;
+        }
+        for (Trie1233 child : trie.children.values()) {
+            dfs(child, folder, ans);
+        }
+    }
+
+    class Trie1233 {
+        int ref;
+        Map<String, Trie1233> children;
+
+        public Trie1233() {
+            children = new HashMap<>();
+            ref = -1;
+        }
+
+        public void insert(List<String> path, int idx) {
+            Trie1233 cur = this;
+            for (String p : path) {
+                cur.children.putIfAbsent(p, new Trie1233());
+                cur = cur.children.get(p);
+            }
+            cur.ref = idx;
+        }
     }
 
     //1948
@@ -5533,7 +5632,7 @@ public class Solutions1 {
         return subarrays;
     }
 
-    //6248. 统计中位数为 K 的子数组
+    //2488. 统计中位数为 K 的子数组
     //把比 k 大的数变成 1，比 k 小的数变成 -1，k 变成 0。
     //设 k 的下标为 pos，k 为子数组的中位数，等价于：
     //子数组包含下标 pos；
@@ -5568,6 +5667,31 @@ public class Solutions1 {
             ans += map.getOrDefault(sum, 0) + map.getOrDefault(sum + 1, 0);
         }
         return ans;
+    }
+
+    //2559. 统计范围内的元音字符串数
+    public int[] vowelStrings(String[] words, int[][] queries) {
+        int n = words.length;
+        int[] prefixSum = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            prefixSum[i] = prefixSum[i - 1] + (check(words[i - 1]) ? 1 : 0);
+        }
+        int[] ans = new int[queries.length];
+        int idx = 0;
+        for (int[] query : queries) {
+            ans[idx++] = prefixSum[query[1] + 1] - prefixSum[query[0]];
+        }
+        return ans;
+    }
+
+    private boolean check(String word) {
+        Set<Character> a = new HashSet<>();
+        a.add('a');
+        a.add('e');
+        a.add('i');
+        a.add('o');
+        a.add('u');
+        return a.contains(word.charAt(0)) && a.contains(word.charAt(word.length() - 1));
     }
     // endregion ---------------------------------------------------------------------------------------------------
 
@@ -6212,6 +6336,60 @@ public class Solutions1 {
             step++;
         }
         return -1;
+    }
+
+    //1210. 穿过迷宫的最少移动次数
+    public int minimumMoves(int[][] grid) {
+        int n = grid.length;
+        int[][][] dist = new int[n][n][2];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                Arrays.fill(dist[i][j], -1);
+            }
+        }
+        dist[0][0][0] = 0;
+        Queue<int[]> queue = new ArrayDeque<int[]>();
+        queue.offer(new int[]{0, 0, 0});
+
+        while (!queue.isEmpty()) {
+            int[] arr = queue.poll();
+            int x = arr[0], y = arr[1], status = arr[2];
+            if (status == 0) {
+                // 向右移动一个单元格
+                if (y + 2 < n && dist[x][y + 1][0] == -1 && grid[x][y + 2] == 0) {
+                    dist[x][y + 1][0] = dist[x][y][0] + 1;
+                    queue.offer(new int[]{x, y + 1, 0});
+                }
+                // 向下移动一个单元格
+                if (x + 1 < n && dist[x + 1][y][0] == -1 && grid[x + 1][y] == 0 && grid[x + 1][y + 1] == 0) {
+                    dist[x + 1][y][0] = dist[x][y][0] + 1;
+                    queue.offer(new int[]{x + 1, y, 0});
+                }
+                // 顺时针旋转 90 度
+                if (x + 1 < n && y + 1 < n && dist[x][y][1] == -1 && grid[x + 1][y] == 0 && grid[x + 1][y + 1] == 0) {
+                    dist[x][y][1] = dist[x][y][0] + 1;
+                    queue.offer(new int[]{x, y, 1});
+                }
+            } else {
+                // 向右移动一个单元格
+                if (y + 1 < n && dist[x][y + 1][1] == -1 && grid[x][y + 1] == 0 && grid[x + 1][y + 1] == 0) {
+                    dist[x][y + 1][1] = dist[x][y][1] + 1;
+                    queue.offer(new int[]{x, y + 1, 1});
+                }
+                // 向下移动一个单元格
+                if (x + 2 < n && dist[x + 1][y][1] == -1 && grid[x + 2][y] == 0) {
+                    dist[x + 1][y][1] = dist[x][y][1] + 1;
+                    queue.offer(new int[]{x + 1, y, 1});
+                }
+                // 逆时针旋转 90 度
+                if (x + 1 < n && y + 1 < n && dist[x][y][0] == -1 && grid[x][y + 1] == 0 && grid[x + 1][y + 1] == 0) {
+                    dist[x][y][0] = dist[x][y][1] + 1;
+                    queue.offer(new int[]{x, y, 0});
+                }
+            }
+        }
+
+        return dist[n - 1][n - 2][0];
     }
 
     //815 公交线路
@@ -8404,6 +8582,53 @@ public class Solutions1 {
         int ans = IntStream.of(dp[src]).min().getAsInt();
 
         return ans >= INF ? -1 : ans;
+    }
+
+    //1129. 颜色交替的最短路径
+    public int[] shortestAlternatingPaths(int n, int[][] redEdges, int[][] blueEdges) {
+        Map<Integer, List<Integer>>[] edges = new Map[2];
+        for (int i = 0; i < 2; i++) {
+            edges[i] = new HashMap<>();
+        }
+        for (int[] edge : redEdges) {
+            addEdge(edges[0], edge);
+        }
+        for (int[] edge : blueEdges) {
+            addEdge(edges[1], edge);
+        }
+        int[][] dist = new int[2][n];
+        for (int[] d : dist) {
+            Arrays.fill(d, Integer.MAX_VALUE);
+        }
+        dist[0][0] = 0;
+        dist[1][0] = 0;
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{0, 0});
+        queue.offer(new int[]{1, 0});
+        while (!queue.isEmpty()) {
+            int[] cell = queue.poll();
+            int curColor = cell[0], cur = cell[1];
+            for (int near : edges[1 - curColor].getOrDefault(cur, new ArrayList<>())) {
+                if (dist[1 - curColor][near] > dist[curColor][cur] + 1) {
+                    dist[1 - curColor][near] = dist[curColor][cur] + 1;
+                    queue.offer(new int[]{1 - curColor, near});
+                }
+            }
+        }
+        int[] ans = new int[n];
+        for (int i = 0; i < n; i++) {
+            ans[i] = Math.min(dist[0][i], dist[1][i]);
+            if (ans[i] == Integer.MAX_VALUE) {
+                ans[i] = -1;
+            }
+        }
+        return ans;
+    }
+
+    private void addEdge(Map<Integer, List<Integer>> map, int[] edge) {
+        List<Integer> ls = map.getOrDefault(edge[0], new ArrayList<>());
+        ls.add(edge[1]);
+        map.put(edge[0], ls);
     }
     // endregion-------------------------------------------------------------------------------------------------------
     // region -------------------------------------------------------最小生成树----------------------------------------------

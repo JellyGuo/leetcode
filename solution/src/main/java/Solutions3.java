@@ -2709,6 +2709,11 @@ public class Solutions3 {
         return queue.peek();
     }
 
+    //2549. 统计桌面上的不同数字
+    public int distinctIntegers(int n) {
+        return Math.max(1, n - 1);
+    }
+
 
     //endregion -------------------------------------------------------------------end--------------------------------
     //region----------------------------------------博弈论/数学----------------------------------------------------
@@ -2840,6 +2845,15 @@ public class Solutions3 {
         return ans;
     }
 
+    // 2335. 装满杯子需要的最短总时长
+    public int fillCups(int[] amount) {
+        Arrays.sort(amount);
+        if (amount[2] > amount[1] + amount[0]) {
+            return amount[2];
+        }
+        return (amount[0] + amount[1] + amount[2] + 1) / 2;
+    }
+
     //----------------------------------------------------- 数学--------------------------------------------
 
     // a b 快速相乘
@@ -2914,6 +2928,22 @@ public class Solutions3 {
         int resulta = num1a * num2a - num1b * num2b;
         int resultb = num1a * num2b + num1b * num2a;
         return resulta + "+" + resultb + 'i';
+    }
+
+    //2550. 猴子碰撞的方法数
+    public int monkeyMove(int n) {
+        int mod = (int) 1e9 + 7;
+        long ans = 1;
+        long x = 2;
+        while (n > 0) {
+            if ((n & 1) == 1) {
+                ans = ans * x % mod;
+            }
+            n >>= 1;
+            x = x * x % mod;
+        }
+        ans = (ans - 2 + mod) % mod;
+        return (int) ans;
     }
 
     // 812 最大三角形面积
@@ -3755,6 +3785,25 @@ public class Solutions3 {
         if (c0) Arrays.fill(mat[0], 0);
     }
 
+
+    //393. UTF-8 编码验证
+    public boolean validUtf8(int[] data) {
+        int n = data.length;
+        for (int i = 0; i < n; ) {
+            int t = data[i], j = 7;
+            while (j >= 0 && (((t >> j) & 1) == 1)) j--;
+            int cnt = 7 - j;
+            if (cnt == 1 || cnt > 4) return false;
+            if (i + cnt - 1 >= n) return false;
+            for (int k = i + 1; k < i + cnt; k++) {
+                if ((((data[k] >> 7) & 1) == 1) && (((data[k] >> 6) & 1) == 0)) continue;
+                return false;
+            }
+            i += cnt == 0 ? 1 : cnt;
+        }
+        return true;
+    }
+
     // 468 验证ip地址
     public String validIPAddress(String queryIP) {
         if (queryIP.contains(".") && validIPv4(queryIP)) return "IPv4";
@@ -3853,6 +3902,32 @@ public class Solutions3 {
         return false;
     }
 
+    //1604. 警告一小时内使用相同员工卡大于等于三次的人
+    public List<String> alertNames(String[] keyName, String[] keyTime) {
+        Map<String, List<Integer>> map = new HashMap<>();
+        int n = keyName.length;
+        for (int i = 0; i < n; i++) {
+            List<Integer> list = map.getOrDefault(keyName[i], new ArrayList<>());
+            int hour = Integer.parseInt(keyTime[i].split(":")[0]);
+            int minute = Integer.parseInt(keyTime[i].split(":")[1]);
+            list.add(hour * 60 + minute);
+            map.put(keyName[i], list);
+        }
+        List<String> names = new ArrayList<>();
+        for (Map.Entry<String, List<Integer>> entry : map.entrySet()) {
+            Collections.sort(entry.getValue());
+            int size = entry.getValue().size();
+            for (int i = 2; i < size; i++) {
+                if (entry.getValue().get(i) - entry.getValue().get(i - 2) <= 60) {
+                    names.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        Collections.sort(names);
+        return names;
+    }
+
     //2303. 计算应缴税款总额
     public double calculateTax(int[][] brackets, int income) {
         double tax = 0;
@@ -3862,6 +3937,71 @@ public class Solutions3 {
             if (income <= brackets[i][0]) break;
         }
         return tax;
+    }
+
+    //2325. 解密消息
+    public String decodeMessage(String key, String message) {
+        Map<Character, Integer> map = new HashMap<>();
+        int idx = 0;
+        for (char c : key.toCharArray()) {
+            if (c == ' ') continue;
+            if (!map.containsKey(c)) {
+                map.put(c, idx++);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (char c : message.toCharArray()) {
+            if (c == ' ') {
+                sb.append(" ");
+                continue;
+            }
+            sb.append((char) (map.get(c) + 'a'));
+        }
+        return sb.toString();
+    }
+
+    //2319. 判断矩阵是否是一个 X 矩阵
+    public boolean checkXMatrix(int[][] grid) {
+        int n = grid.length;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == j || i + j == n - 1) {
+                    if (grid[i][j] == 0) return false;
+                } else {
+                    if (grid[i][j] != 0) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    //2315. 统计星号
+    public int countAsterisks(String s) {
+        int ans = 0;
+        boolean valid = true;
+        for (char c : s.toCharArray()) {
+            if (c == '|') {
+                valid = !valid;
+            } else if (c == '*' && valid) {
+                ans++;
+            }
+        }
+        return ans;
+    }
+
+    //2309. 兼具大小写的最好英文字母
+    public String greatestLetter(String s) {
+        Set<Character> ht = new HashSet<>();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            ht.add(c);
+        }
+        for (int i = 25; i >= 0; i--) {
+            if (ht.contains((char) ('a' + i)) && ht.contains((char) ('A' + i))) {
+                return String.valueOf((char) ('A' + i));
+            }
+        }
+        return "";
     }
 
     //2185. 统计包含给定前缀的字符串
@@ -6386,6 +6526,18 @@ public class Solutions3 {
         long diff = goal - sum;
         long ans = (Math.abs(diff) + limit - 1) / limit;
         return (int) ans;
+    }
+
+    //1798. 你能构造出连续值的最大数目
+    public int getMaximumConsecutive(int[] coins) {
+        int m = 0; // 一开始只能构造出 0
+        Arrays.sort(coins);
+        for (int c : coins) {
+            if (c > m + 1) // coins 已排序，后面没有比 c 更小的数了
+                break; // 无法构造出 m+1，继续循环没有意义
+            m += c; // 可以构造出区间 [0,m+c] 中的所有整数
+        }
+        return m + 1; // [0,m] 中一共有 m+1 个整数
     }
 
     //1827. 最少操作使数组递增
@@ -9067,6 +9219,31 @@ public class Solutions3 {
         return time;
     }
 
+    //2560. 打家劫舍 IV
+    // 类似还有
+    // 2439. 最小化数组中的最大值
+    //2513. 最小化两个数组中的最大值
+    //2517. 礼盒的最大甜蜜度
+    //2528. 最大化城市的最小供电站数目
+    public int minCapability(int[] nums, int k) {
+        int left = 0, right = (int) 1e9;
+        while (left + 1 < right) {
+            int mid = (left + right) >>> 1;
+            int f0 = 0, f1 = 0;
+            for (int x : nums)
+                if (x > mid) f0 = f1;
+                else {
+                    int tmp = f1;
+                    f1 = Math.max(f1, f0 + 1);
+                    f0 = tmp;
+                }
+            if (f1 >= k) right = mid;
+            else left = mid;
+        }
+        return right;
+    }
+
+    //1011. 在 D 天内送达包裹的能力
     public int shipWithinDays(int[] weights, int days) {
         int n = weights.length;
         int sum = 0, max = 0;
