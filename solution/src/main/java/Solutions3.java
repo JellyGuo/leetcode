@@ -717,6 +717,37 @@ public class Solutions3 {
         return result;
     }
 
+    //6356. 子字符串异或查询
+    // 字符串匹配TLE
+    public int[][] substringXorQueries(String s, int[][] queries) {
+        int n = queries.length;
+        int[][] ans = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            String target = Integer.toBinaryString(queries[i][0] ^ queries[i][1]);
+            int idx = s.indexOf(target);
+            if (idx != -1) {
+                ans[i] = new int[]{idx, idx + target.length() - 1};
+            } else {
+                ans[i] = new int[]{-1, -1};
+            }
+        }
+        return ans;
+    }
+    // 预处理
+    public int[][] substringXorQueries2(String s, int[][] queries) {
+        HashMap<Integer, int[]> map = new HashMap<>();
+        for (int len = 30; len > 0; len--) {
+            for (int l = s.length() - len; l >= 0; l--) {
+                map.put(Integer.valueOf(s.substring(l, l + len), 2), new int[]{l, l + len - 1});
+            }
+        }
+        int[][] result = new int[queries.length][];
+        for (int i = 0; i < queries.length; i++) {
+            result[i] = map.getOrDefault(queries[i][0] ^ queries[i][1], new int[]{-1, -1});
+        }
+        return result;
+    }
+
     //172 阶乘后的0
     // n的阶乘中有几个5相乘 5!只有1个  10! 有2个 25！有6个
     public int trailingZeroes(int n) {
@@ -3843,6 +3874,41 @@ public class Solutions3 {
             }
         }
         return true;
+    }
+
+    //1138. 字母板上的路径
+    public String alphabetBoardPath(String target) {
+        int cx = 0, cy = 0;
+        StringBuilder res = new StringBuilder();
+        for (int i = 0; i < target.length(); i++) {
+            char c = target.charAt(i);
+            int nx = (c - 'a') / 5;
+            int ny = (c - 'a') % 5;
+            if (nx < cx) {
+                for (int j = 0; j < cx - nx; j++) {
+                    res.append('U');
+                }
+            }
+            if (ny < cy) {
+                for (int j = 0; j < cy - ny; j++) {
+                    res.append('L');
+                }
+            }
+            if (nx > cx) {
+                for (int j = 0; j < nx - cx; j++) {
+                    res.append('D');
+                }
+            }
+            if (ny > cy) {
+                for (int j = 0; j < ny - cy; j++) {
+                    res.append('R');
+                }
+            }
+            res.append('!');
+            cx = nx;
+            cy = ny;
+        }
+        return res.toString();
     }
 
     //1945. 字符串转化后的各位数字之和

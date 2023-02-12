@@ -66,7 +66,7 @@ public class NumArrayTwoBIT {
         init(nums.length + 5);
         for (int i = nums.length - 1; i >= 0; --i) {
             int id = getId(nums[i]);
-            resultList.add(query(id - 1));
+            resultList.add(query1(id - 1));
             update(id);
         }
         Collections.reverse(resultList);

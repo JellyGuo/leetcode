@@ -738,10 +738,10 @@ public class Solution {
             }
             return min;
         }
-        for (int i = 0; i+2*(k-1) < n; i++) {
+        for (int i = 0; i + 2 * (k - 1) < n; i++) {
 
             int f = 2;
-            while (f<n){
+            while (f < n) {
                 PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
                 pq.offer(nums[i]);
                 int j = i;
@@ -761,9 +761,73 @@ public class Solution {
         return min;
     }
 
+    public long findTheArrayConcVal(int[] nums) {
+        long sum = 0;
+        int l = 0, r = nums.length - 1;
+        while (l <= r) {
+            if (l < r) {
+                sum += getSum(nums[l++], nums[r--]);
+            } else {
+                sum += nums[l++];
+            }
+        }
+        return sum;
+    }
+
+    private long getSum(int l, int r) {
+        int digit = String.valueOf(r).length();
+        return (long) Math.pow(10, digit) * l + r;
+    }
+
+    public long countFairPairs(int[] nums, int lower, int upper) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        long ans = 0;
+        for (int i = 0, l = n - 1, r = n - 1; i < n; i++) {
+            while (l >= 0 && nums[i] + nums[l] >= lower) {
+                l--;
+            }
+            while (r >= 0 && nums[i] + nums[r] > upper) {
+                r--;
+            }
+            ans += r - l - ((i > l && i <= r) ? 1 : 0);
+        }
+        return ans / 2;
+    }
+
+
+    public int[][] substringXorQueries(String s, int[][] queries) {
+        int n = queries.length;
+        int[][] ans = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            String target = Integer.toBinaryString(queries[i][0] ^ queries[i][1]);
+            int idx = s.indexOf(target);
+            if (idx != -1) {
+                ans[i] = new int[]{idx, idx + target.length() - 1};
+            } else {
+                ans[i] = new int[]{-1, -1};
+            }
+        }
+        return ans;
+    }
+
+    public int[][] substringXorQueries2(String s, int[][] queries) {
+        HashMap<Integer, int[]> map = new HashMap<>();
+        for (int len = 30; len > 0; len--) {
+            for (int l = s.length() - len; l >= 0; l--) {
+                map.put(Integer.valueOf(s.substring(l, l + len), 2), new int[]{l, l + len - 1});
+            }
+        }
+        int[][] result = new int[queries.length][];
+        for (int i = 0; i < queries.length; i++) {
+            result[i] = map.getOrDefault(queries[i][0] ^ queries[i][1], new int[]{-1, -1});
+        }
+        return result;
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.minCapability(new int[]{24,1,55,46,4,61,21,52},3);
+        solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);
         ListNode l3 = new ListNode(13);

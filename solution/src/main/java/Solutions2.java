@@ -1253,6 +1253,43 @@ public class Solutions2 {
         return res;
     }
 
+    //6355. 统计公平数对的数目
+    public long countFairPairs(int[] nums, int lower, int upper) {
+        int n = nums.length;
+        long cnt = 0;
+        for(int i=0;i<n-1;i++){
+            for(int j=i+1;j<n;j++){
+                if(nums[i]+nums[j]>=lower && nums[i]+nums[j]<=upper) {
+                    cnt++;
+                }
+
+            }
+        }
+        return cnt;
+    }
+
+    // 如果(i, j)数对满足以下情况，则认为它是一个 公平数对
+    //0 <= i < j < n，且
+    //lower <= nums[i] + nums[j] <= upper
+    // i、j有先后顺序，排序后i、j会重复计算，最后答案/2即可
+    // 暴力会TLE，需要复用每个i的结果：排序后从前往后遍历nums[i]递增，则 [lower-nums[i],upper-nums[i]]递减
+    // 从后往前的指针[l,r]在i往后的时候可以从上一个i的位置继续往前
+    public long countFairPairsDualPointer(int[] nums, int lower, int upper) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        long ans = 0;
+        for (int i = 0, l = n - 1, r = n - 1; i < n; i++) {
+            while (l >= 0 && nums[i] + nums[l] >= lower) {
+                l--;
+            }
+            while (r >= 0 && nums[i] + nums[r] > upper) {
+                r--;
+            }
+            ans += r - l - ((i > l && i <= r) ? 1 : 0);
+        }
+        return ans / 2;
+    }
+
     //endregion---------------------------------------------------------------------------------------------------------
 
     //region--------------------------------------------------------------------滑动窗口---------------------------------------------
