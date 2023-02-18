@@ -1196,6 +1196,23 @@ public class Solutions2 {
         return r - l + 1;
     }
 
+    //1237. 找出给定方程的正整数解
+    public List<List<Integer>> findSolution(CustomFunction customfunction, int z) {
+        List<List<Integer>> res = new ArrayList<>();
+        for (int x = 1, y = 1000; x <= 1000 && y >= 1; x++) {
+            while (y >= 1 && customfunction.f(x, y) > z) {
+                y--;
+            }
+            if (y >= 1 && customfunction.f(x, y) == z) {
+                List<Integer> pair = new ArrayList<>();
+                pair.add(x);
+                pair.add(y);
+                res.add(pair);
+            }
+        }
+        return res;
+    }
+
     //1807. 替换字符串中的括号内容
     public String evaluate(String s, List<List<String>> knowledge) {
         Map<String, String> dict = new HashMap<>();
@@ -1253,7 +1270,7 @@ public class Solutions2 {
         return res;
     }
 
-    //6355. 统计公平数对的数目
+    //2563. 统计公平数对的数目
     public long countFairPairs(int[] nums, int lower, int upper) {
         int n = nums.length;
         long cnt = 0;
@@ -2212,6 +2229,36 @@ public class Solutions2 {
             ans += r - l + 1;
         }
         return ans;
+    }
+
+    //1234. 替换子串得到平衡字符串
+    public int balancedString(String s) {
+        int n = s.length();
+        int t = n / 4;
+        char[] chars = s.toCharArray();
+        int[] cnt = new int[26];
+        for (char c : chars) {
+            cnt[c - 'A']++;
+        }
+        if (check(cnt, t)) {
+            return 0;
+        }
+        int min = Integer.MAX_VALUE;
+        for (int l = 0, r = 0; r < n; r++) {
+            cnt[chars[r] - 'A']--;
+            while (check(cnt, t)) {
+                min = Math.min(min, r - l + 1);
+                cnt[chars[l++] - 'A']++;
+            }
+        }
+        return min;
+    }
+
+    private boolean check(int[] cnt, int t) {
+        if (cnt['Q' - 'A'] > t || cnt['W' - 'A'] > t || cnt['E' - 'A'] > t || cnt['R' - 'A'] > t) {
+            return false;
+        }
+        return true;
     }
 
     //2537. 统计好子数组的数目
@@ -7655,6 +7702,28 @@ public class Solutions2 {
             }
         }
         return max * max;
+    }
+
+    //1139. 最大的以 1 为边界的正方形
+    public int largest1BorderedSquare(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[][] left = new int[m + 1][n + 1];
+        int[][] up = new int[m + 1][n + 1];
+        int max = 0;
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (grid[i - 1][j - 1] == 1) {
+                    left[i][j] = left[i][j - 1] + 1;
+                    up[i][j] = up[i - 1][j] + 1;
+                    int l = Math.min(left[i][j], up[i][j]);
+                    while (left[i - l + 1][j] < l || up[i][j - l + 1] < l) {
+                        l--;
+                    }
+                    max = Math.max(max, l);
+                }
+            }
+        }
+        return max*max;
     }
 
     // 面试题 17.23. 最大黑方阵

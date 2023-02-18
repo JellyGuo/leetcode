@@ -238,6 +238,15 @@ public class Solutions3 {
     }
 
     //191 编写一个函数，输入是一个无符号整数（以二进制串的形式），返回其二进制表达式中数字位数为 '1' 的个数（也被称为 汉明重量).）。
+    public int reverseBits(int n) {
+        int ans = 0;
+        for (int i = 31; i >= 0 && n != 0; i--) {
+            ans |= (n & 1) << i;
+            n = (n >>> 1);
+        }
+        return ans;
+    }
+
     // offer 15 二进制中1的个数
     public int hammingWeight(int n) {
         int cnt = 0;
@@ -717,7 +726,7 @@ public class Solutions3 {
         return result;
     }
 
-    //6356. 子字符串异或查询
+    //2563. 子字符串异或查询
     // 字符串匹配TLE
     public int[][] substringXorQueries(String s, int[][] queries) {
         int n = queries.length;
@@ -3024,6 +3033,18 @@ public class Solutions3 {
         return ans;
     }
 
+    //1250. 检查「好数组」
+    public boolean isGoodArray(int[] nums) {
+        int divisor = nums[0];
+        for (int num : nums) {
+            divisor = gcd(divisor, num);
+            if (divisor == 1) {
+                break;
+            }
+        }
+        return divisor == 1;
+    }
+
     // 593 有效的正方形
     public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
         if (Arrays.equals(p1, p2)) return false;
@@ -3866,7 +3887,7 @@ public class Solutions3 {
         String[] ss = new String[8];
         System.arraycopy(tmp, 1, ss, 0, 8);
         for (String s : ss) {
-            if (s.length() > 4 || s.length() < 1) return false;
+            if (s.length() > 4 || s.length() < 1) return false; 
             for (char c : s.toCharArray()) {
                 if (Character.isLetter(c)) {
                     if (!((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) return false;
@@ -4068,6 +4089,20 @@ public class Solutions3 {
             }
         }
         return "";
+    }
+
+    //2341. 数组能形成多少数对
+    public int[] numberOfPairs(int[] nums) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+        }
+        int[] ans = new int[2];
+        for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+            ans[0] += entry.getValue() / 2;
+            ans[1] += entry.getValue() % 2;
+        }
+        return ans;
     }
 
     //2185. 统计包含给定前缀的字符串
@@ -10145,6 +10180,112 @@ public class Solutions3 {
             }
         }
         return (int) l;
+    }
+
+    //2439. 最小化数组中的最大值
+    public int minimizeArrayValue(int[] nums) {
+        // [l,r] 使nums每个数在转移后都小于等于的值k
+        // 求该值最小，r向左收缩（k满足大于等于结果的最小值）
+        int l = 0, r = (int) 1e9;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (canTransfer(nums, mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    private boolean canTransfer(int[] nums, int k) {
+        long have = 0;//前方的数字还可以帮我们后方的大数承载多少数字
+        for (int n : nums) {
+            if (n <= k) {
+                have += k - n;//较小数，可以算入承载量
+            } else {
+                if (have < n - k) return false;//承载不了了，该答案不可行
+                else have -= (n - k);//减去承载量
+            }
+        }
+        return true;
+    }
+
+    //2513. 最小化两个数组中的最大值
+    public int minimizeSet(int d1, int d2, int n, int m) {
+        long l = n + m, r = Integer.MAX_VALUE;//v[l,r]是满足条件的v，大于等于v的全都符合条件，小于v全部不符合题目条件
+        // v越大，能满足条件的数越多，两个数组的最大值就越大
+        while (l < r) {
+            long mid = l + r >> 1;
+            if (check(d1, d2, n, m, mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return (int) l;
+    }
+
+    // 计算[1，v]中有多少数可以选，此时v就是最大值
+    private boolean check(long d1, long d2, long n, long m, long v) {
+        long c1 = v / d1; // c1表示[1,v]中能被d1整除的个数
+        long c2 = v / d2; // c2表示[1,v]中能被d2整除的个数
+        long cc = v / lcm((int)d1,(int) d2); // cc 表示能被d1、d2同时整除的个数
+        // c1和c2都减去同时被整除的这些数
+        c1 -= cc;
+        c2 -= cc;
+        // 最终结果也减去同时被整除的这些数
+        v -= cc;
+        // c1是被d1整除的个数，可以放在arr2中，如果大于m，最终结果减去超过m的个数(即c1-m)
+        if (c1 > m) {
+            v -= (c1 - m);
+        }
+        // c2是被d2整除的个数，可以放在arr1中，如果大于n，最终结果减去超过n的个数(即c2-n)
+        if (c2 > n) {
+            v -= (c2 - n);
+        }
+        //最终的结果个数大于n+m 即为满足条件的v
+        return v >= (n + m);
+    }
+
+    //2528. 最大化城市的最小供电站数目
+    // 二分+前缀和+差分
+    public long maxPower(int[] stations, int range, int k) {
+        int n = stations.length;
+        long[] sum = new long[n + 1]; // 前缀和
+        for (int i = 0; i < n; ++i) {
+            sum[i + 1] = sum[i] + stations[i];
+        }
+        long min = Long.MAX_VALUE;
+        long[] power = new long[n]; // 电量
+        for (int i = 0; i < n; ++i) {
+            power[i] = sum[Math.min(i + range + 1, n)] - sum[Math.max(i - range, 0)];
+            min = Math.min(min, power[i]);
+        }
+
+        long l = min, r = min + k;
+        while (l < r) {
+            long mid = l + r + 1 >> 1;
+            if (check(mid, power, n, range, k)) l = mid;
+            else r = mid - 1;
+        }
+        return l;
+    }
+
+    private boolean check(long minPower, long[] power, int n, int range, int k) {
+        long[] diff = new long[n + 1]; // 差分数组
+        long sumD = 0, need = 0;
+        for (int i = 0; i < n; ++i) {
+            sumD += diff[i]; // 累加差分值
+            long m = minPower - power[i] - sumD;
+            if (m > 0) { // 需要 m 个供电站
+                need += m;
+                if (need > k) return false; // 提前退出这样快一些
+                sumD += m; // 差分更新
+                if (i + range * 2 + 1 < n) diff[i + range * 2 + 1] -= m; // 差分更新
+            }
+        }
+        return true;
     }
 
     //endregion-------------------------------------------------------------------------------------------
