@@ -4222,6 +4222,24 @@ public class Solutions3 {
         return ans;
     }
 
+    //6362. 合并两个二维数组 - 求和法
+    public int[][] mergeArrays(int[][] nums1, int[][] nums2) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int[] num : nums1) {
+            map.put(num[0], map.getOrDefault(num[0], 0) + num[1]);
+        }
+        for (int[] num : nums2) {
+            map.put(num[0], map.getOrDefault(num[0], 0) + num[1]);
+        }
+        int[][] ans = new int[map.size()][2];
+        int idx = 0;
+        for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+            ans[idx++] = new int[]{entry.getKey(), entry.getValue()};
+        }
+        Arrays.sort(ans, Comparator.comparingInt(o -> o[0]));
+        return ans;
+    }
+
     // 1742 盒子中小球的最大数量
     public int countBalls(int lowLimit, int highLimit) {
         Map<Integer, Integer> map = new HashMap<>();

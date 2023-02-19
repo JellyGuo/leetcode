@@ -421,7 +421,7 @@ public class Solution {
         return sum;
     }
 
-    private List<Integer> fac(int n) {
+    public List<Integer> fac(int n) {
         List<Integer> ans = new ArrayList<>();
         if (isPrime(n)) {
             ans.add(n);
@@ -825,8 +825,39 @@ public class Solution {
         return result;
     }
 
+    public int[][] mergeArrays(int[][] nums1, int[][] nums2) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int[] num : nums1) {
+            map.put(num[0], map.getOrDefault(num[0], 0) + num[1]);
+        }
+        for (int[] num : nums2) {
+            map.put(num[0], map.getOrDefault(num[0], 0) + num[1]);
+        }
+        int[][] ans = new int[map.size()][2];
+        int idx = 0;
+        for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+            ans[idx++] = new int[]{entry.getKey(), entry.getValue()};
+        }
+        Arrays.sort(ans, Comparator.comparingInt(o -> o[0]));
+        return ans;
+    }
+
+    public int minOperations(int n) {
+        if(n == 0) return 0;
+        if(n == 1) return 1;
+        int x = 0;
+        while (Math.pow(2, x) < n) {
+            x++;
+        }
+        int diff = (int) Math.min(n - Math.pow(2, x - 1), Math.pow(2, x) - n);
+        return 1+minOperations(diff);
+    }
+
+
+
     public static void main(String[] args) {
         Solution solution = new Solution();
+        solution.fac(3);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);

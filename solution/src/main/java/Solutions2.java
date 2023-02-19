@@ -10244,6 +10244,29 @@ public class Solutions2 {
         return ans;
     }
 
+    //1792. 最大平均通过率
+    public double maxAverageRatio(int[][] classes, int extraStudents) {
+        PriorityQueue<double[]> pq = new PriorityQueue<>((a, b) -> {
+            double x = (a[0] + 1) / (a[1] + 1) - a[0] / a[1];
+            double y = (b[0] + 1) / (b[1] + 1) - b[0] / b[1];
+            return Double.compare(y, x);
+        });
+        for (int[] e : classes) {
+            pq.offer(new double[] {e[0], e[1]});
+        }
+        while (extraStudents-- > 0) {
+            double[] e = pq.poll();
+            double a = e[0] + 1, b = e[1] + 1;
+            pq.offer(new double[] {a, b});
+        }
+        double ans = 0;
+        while (!pq.isEmpty()) {
+            double[] e = pq.poll();
+            ans += e[0] / e[1];
+        }
+        return ans / classes.length;
+    }
+
     //1687. 从仓库到码头运输箱子
     // 单调队列+滑动窗口 Hard
     //https://leetcode.cn/problems/delivering-boxes-from-storage-to-ports/solutions/2006449/by-tizzi-4ubq/
