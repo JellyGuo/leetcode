@@ -478,8 +478,21 @@ public class Solutions3 {
     }
 
     // 89 格雷编码
-    //n=1 0,1
-    //n=2 0,1->翻转1,0 ->前面加1 11,10
+     //n = 1  [0, 1]
+    //n = 2  [00，01，11，10]
+    //n = 3  [000, 001, 011, 010, 110, 111, 101, 100]
+    //....
+    //一位格雷码只有两个元素，【1， 0】
+    //因为格雷码 n 每增加1，包含的数字会翻倍，这里我们设n位格雷码包含c个数，前一个n为n'，所以c = 2c'
+    //所以这时n中的前c'个数是n'中的所有数字前面补0，相当于全部都是n`中的数字
+    //n = 2  [ 00,  01,  11,  10]
+    //n = 3  [000, 001, 011, 010] (前四个数)
+    //这时n中的后c'个数是n'中的所有数字前面补1，然后变为逆序
+    //n = 2  [ 00,  01,  11,  10]
+    //补   1 [100, 101, 111, 110]
+    //逆  序 [110, 111, 101, 100] （后四个数）
+    //结果拼接
+    // n = 3  [000, 001, 011, 010, 110, 111, 101, 100]
     public List<Integer> grayCode(int n) {
         List<Integer> gray = new ArrayList<>();
         gray.add(0); //初始化 n = 0 的解
@@ -493,6 +506,34 @@ public class Solutions3 {
         return gray;
     }
 
+    //1238. 循环码排列
+    public List<Integer> circularPermutation(int n, int start) {
+        List<Integer> ret = new ArrayList<>();
+        ret.add(start);
+        for (int i = 1; i <= n; i++) {
+            int m = ret.size();
+            for (int j = m - 1; j >= 0; j--) {
+                ret.add(((ret.get(j) ^ start) | (1 << (i - 1))) ^ start);
+            }
+        }
+        return ret;
+    }
+    //先枚举再截取
+    public List<Integer> circularPermutation2(int n, int start) {
+        int[] g = new int[1 << n];
+        int j = 0;
+        for (int i = 0; i < 1 << n; ++i) {
+            g[i] = i ^ (i >> 1);// 二进制码转换成二进制格雷码
+            if (g[i] == start) {
+                j = i;
+            }
+        }
+        List<Integer> ans = new ArrayList<>();
+        for (int i = j; i < j + (1 << n); ++i) {
+            ans.add(g[i % (1 << n)]);
+        }
+        return ans;
+    }
     //第一个不重复的字符
     public char firstUniqChar(String s) {
         int[] count = new int[26];
@@ -742,6 +783,7 @@ public class Solutions3 {
         }
         return ans;
     }
+
     // 预处理
     public int[][] substringXorQueries2(String s, int[][] queries) {
         HashMap<Integer, int[]> map = new HashMap<>();
@@ -2970,6 +3012,7 @@ public class Solutions3 {
         return resulta + "+" + resultb + 'i';
     }
 
+    // long 大数越界问题
     //2550. 猴子碰撞的方法数
     public int monkeyMove(int n) {
         int mod = (int) 1e9 + 7;
@@ -2984,6 +3027,18 @@ public class Solutions3 {
         }
         ans = (ans - 2 + mod) % mod;
         return (int) ans;
+    }
+
+    //6368. 找出字符串的可整除数组
+    public int[] divisibilityArray(String word, int m) {
+        int n = word.length();
+        int[] div = new int[n];
+        long s = 0;
+        for (int i = 0; i < n; i++) {
+            s = (s*10+word.charAt(i) - '0')%m;
+            if (s==0) div[i] = 1;
+        }
+        return div;
     }
 
     // 812 最大三角形面积
@@ -3887,7 +3942,7 @@ public class Solutions3 {
         String[] ss = new String[8];
         System.arraycopy(tmp, 1, ss, 0, 8);
         for (String s : ss) {
-            if (s.length() > 4 || s.length() < 1) return false; 
+            if (s.length() > 4 || s.length() < 1) return false;
             for (char c : s.toCharArray()) {
                 if (Character.isLetter(c)) {
                     if (!((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) return false;
@@ -4105,6 +4160,49 @@ public class Solutions3 {
         return ans;
     }
 
+    //2347. 最好的扑克手牌
+    public String bestHand(int[] ranks, char[] suits) {
+        if (check(suits)) return "Flush";
+        int[] cnt = new int[14];
+        for (int r : ranks) {
+            cnt[r]++;
+            if (cnt[r] == 3) return "Three of a Kind";
+        }
+        for (int i = 1; i <= 13; i++) {
+            if (cnt[i] == 2) return "Pair";
+        }
+        return "High Card";
+    }
+
+    private boolean check(char[] suits) {
+        for (char c : suits) {
+            if (c != suits[0]) return false;
+        }
+        return true;
+    }
+
+    //2357. 使数组中所有元素都等于零
+    public int minimumOperations2357(int[] nums) {
+        Set<Integer> set = new HashSet<>();
+        for(int num:nums){
+            if(num!=0) set.add(num);
+        }
+        return set.size();
+    }
+    public int minimumOperations2(int[] nums) {
+        Arrays.sort(nums);
+        int n = nums.length;
+        int[] diff = new int[n];
+        diff[0] = nums[0];
+        for(int i=n-1;i>0;i--){
+            diff[i] = nums[i]-nums[i-1];
+        }
+        int cnt = 0;
+        for(int i:diff){
+            if(i>0) cnt++;
+        }
+        return cnt;
+    }
     //2185. 统计包含给定前缀的字符串
     public int prefixCount(String[] words, String pref) {
         int cnt = 0;
@@ -4222,7 +4320,7 @@ public class Solutions3 {
         return ans;
     }
 
-    //6362. 合并两个二维数组 - 求和法
+    //2570. 合并两个二维数组 - 求和法
     public int[][] mergeArrays(int[][] nums1, int[][] nums2) {
         Map<Integer, Integer> map = new HashMap<>();
         for (int[] num : nums1) {
@@ -5788,6 +5886,28 @@ public class Solutions3 {
         return ans;
     }
 
+    //1247. 交换字符使得字符串相同
+    //s1[i] = s2[i] 的位置不用处理。
+    //s1[i] ≠ s2[i] 的个数计作d ；
+    //若d为奇数，则 x与y的个数一定为奇数，不可能通过交换使s1,s2 相同
+    //若d为偶数，则不同的情况为 s1[i] = 'x', s2[i] = 'y' 或 s1[i] = 'y', s2[i] = 'x'。 通过交换一次最多使 d-2。 贪心思想：每次交换尽量使d减少最多。
+    //case1: 不同的x的个数为偶数，则不同的y的个数也为偶数，每次交换都可以使 d - 2 ，总次数 d/2
+    //xxyyyy
+    //yyxxxx
+    //case2: 不同的x的个数为奇数，则不同的y的个数也为奇数; 先使用xx或yy，每次交换使d-2, 最后只剩下一对不同，通过两次交换即可。总次数为 (d-2)/2 + 2 即 d/2 + 1
+    //xxxyyy   --> xy
+    //yyyxxx   --> yx
+    public int minimumSwap(String s1, String s2) {
+        int[] cnt = new int[2];
+        for (int i = 0; i < s1.length(); i++) {
+            if (s1.charAt(i) != s2.charAt(i)) {
+                ++cnt[s1.charAt(i) % 2];
+            }
+        }
+        int d = cnt[0] + cnt[1];
+        return d % 2 != 0 ? -1 : d / 2 + cnt[0] % 2;
+    }
+
     // 1252 奇数值单元格的数目
     public int oddCells(int m, int n, int[][] indices) {
         int[][] matrix = new int[m][n];
@@ -6209,6 +6329,30 @@ public class Solutions3 {
             max = Math.max(max, i + nums[i]);
         }
         return false;
+    }
+
+    //1326. 灌溉花园的最少水龙头数目
+    public int minTaps(int n, int[] ranges) {
+        int[] rightMost = new int[n+1];
+        for(int i=0;i<=n;i++){
+            int start = Math.max(0,i-ranges[i]);
+            int end = Math.min(n,i+ranges[i]);
+            // 这里不能等于end，要保留有效的rightMost：
+            // 1.start=end，水龙头是无法覆盖土地的，此时的rightMost其实是无效的
+            // 2.rightMax[end]本身=end 也是无效的覆盖
+            for(int j=start;j<end;j++){
+                rightMost[j] = Math.max(rightMost[j],end);
+            }
+        }
+        int cur =0;
+        int cnt = 0;
+        while(cur<n){
+            // 如果是无效覆盖
+            if(rightMost[cur]==0) return -1;
+            cur = rightMost[cur];
+            cnt++;
+        }
+        return cnt;
     }
 
     // 135 分发糖果
@@ -9494,6 +9638,38 @@ public class Solutions3 {
         return cnt;
     }
 
+    //6367. 求出最多标记下标
+    public int maxNumOfMarkedIndices(int[] nums) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        // 对数最多n/2对
+        int l = 0,r = n / 2;
+        while (l < r) {
+            // 求做多对数
+            int m = (l + r + 1) / 2;
+            if (checkPair(nums, m)) {
+                l = m;
+            } else {
+                r = m - 1;
+            }
+        }
+        return l * 2;
+    }
+
+    public boolean checkPair(int[] nums, int k) {
+        if (k * 2 > nums.length) {
+            return false;
+        }
+        int l = 0;
+        int r = nums.length - k;
+        for (int i = 0; i < k; i++, l++, r++) {
+            if (nums[l] * 2 > nums[r]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // 410 分割数组的最大值
     // DP做法搜splitArrayDP
     public int splitArray(int[] nums, int m) {
@@ -10248,7 +10424,7 @@ public class Solutions3 {
     private boolean check(long d1, long d2, long n, long m, long v) {
         long c1 = v / d1; // c1表示[1,v]中能被d1整除的个数
         long c2 = v / d2; // c2表示[1,v]中能被d2整除的个数
-        long cc = v / lcm((int)d1,(int) d2); // cc 表示能被d1、d2同时整除的个数
+        long cc = v / lcm((int) d1, (int) d2); // cc 表示能被d1、d2同时整除的个数
         // c1和c2都减去同时被整除的这些数
         c1 -= cc;
         c2 -= cc;

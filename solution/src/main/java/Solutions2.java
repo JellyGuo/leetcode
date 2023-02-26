@@ -221,7 +221,7 @@ public class Solutions2 {
             second = second.next;
         }
         ListNode tail = list2;
-        while (tail.next!=null){
+        while (tail.next != null) {
             tail = tail.next;
         }
         first.next = list2;
@@ -1274,9 +1274,9 @@ public class Solutions2 {
     public long countFairPairs(int[] nums, int lower, int upper) {
         int n = nums.length;
         long cnt = 0;
-        for(int i=0;i<n-1;i++){
-            for(int j=i+1;j<n;j++){
-                if(nums[i]+nums[j]>=lower && nums[i]+nums[j]<=upper) {
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (nums[i] + nums[j] >= lower && nums[i] + nums[j] <= upper) {
                     cnt++;
                 }
 
@@ -3459,7 +3459,7 @@ public class Solutions2 {
         return res;
     }
 
-   //1815. 得到新鲜甜甜圈的最多组数 状态压缩+记忆化搜索
+    //1815. 得到新鲜甜甜圈的最多组数 状态压缩+记忆化搜索
     static final int K_WIDTH = 5;
     static final int K_WIDTH_MASK = (1 << K_WIDTH) - 1;
 
@@ -5300,6 +5300,47 @@ public class Solutions2 {
             }
         }
         return Math.max(f[n * 2 - 2][n - 1][n - 1], 0);
+    }
+
+    //1255. 得分最高的单词集合
+    // 1.状态压缩枚举单词->2.根据每个单词字母计算得分->3.取最大分
+    // 将第（bit）种组合情况，所使用的单词中的字母数量统计出来
+    public int maxScoreWords(String[] words, char[] letters, int[] score) {
+        // 统计给出的字母的数量
+        int[] lettercnt = new int[26];
+        for (char c : letters) {
+            lettercnt[c - 'a']++;
+        }
+
+        int ans = 0;
+        //从0至2^n枚举状态
+        for (int i = 0; i < (1 << words.length); i++) {
+            int[] g = group(words, i);
+            ans = Math.max(ans, calcScore(g, lettercnt, score));
+        }
+        return ans;
+    }
+
+    private int[] group(String[] words, int bit) {
+        int[] g = new int[26];
+        //当前bit状态哪些位是1就是用了哪些单词
+        for (int i = 0; i < words.length; i++) {
+            if ((bit & (1 << i)) == 0) continue;
+            for (char c : words[i].toCharArray()) {
+                g[c - 'a']++;
+            }
+        }
+        return g;
+    }
+
+    // 根据规则计算得分
+    private int calcScore(int[] group, int[] lettercnt, int[] score) {
+        int s = 0;
+        for (int j = 0; j < 26; j++) {
+            if (lettercnt[j] < group[j]) return 0;
+            s += group[j] * score[j];
+        }
+        return s;
     }
 
     //1799. N 次操作后的最大分数和 Hard toreview
@@ -7723,7 +7764,7 @@ public class Solutions2 {
                 }
             }
         }
-        return max*max;
+        return max * max;
     }
 
     // 面试题 17.23. 最大黑方阵
@@ -7813,6 +7854,30 @@ public class Solutions2 {
             }
         }
         return dp[0][n - 1] > 0;
+    }
+
+    //1140. 石子游戏 II
+    public int stoneGameII(int[] piles) {
+        int len = piles.length, sum = 0;
+        // dp[i][j]表示剩余[i,len-1]堆时，M=j的情况下，先取的人能获取的最多石子数
+        int[][] dp = new int[len][len + 1];
+        // 从后往前遍历：剩余的堆数可以一次性全拿，可以推导
+        for (int i = len - 1; i >= 0; i--) {
+            sum += piles[i];
+            // 枚举M
+            for (int M = 1; M <= len; M++) {
+                // 可选范围大于长度时，一次性全拿
+                if (i + 2 * M >= len) {
+                    dp[i][M] = sum;
+                } else {
+                    // 小于总长时，枚举i后面的各位，减去i+x及当前M时拿取的石子，即为当前可取的最大石子
+                    for (int x = 1; x <= 2 * M; x++) {
+                        dp[i][M] = Math.max(dp[i][M], sum - dp[i + x][Math.max(M, x)]);
+                    }
+                }
+            }
+        }
+        return dp[0][1];
     }
 
     // 375 猜数字大小
@@ -10252,12 +10317,12 @@ public class Solutions2 {
             return Double.compare(y, x);
         });
         for (int[] e : classes) {
-            pq.offer(new double[] {e[0], e[1]});
+            pq.offer(new double[]{e[0], e[1]});
         }
         while (extraStudents-- > 0) {
             double[] e = pq.poll();
             double a = e[0] + 1, b = e[1] + 1;
-            pq.offer(new double[] {a, b});
+            pq.offer(new double[]{a, b});
         }
         double ans = 0;
         while (!pq.isEmpty()) {
@@ -10318,20 +10383,20 @@ public class Solutions2 {
 
     //2558 从数量最多的堆取走礼物
     public long pickGifts(int[] gifts, int k) {
-        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2-o1);
+        PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
         long sum = 0;
-        for(int gift:gifts){
+        for (int gift : gifts) {
             pq.offer(gift);
-            sum+=gift;
+            sum += gift;
         }
-        long take=0;
-        while (k-->0 && !pq.isEmpty()){
+        long take = 0;
+        while (k-- > 0 && !pq.isEmpty()) {
             int max = pq.poll();
             int remain = (int) Math.sqrt(max);
-            take+=max-remain;
+            take += max - remain;
             pq.offer(remain);
         }
-        return sum-take;
+        return sum - take;
     }
 
     //2551. 将珠子放入背包中

@@ -1,3 +1,4 @@
+import java.math.BigInteger;
 import java.util.*;
 
 public class Solution {
@@ -843,21 +844,122 @@ public class Solution {
     }
 
     public int minOperations(int n) {
-        if(n == 0) return 0;
-        if(n == 1) return 1;
+        if (n == 0) return 0;
+        if (n == 1) return 1;
         int x = 0;
         while (Math.pow(2, x) < n) {
             x++;
         }
         int diff = (int) Math.min(n - Math.pow(2, x - 1), Math.pow(2, x) - n);
-        return 1+minOperations(diff);
+        return 1 + minOperations(diff);
+    }
+
+    public int[] leftRigthDifference(int[] nums) {
+        int n = nums.length;
+        int[] leftSum = new int[n];
+        int[] rightSum = new int[n];
+        leftSum[0] = nums[0];
+        rightSum[n - 1] = nums[n - 1];
+        for (int i = 1; i < n; i++) {
+            leftSum[i] = nums[i] + leftSum[i - 1];
+            rightSum[n - i - 1] = nums[n - i - 1] + rightSum[n - i];
+        }
+        int[] ans = new int[n];
+        for (int i = 0; i < n; i++) {
+            ans[i] = Math.abs(leftSum[i] - nums[i] - (rightSum[i] - nums[i]));
+        }
+        return ans;
     }
 
 
+    public int[] divisibilityArray(String word, int m) {
+        int n = word.length();
+        int[] div = new int[n];
+        long s = 0;
+        for (int i = 0; i < n; i++) {
+            s = (s * 10 + word.charAt(i) - '0') % m;
+            if (s == 0) div[i] = 1;
+        }
+        return div;
+    }
+
+    public int maxNumOfMarkedIndices(int[] nums) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        // 对数最多n/2对
+        int l = 0,r = n / 2;
+        while (l < r) {
+            // 求做多对数
+            int m = (l + r + 1) / 2;
+            if (check(nums, m)) {
+                l = m;
+            } else {
+                r = m - 1;
+            }
+        }
+        return l * 2;
+    }
+
+    public boolean check(int[] nums, int k) {
+        if (k * 2 > nums.length) {
+            return false;
+        }
+        int l = 0;
+        int r = nums.length - k;
+        for (int i = 0; i < k; i++, l++, r++) {
+            if (nums[l] * 2 > nums[r]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    int[][] directions = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    public int minimumTime(int[][] grid) {
+        int l = 0, r = 100000;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (checkDFS(grid, mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    private boolean checkDFS(int[][] grid, int threshold) {
+        if (grid[0][0] > threshold) return false;
+        return dfs(grid, 0, 0, threshold, 1);
+    }
+
+    private boolean dfs(int[][] grid, int x, int y, int threshold, int t) {
+        int m = grid.length, n = grid[0].length;
+        for (int[] direction : directions) {
+            int newX = x + direction[0];
+            int newY = y + direction[1];
+            if (inArea(newX, newY, grid) && grid[newX][newY] < threshold && valid(newX, newY, t, grid)) {
+                if (newX == m - 1 && newY == n - 1) return true;
+                if (dfs(grid, newX, newY, threshold, t + 1)) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean valid(int newX, int newY, int t, int[][] grid) {
+        return grid[newX][newY] <= t;
+    }
+
+    private boolean inArea(int x, int y, int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        return x >= 0 && x < m && y >= 0 && y < n;
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.fac(3);
+        solution.minimumTime(new int[][]{{0, 1, 3, 2}, {5, 1, 2, 5}, {4, 3, 8, 6}});
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);

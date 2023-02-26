@@ -3175,7 +3175,7 @@ public class Solutions1 {
         return list.stream().mapToInt(Integer::intValue).sum();
     }
 
-    //6365. 将整数减少到零需要的最少操作数
+    //2571. 将整数减少到零需要的最少操作数
     public int minOperations(int n) {
         if (n == 0) return 0;
         if (n == 1) return 1;
