@@ -1731,6 +1731,31 @@ public class Solutions1 {
         return result;
     }
 
+    //6308. 二叉树中的第 K 大层和
+    public long kthLargestLevelSum(TreeNode root, int k) {
+        if (root == null) return -1;
+        PriorityQueue<Long> pq = new PriorityQueue<>(Comparator.reverseOrder());
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            long sum = 0;
+            for (int i = 0; i < size; i++) {
+                TreeNode tmp = queue.poll();
+                sum += tmp.val;
+                if (tmp.left != null) queue.offer(tmp.left);
+                if (tmp.right != null) queue.offer(tmp.right);
+            }
+            pq.offer(sum);
+        }
+        if (pq.size() < k) return -1;
+        long ans = -1;
+        for (int i = 0; i < k; i++) {
+            ans = pq.poll().longValue();
+        }
+        return ans;
+    }
+
     // 面试04.03 特定深度节点链表
     public ListNode[] listOfDepth(TreeNode tree) {
         List<ListNode> list = new ArrayList<>();
@@ -8954,6 +8979,53 @@ public class Solutions1 {
 
     private int getIndexRowCol(int i, int j) {
         return i * col + j;
+    }
+
+    // 2577. 在网格图中访问一个格子的最少时间
+    // 存在反复横跳的情况，可以从终点一刻不停的往起点找
+    int[][] grid;
+    int[][] visited;// int 数组visited，记录某个时刻X,Y是否被遍历过
+
+    public int minimumTime(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        if (grid[0][1] > 1 && grid[1][0] > 1) // 无法「等待」
+            return -1;
+
+        this.grid = grid;
+        visited = new int[m][n];
+        int left = Math.max(grid[m - 1][n - 1], m + n - 2) - 1;
+        int right = (int) 1e5 + m + n; // 开区间
+        while (left + 1 < right) {
+            int mid = (left + right) >>> 1;
+            if (check(mid)) right = mid;
+            else left = mid;
+        }
+        return right + (right + m + n) % 2;
+    }
+
+    private boolean check(int endTime) {
+        int m = grid.length, n = grid[0].length;
+        visited[m - 1][n - 1] = endTime;
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{m - 1, n - 1});
+        int t = endTime - 1;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int[] cell = queue.poll();
+                int x = cell[0], y = cell[1];
+                for (int[] d : dirs) { // 枚举周围四个格子
+                    int newX = x + d[0], newY = y + d[1];
+                    if (inAreaRowCol(newX, newY) && visited[x][y] != endTime && grid[x][y] <= t) {
+                        if (x == 0 && y == 0) return true;
+                        visited[x][y] = endTime; // 用二分的值来标记，避免重复创建 vis 数组
+                        queue.add(new int[]{x, y});
+                    }
+                }
+            }
+            t--;
+        }
+        return false;
     }
 
     // endregion-----------------------------------------------------------------------------------------------------------

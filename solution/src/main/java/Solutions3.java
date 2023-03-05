@@ -256,6 +256,25 @@ public class Solutions3 {
         return cnt;
     }
 
+    //982. 按位与为零的三元组
+    public int countTriplets(int[] nums) {
+        int[] cnt = new int[1 << 16];
+        for (int x : nums) {
+            for (int y : nums) {
+                ++cnt[x & y];
+            }
+        }
+        int ans = 0;
+        for (int x : nums) {
+            for (int mask = 0; mask < (1 << 16); ++mask) {
+                if ((x & mask) == 0) {
+                    ans += cnt[mask];
+                }
+            }
+        }
+        return ans;
+    }
+
     //2546. 执行逐位运算使字符串相等
     public boolean makeStringsEqual(String s, String target) {
         return s.contains("1") == target.contains("1");
@@ -478,7 +497,7 @@ public class Solutions3 {
     }
 
     // 89 格雷编码
-     //n = 1  [0, 1]
+    //n = 1  [0, 1]
     //n = 2  [00，01，11，10]
     //n = 3  [000, 001, 011, 010, 110, 111, 101, 100]
     //....
@@ -518,6 +537,7 @@ public class Solutions3 {
         }
         return ret;
     }
+
     //先枚举再截取
     public List<Integer> circularPermutation2(int n, int start) {
         int[] g = new int[1 << n];
@@ -534,6 +554,7 @@ public class Solutions3 {
         }
         return ans;
     }
+
     //第一个不重复的字符
     public char firstUniqChar(String s) {
         int[] count = new int[26];
@@ -1254,7 +1275,7 @@ public class Solutions3 {
         return sum;
     }
 
-    //6279. 数组乘积中的不同质因数数目 考察质因数分解
+    //2521. 数组乘积中的不同质因数数目 考察质因数分解
     public int distinctPrimeFactors(int[] nums) {
         Set<Integer> set = new HashSet<>();
         for (int num : nums) {
@@ -1263,7 +1284,7 @@ public class Solutions3 {
         return set.size();
     }
 
-    //6280. 范围内最接近的两个质数  考察质数
+    //2523. 范围内最接近的两个质数  考察质数
     public int[] closestPrimes(int left, int right) {
         Integer prev = null;
         int min = Integer.MAX_VALUE;
@@ -1281,6 +1302,57 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //6309. 分割数组使乘积互质 质因数分解
+    public int findValidSplit(int[] nums) {
+        int n = nums.length;
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        Map<Integer, Integer> suffixCnt = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            List<Integer> f = fac(nums[i]);
+            map.put(i, f);
+            for (int num : f) {
+                suffixCnt.put(num, suffixCnt.getOrDefault(num, 0) + 1);
+            }
+        }
+        Map<Integer, Integer> prefixCnt = new HashMap<>();
+        for (int i = 0; i < n - 1; i++) {
+            List<Integer> f = map.get(i);
+            for (int num : f) {
+                prefixCnt.put(num, prefixCnt.getOrDefault(num, 0) + 1);
+                suffixCnt.put(num, suffixCnt.getOrDefault(num, 0) - 1);
+                if (suffixCnt.get(num) <= 0) suffixCnt.remove(num);
+            }
+            if (noCommon(prefixCnt, suffixCnt)) return i;
+        }
+        return -1;
+    }
+
+    private boolean noCommon(Map<Integer, Integer> prefixCnt, Map<Integer, Integer> suffixCnt) {
+        for (Map.Entry<Integer, Integer> entry : prefixCnt.entrySet()) {
+            if (suffixCnt.containsKey(entry.getKey())) return false;
+        }
+        return true;
+    }
+
+    // 双指针
+    public int findValidSplitDualPointer(int[] nums) {
+        int l = 0;
+        int max = 1;
+        while (max < nums.length && l < max) {
+            for (int index = max; index < nums.length; index++) {
+                if (gcd(nums[l], nums[index]) != 1) {
+                    max = Math.max(max, index);
+                }
+            }
+            l++;
+        }
+        if (max >= nums.length - 1) {
+            return -1;
+        } else {
+            return l;
+        }
     }
 
     // 258 各位相加
@@ -3029,14 +3101,14 @@ public class Solutions3 {
         return (int) ans;
     }
 
-    //6368. 找出字符串的可整除数组
+    //2575. 找出字符串的可整除数组
     public int[] divisibilityArray(String word, int m) {
         int n = word.length();
         int[] div = new int[n];
         long s = 0;
         for (int i = 0; i < n; i++) {
-            s = (s*10+word.charAt(i) - '0')%m;
-            if (s==0) div[i] = 1;
+            s = (s * 10 + word.charAt(i) - '0') % m;
+            if (s == 0) div[i] = 1;
         }
         return div;
     }
@@ -4184,25 +4256,27 @@ public class Solutions3 {
     //2357. 使数组中所有元素都等于零
     public int minimumOperations2357(int[] nums) {
         Set<Integer> set = new HashSet<>();
-        for(int num:nums){
-            if(num!=0) set.add(num);
+        for (int num : nums) {
+            if (num != 0) set.add(num);
         }
         return set.size();
     }
+
     public int minimumOperations2(int[] nums) {
         Arrays.sort(nums);
         int n = nums.length;
         int[] diff = new int[n];
         diff[0] = nums[0];
-        for(int i=n-1;i>0;i--){
-            diff[i] = nums[i]-nums[i-1];
+        for (int i = n - 1; i > 0; i--) {
+            diff[i] = nums[i] - nums[i - 1];
         }
         int cnt = 0;
-        for(int i:diff){
-            if(i>0) cnt++;
+        for (int i : diff) {
+            if (i > 0) cnt++;
         }
         return cnt;
     }
+
     //2185. 统计包含给定前缀的字符串
     public int prefixCount(String[] words, String pref) {
         int cnt = 0;
@@ -5980,6 +6054,75 @@ public class Solutions3 {
         return ans;
     }
 
+    //1487. 保证文件名唯一
+    public String[] getFolderNames(String[] names) {
+        int n = names.length;
+        String[] ans = new String[n];
+        Map<String, Integer> map = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            String name = names[i];
+            if (!map.containsKey(name)) {
+                map.put(name, 1);
+                ans[i] = name;
+            } else {
+                int k = map.get(name);
+                while (map.containsKey(name + "(" + k + ")")) {
+                    k++;
+                }
+                ans[i] = name + "(" + k + ")";
+                map.put(name, k + 1);
+                map.put(name + "(" + k + ")", 1);
+            }
+        }
+        return ans;
+    }
+
+    //1599. 经营摩天轮的最大利润
+    public int minOperationsMaxProfit(int[] customers, int boardingCost, int runningCost) {
+        int ans = -1;
+        int maxProfit = 0;
+        int totalProfit = 0;
+        int operations = 0;
+        int customersCount = 0;
+        int n = customers.length;
+        for (int i = 0; i < n; i++) {
+            operations++;
+            customersCount += customers[i];
+            int curCustomers = Math.min(customersCount, 4);
+            customersCount -= curCustomers;
+            totalProfit += boardingCost * curCustomers - runningCost;
+            if (totalProfit > maxProfit) {
+                maxProfit = totalProfit;
+                ans = operations;
+            }
+        }
+        if (customersCount == 0) {
+            return ans;
+        }
+        int profitEachTime = boardingCost * 4 - runningCost;
+        if (profitEachTime <= 0) {
+            return ans;
+        }
+        if (customersCount > 0) {
+            int fullTimes = customersCount / 4;
+            totalProfit += profitEachTime * fullTimes;
+            operations += fullTimes;
+            if (totalProfit > maxProfit) {
+                maxProfit = totalProfit;
+                ans = operations;
+            }
+            int remainingCustomers = customersCount % 4;
+            int remainingProfit = boardingCost * remainingCustomers - runningCost;
+            totalProfit += remainingProfit;
+            if (totalProfit > maxProfit) {
+                maxProfit = totalProfit;
+                operations++;
+                ans++;
+            }
+        }
+        return ans;
+    }
+
     //2180. 统计各位数字之和为偶数的整数个数
     public int countEven(int num) {
         int cnt = 0;
@@ -6016,7 +6159,66 @@ public class Solutions3 {
         return true;
     }
 
-    //6152. 赢得比赛需要的最少训练时长
+    //2363. 合并相似的物品
+    public List<List<Integer>> mergeSimilarItems(int[][] items1, int[][] items2) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int[] item : items1) {
+            map.put(item[0], map.getOrDefault(item[0], 0) + item[1]);
+        }
+        for (int[] item : items2) {
+            map.put(item[0], map.getOrDefault(item[0], 0) + item[1]);
+        }
+        List<List<Integer>> result = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+            result.add(Arrays.asList(entry.getKey(), entry.getValue()));
+        }
+        result.sort(Comparator.comparingInt(o -> o.get(0)));
+        return result;
+    }
+
+    //2373. 矩阵中的局部最大值
+    public int[][] largestLocal(int[][] grid) {
+        int n = grid.length;
+        int[][] res = new int[n - 2][n - 2];
+        for (int i = 0; i < n - 2; i++) {
+            for (int j = 0; j < n - 2; j++) {
+                for (int x = i; x < i + 3; x++) {
+                    for (int y = j; y < j + 3; y++) {
+                        res[i][j] = Math.max(res[i][j], grid[x][y]);
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    //2574. 左右元素和的差值
+    public int[] leftRigthDifference(int[] nums) {
+        int n = nums.length;
+        int[] leftSum = new int[n];
+        int[] rightSum = new int[n];
+        leftSum[0] = nums[0];
+        rightSum[n - 1] = nums[n - 1];
+        for (int i = 1; i < n; i++) {
+            leftSum[i] = nums[i] + leftSum[i - 1];
+            rightSum[n - i - 1] = nums[n - i - 1] + rightSum[n - i];
+        }
+        int[] ans = new int[n];
+        for (int i = 0; i < n; i++) {
+            ans[i] = Math.abs(leftSum[i] - nums[i] - (rightSum[i] - nums[i]));
+        }
+        return ans;
+    }
+
+    //6307. 递枕头
+    public int passThePillow(int n, int time) {
+        int k = time / (n - 1);
+        int r = time % (n - 1);
+        if (k % 2 == 0) return 1 + r;
+        return n - r;
+    }
+
+    //2383. 赢得比赛需要的最少训练时长
     public int minNumberOfHours(int initialEnergy, int initialExperience, int[] energy, int[] experience) {
         int n = energy.length;
         int leastEnergy = energy[n - 1] + 1;
@@ -6033,7 +6235,7 @@ public class Solutions3 {
         return energyHour + expHour;
     }
 
-    //6166. 最大回文数字
+    //2384. 最大回文数字
     public String largestPalindromic(String num) {
         // 定义暂存数组
         int[] dig = new int[10];
@@ -6078,6 +6280,7 @@ public class Solutions3 {
     }
 
 
+    //1224. 最大相等频率
     public int maxEqualFreq(int[] nums) {
         Map<Integer, Integer> count = new HashMap<>();
         Map<Integer, Integer> freq = new HashMap<>();
@@ -6331,24 +6534,75 @@ public class Solutions3 {
         return false;
     }
 
+    //1144. 递减元素使数组呈锯齿状
+    public int movesToMakeZigzag(int[] nums) {
+        int odd = 0, even = 0;
+        for (int i = 0; i < nums.length; i++) {
+            int left = i > 0 ? nums[i - 1] : 1001;
+            int right = i < nums.length - 1 ? nums[i + 1] : 1001;
+            if (i % 2 == 0) {
+                even += Math.max(0, nums[i] - Math.min(left, right) + 1);
+            } else {
+                odd += Math.max(0, nums[i] - Math.min(left, right) + 1);
+            }
+        }
+        return Math.min(odd, even);
+    }
+
     //1326. 灌溉花园的最少水龙头数目
+    public int minTapsDP(int n, int[] ranges) {
+        int[] dp = new int[n + 1];
+        Arrays.fill(dp, n + 2);
+        dp[0] = 0;
+        for (int i = 0; i <= n; i++) {
+            int left = Math.max(i - ranges[i], 0);
+            int right = Math.min(i + ranges[i], n);
+            for (int j = left; j <= right; j++) {
+                dp[j] = Math.min(dp[j], dp[left] + 1);
+            }
+        }
+        return dp[n] == n + 2 ? -1 : dp[n];
+    }
+
     public int minTaps(int n, int[] ranges) {
-        int[] rightMost = new int[n+1];
-        for(int i=0;i<=n;i++){
-            int start = Math.max(0,i-ranges[i]);
-            int end = Math.min(n,i+ranges[i]);
+        int[] rightMost = new int[n + 1];
+        for (int i = 0; i <= n; ++i) {
+            if (rightMost[i] == 0) {
+                rightMost[i] = i;
+            }
+            int start = Math.max(0, i - ranges[i]);
+            int end = Math.min(n, i + ranges[i]);
+            rightMost[start] = Math.max(rightMost[start], end);
+        }
+        int res = 0, right = 0, cur = 0;
+        for (int i = 0; i < n; i++) {
+            right = Math.max(right, rightMost[i]);
+            if (right == i) return -1;
+            if (i == cur) {
+                res++;
+                cur = right;
+            }
+        }
+        return res;
+    }
+
+    public int minTaps2(int n, int[] ranges) {
+        int[] rightMost = new int[n + 1];
+        for (int i = 0; i <= n; i++) {
+            int start = Math.max(0, i - ranges[i]);
+            int end = Math.min(n, i + ranges[i]);
             // 这里不能等于end，要保留有效的rightMost：
             // 1.start=end，水龙头是无法覆盖土地的，此时的rightMost其实是无效的
             // 2.rightMax[end]本身=end 也是无效的覆盖
-            for(int j=start;j<end;j++){
-                rightMost[j] = Math.max(rightMost[j],end);
+            for (int j = start; j < end; j++) {
+                rightMost[j] = Math.max(rightMost[j], end);
             }
         }
-        int cur =0;
+        int cur = 0;
         int cnt = 0;
-        while(cur<n){
+        while (cur < n) {
             // 如果是无效覆盖
-            if(rightMost[cur]==0) return -1;
+            if (rightMost[cur] == 0) return -1;
             cur = rightMost[cur];
             cnt++;
         }
@@ -9638,12 +9892,12 @@ public class Solutions3 {
         return cnt;
     }
 
-    //6367. 求出最多标记下标
+    //2576. 求出最多标记下标
     public int maxNumOfMarkedIndices(int[] nums) {
         int n = nums.length;
         Arrays.sort(nums);
         // 对数最多n/2对
-        int l = 0,r = n / 2;
+        int l = 0, r = n / 2;
         while (l < r) {
             // 求做多对数
             int m = (l + r + 1) / 2;

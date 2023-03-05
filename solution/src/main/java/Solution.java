@@ -887,7 +887,7 @@ public class Solution {
         int n = nums.length;
         Arrays.sort(nums);
         // 对数最多n/2对
-        int l = 0,r = n / 2;
+        int l = 0, r = n / 2;
         while (l < r) {
             // 求做多对数
             int m = (l + r + 1) / 2;
@@ -957,9 +957,105 @@ public class Solution {
         return x >= 0 && x < m && y >= 0 && y < n;
     }
 
+    public int passThePillow(int n, int time) {
+        int k = time / (n - 1);
+        int r = time % (n - 1);
+        if (k % 2 == 0) return 1 + r;
+        return n - r;
+    }
+
+    public long kthLargestLevelSum(TreeNode root, int k) {
+        if(root == null) return -1;
+        PriorityQueue<Long> pq  = new PriorityQueue<>(Comparator.reverseOrder());
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+        while (!queue.isEmpty()){
+            int size = queue.size();
+            long sum = 0;
+            for(int i=0;i<size;i++){
+                TreeNode tmp = queue.poll();
+                sum += tmp.val;
+                if(tmp.left!=null) queue.offer(tmp.left);
+                if(tmp.right!=null) queue.offer(tmp.right);
+            }
+            pq.offer(sum);
+        }
+        if(pq.size()<k) return -1;
+        long ans = -1;
+        for(int i=0;i<k;i++){
+            ans = pq.poll().longValue();
+        }
+        return ans;
+    }
+
+    public int findValidSplit(int[] nums) {
+        int n = nums.length;
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        Map<Integer, Integer> suffixCnt = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            List<Integer> f = fac(nums[i]);
+            map.put(i, f);
+            for (int num : f) {
+                suffixCnt.put(num, suffixCnt.getOrDefault(num, 0) + 1);
+            }
+        }
+        Map<Integer, Integer> prefixCnt = new HashMap<>();
+        for (int i = 0; i < n - 1; i++) {
+            List<Integer> f = map.get(i);
+            for (int num : f) {
+                prefixCnt.put(num, prefixCnt.getOrDefault(num, 0) + 1);
+                suffixCnt.put(num, suffixCnt.getOrDefault(num, 0) - 1);
+                if (suffixCnt.get(num) <= 0) suffixCnt.remove(num);
+            }
+            if (noCommon(prefixCnt, suffixCnt)) return i;
+        }
+        return -1;
+    }
+
+    private boolean noCommon(Map<Integer, Integer> prefixCnt, Map<Integer, Integer> suffixCnt) {
+        for (Map.Entry<Integer, Integer> entry : prefixCnt.entrySet()) {
+            if (suffixCnt.containsKey(entry.getKey())) return false;
+        }
+        return true;
+    }
+
+
+    public int minOperationsMaxProfit(int[] customers, int boardingCost, int runningCost) {
+        int remain = 0;
+        int revenue = 0;
+        int turns = 1;
+        int exist = 0;
+        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[0]-o1[0]);
+        for (int customer : customers) {
+            if (customer + remain <= 4) {
+                exist = (customer + remain);
+            } else {
+                exist += 4;
+                remain = customer + remain - 4;
+            }
+            revenue += exist * boardingCost - turns * runningCost;
+            pq.offer(new int[]{revenue,turns});
+            turns++;
+        }
+        while (remain >= 4) {
+            exist += 4;
+            remain -= 4;
+            revenue += exist * boardingCost - turns * runningCost;
+            pq.offer(new int[]{revenue,turns});
+            turns++;
+        }
+        if (remain > 0) {
+            exist += remain;
+            revenue += exist * boardingCost - turns * runningCost;
+            pq.offer(new int[]{revenue,turns});
+        }
+        return  pq.peek()[0]>0?pq.peek()[1]:-1;
+    }
+
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.minimumTime(new int[][]{{0, 1, 3, 2}, {5, 1, 2, 5}, {4, 3, 8, 6}});
+        solution.minOperationsMaxProfit(new int[]{10,10,6,4,7},3,8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);

@@ -6043,6 +6043,23 @@ public class Solutions2 {
         return res;
     }
 
+    //6310. 获得分数的方法数
+    public int waysToReachTarget(int target, int[][] types) {
+        int mod = (int) 1e9 + 7;
+        int[][] dp = new int[types.length + 1][target + 1];
+        dp[0][0] = 1;
+        for (int i = 1; i <= types.length; i++) {
+            int score = types[i - 1][1];  //分数
+            for (int j = 0; j < dp[0].length; j++) {
+                for (int k = 0; k <= types[i - 1][0] && j - score * k >= 0; k++) {
+                    dp[i][j] = dp[i][j] + dp[i - 1][j - k * score];
+                    dp[i][j] = dp[i][j] % mod;
+                }
+            }
+        }
+        return dp[types.length][target];
+    }
+
     //endregion-----------------------------------------------------------------------------------------
     //region--------------------------------分组背包---------------------------------------------------
     // 有N种物品和容量位C的背包
