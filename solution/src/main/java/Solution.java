@@ -1,5 +1,6 @@
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Solution {
     //    882. 细分图中的可到达节点
@@ -1052,6 +1053,62 @@ public class Solution {
         return  pq.peek()[0]>0?pq.peek()[1]:-1;
     }
 
+    public int vowelStrings(String[] words, int left, int right) {
+        Set<Character> set = new HashSet<>();
+        set.add('a');
+        set.add('e');
+        set.add('i');
+        set.add('o');
+        set.add('u');
+        int ans = 0;
+        for(int i=left;i<=right;i++){
+            if(set.contains(words[i].charAt(0))&& set.contains(words[i].charAt(words[i].length()-1))){
+                ans++;
+            }
+        }
+        return ans;
+
+    }
+
+    public int maxScore(int[] nums) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        long[] sum = new long[n];
+        sum[0] = nums[n-1];
+        int ans = sum[0]>0?1:0;
+        for(int i=1;i<n;i++){
+            sum[i] = sum[i-1]+nums[n-1-i];
+            if(sum[i]>0) ans ++;
+        }
+        return ans;
+    }
+
+    public int maxScore2(int[] nums) {
+        int n = nums.length;
+        List<Integer> ls =Arrays.stream(nums).boxed().collect(Collectors.toList());
+        ls.sort((o1, o2) -> o2-o1);
+        int[] sum = new int[n+1];
+        int ans = 0;
+        for(int i=1;i<=n;i++){
+            sum[i] = sum[i-1]+ls.get(i-1);
+            if(sum[i]>0) ans++;
+        }
+        return ans;
+    }
+
+    public long beautifulSubarrays(int[] nums) {
+        int n = nums.length;
+        long ans = 0;
+        for(int i=0;i<n;i++){
+            int x = nums[i];
+            if(x==0) ans++;
+            for(int j=i+1;j<n;j++){
+                x^=nums[j];
+                if(x==0) ans++;
+            }
+        }
+        return ans;
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();

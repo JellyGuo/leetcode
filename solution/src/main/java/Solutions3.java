@@ -4412,6 +4412,24 @@ public class Solutions3 {
         return ans;
     }
 
+    //6315. 统计范围内的元音字符串数
+    public int vowelStrings(String[] words, int left, int right) {
+        Set<Character> set = new HashSet<>();
+        set.add('a');
+        set.add('e');
+        set.add('i');
+        set.add('o');
+        set.add('u');
+        int ans = 0;
+        for(int i=left;i<=right;i++){
+            if(set.contains(words[i].charAt(0))&& set.contains(words[i].charAt(words[i].length()-1))){
+                ans++;
+            }
+        }
+        return ans;
+
+    }
+
     // 1742 盒子中小球的最大数量
     public int countBalls(int lowLimit, int highLimit) {
         Map<Integer, Integer> map = new HashMap<>();

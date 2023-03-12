@@ -220,6 +220,31 @@ public class Solutions1 {
         return cnt == 0;
     }
 
+    //1096. 花括号展开 II
+    private TreeSet<String> s = new TreeSet<>();
+
+    public List<String> braceExpansionII(String expression) {
+        dfs1096(expression);
+        return new ArrayList<>(s);
+    }
+
+    private void dfs1096(String exp) {
+        int j = exp.indexOf('}');
+        if (j == -1) {
+            s.add(exp);
+            return;
+        }
+        int i = j;
+        while (exp.charAt(i) != '{') {
+            --i;
+        }
+        String a = exp.substring(0, i);
+        String c = exp.substring(j + 1);
+        for (String b : exp.substring(i + 1, j).split(",")) {
+            dfs1096(a + b + c);
+        }
+    }
+
     // 761 特殊的二进制序列
     public String makeLargestSpecial(String s) {
         if (s.length() <= 2) {
@@ -1731,7 +1756,8 @@ public class Solutions1 {
         return result;
     }
 
-    //6308. 二叉树中的第 K 大层和
+    //2583. 二叉树中的第 K 大层和
+    // 竞赛int相加溢出，开long
     public long kthLargestLevelSum(TreeNode root, int k) {
         if (root == null) return -1;
         PriorityQueue<Long> pq = new PriorityQueue<>(Comparator.reverseOrder());
@@ -4871,7 +4897,51 @@ public class Solutions1 {
         return ans;
     }
 
-    //560 和为K的子数组(和为k的子数组个数)
+    //6316. 重排数组以得到最大前缀分数
+    // 竞赛int相加溢出，开long
+    public int maxScore(int[] nums) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        long[] sum = new long[n];
+        sum[0] = nums[n - 1];
+        int ans = sum[0] > 0 ? 1 : 0;
+        for (int i = 1; i < n; i++) {
+            sum[i] = sum[i - 1] + nums[n - 1 - i];
+            if (sum[i] > 0) ans++;
+        }
+        return ans;
+    }
+
+    public long beautifulSubarrays(int[] nums) {
+        long ans = 0;
+        Map<Integer, Integer> map = new HashMap<>();
+        map.put(0, 1);
+        int x = 0;
+        for (int num : nums) {
+            x ^= num;
+            // 之前有多少个异或和为x的，就能与当前组成异或和=0的子数组
+            ans += map.getOrDefault(x,0);
+            map.put(x, map.getOrDefault(x, 0) + 1);
+        }
+        return ans;
+    }
+
+    //1915. 最美子字符串的数目
+    public long wonderfulSubstrings(String word) {
+        int[] cnt = new int[1024];
+        cnt[0] = 1; // 初始前缀和为 0，需将其计入出现次数
+        long ans = 0L;
+        for (int i = 0, sum = 0; i < word.length(); ++i) {
+            sum ^= 1 << (word.charAt(i) - 'a'); // 计算当前前缀和
+            ans += cnt[sum]; // 所有字母均出现偶数次
+            for (int j = 1; j < 1024; j <<= 1) // 枚举其中一个字母出现奇数次
+                ans += cnt[sum ^ j]; // 反转该字母的出现次数的奇偶性
+            ++cnt[sum]; // 更新前缀和出现次数
+        }
+        return ans;
+    }
+
+    // 560 和为K的子数组(和为k的子数组个数)
     // 53 最大子数组和 dp 523 连续子数组和 325 和等于k的最长子数组长度 525 连续数组 560 和为k的子数组
 // 前缀和
     public int subarraySum(int[] nums, int k) {
@@ -4952,6 +5022,33 @@ public class Solutions1 {
             }
         }
         return false;
+    }
+
+    //1590. 使数组和能被 P 整除
+    public int minSubarray(int[] nums, int p) {
+        int n = nums.length;
+        int x = 0;
+        // 前n个数对p的余数
+        for (int num : nums) {
+            x = (x + num) % p;
+        }
+        if (x == 0) return 0;
+        // y%p=x,(y-z)%p=0 => z%p=x
+        //sum[n]=y,找到区间和%p=x的子数组：(sum[r]-sum[l]=z)%p=x
+        //(y-z)%p=x => z%p=(y-x)%p
+        // sum[l]%p = (sum[r]-x)%p
+        Map<Integer, Integer> map = new HashMap<>();
+        int y = 0;
+        int min = n;
+        for (int i = 0; i < n; i++) {
+            map.put(y, i);
+            y = (y + nums[i]) % p;
+            int t = (y - x + p) % p;
+            if (map.containsKey(t)) {
+                min = Math.min(min, i - map.get(t) + 1);
+            }
+        }
+        return min == n ? -1 : min;
     }
 
     // 325 和等于k的最长子数组长度

@@ -1307,6 +1307,35 @@ public class Solutions2 {
         return ans / 2;
     }
 
+    //6317. 统计美丽子数组数目
+    // 朴素双循环TLE
+    public long beautifulSubarrays(int[] nums) {
+        int n = nums.length;
+        long ans = 0;
+        for (int i = 0; i < n; i++) {
+            int x = nums[i];
+            if (x == 0) ans++;
+            for (int j = i + 1; j < n; j++) {
+                x ^= nums[j];
+                if (x == 0) ans++;
+            }
+        }
+        return ans;
+    }
+
+    public long beautifulSubarrays2(int[] nums) {
+        long ans = 0;
+        Map<Integer, Integer> map = new HashMap<>();
+        map.put(0, 1);
+        int x = 0;
+        for (int num : nums) {
+            x ^= num;
+            ans += map.getOrDefault(x,0);
+            map.put(x, map.getOrDefault(x, 0) + 1);
+        }
+        return ans;
+    }
+
     //endregion---------------------------------------------------------------------------------------------------------
 
     //region--------------------------------------------------------------------滑动窗口---------------------------------------------
@@ -1664,6 +1693,29 @@ public class Solutions2 {
             ans = (ans + (r - l + 1) % mod) % mod;
         }
         return (int) ans;
+    }
+
+    //2379. 得到 K 个黑块的最少涂色次数
+    public int minimumRecolors(String blocks, int k) {
+        int n = blocks.length();
+        char[] chars = blocks.toCharArray();
+        int min = Integer.MAX_VALUE;
+        int cnt = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            if (chars[r] == 'W') {
+                cnt++;
+            }
+            while (r - l + 1 > k) {
+                if (chars[l] == 'W') {
+                    cnt--;
+                }
+                l++;
+            }
+            if (r - l + 1 == k) {
+                min = Math.min(min, cnt);
+            }
+        }
+        return min;
     }
 
     // 485 最大连续1的个数
@@ -4149,6 +4201,23 @@ public class Solutions2 {
         return max;
     }
 
+    //1653. 使字符串平衡的最少删除次数
+    public int minimumDeletions(String s) {
+        int n = s.length();
+        int[] dp = new int[n + 1];
+        dp[0] = 0;
+        int cntB = 0;
+        for (int i = 1; i <= n; i++) {
+            if (s.charAt(i - 1) == 'b') {
+                dp[i] = dp[i - 1];
+                cntB++;
+            } else {
+                dp[i] = Math.min(dp[i - 1] + 1, cntB);
+            }
+        }
+        return dp[n];
+    }
+
     // 2414 最长的字母序连续子字符串的长度
     // 字母序连续字符串 是由字母表中连续字母组成的字符串。换句话说，字符串 "abcdefghijklmnopqrstuvwxyz" 的任意子字符串都是 字母序连续字符串 。
 // 例如，"abc" 是一个字母序连续字符串，而 "acb" 和 "za" 不是。
@@ -6043,7 +6112,7 @@ public class Solutions2 {
         return res;
     }
 
-    //6310. 获得分数的方法数
+    //2585. 获得分数的方法数
     public int waysToReachTarget(int target, int[][] types) {
         int mod = (int) 1e9 + 7;
         int[][] dp = new int[types.length + 1][target + 1];
@@ -8442,6 +8511,114 @@ public class Solutions2 {
             }
         }
         return maxLen;
+    }
+
+    //1617. 统计子树中城市之间最大距离
+    int mask;
+    int diameter;
+
+    public int[] countSubgraphsForEachDiameterDFS(int n, int[][] edges) {
+        List<Integer>[] adj = new List[n];
+        for (int i = 0; i < n; i++) {
+            adj[i] = new ArrayList<Integer>();
+        }
+        for (int[] edge : edges) {
+            int x = edge[0] - 1;
+            int y = edge[1] - 1;
+            adj[x].add(y);
+            adj[y].add(x);
+        }
+
+        int[] ans = new int[n - 1];
+        for (int i = 1; i < (1 << n); i++) {
+            int x = 32 - Integer.numberOfLeadingZeros(i) - 1;
+            int mask = i;
+            int y = -1;
+            Queue<Integer> queue = new ArrayDeque<Integer>();
+            queue.offer(x);
+            mask &= ~(1 << x);
+            while (!queue.isEmpty()) {
+                y = queue.poll();
+                for (int vertex : adj[y]) {
+                    if ((mask & (1 << vertex)) != 0) {
+                        mask &= ~(1 << vertex);
+                        queue.offer(vertex);
+                    }
+                }
+            }
+            if (mask == 0) {
+                int diameter = dfs(adj, -1, y, i);
+                if (diameter > 0) {
+                    ans[diameter - 1]++;
+                }
+            }
+        }
+        return ans;
+    }
+
+    public int dfs(List<Integer>[] adj, int parent, int u, int mask) {
+        int depth = 0;
+        for (int v : adj[u]) {
+            if (v != parent && (mask & (1 << v)) != 0) {
+                depth = Math.max(depth, 1 + dfs(adj, u, v, mask));
+            }
+        }
+        return depth;
+    }
+
+    //枚举任意两点直径
+    public int[] countSubgraphsForEachDiameter(int n, int[][] edges) {
+        List<Integer>[] adj = new List[n];
+        int[][] dist = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(dist[i], Integer.MAX_VALUE);
+            dist[i][i] = 0;
+        }
+        for (int i = 0; i < n; i++) {
+            adj[i] = new ArrayList<Integer>();
+        }
+        for (int[] edge : edges) {
+            int x = edge[0] - 1;
+            int y = edge[1] - 1;
+            adj[x].add(y);
+            adj[y].add(x);
+            dist[x][y] = dist[y][x] = 1;
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    if (dist[j][i] != Integer.MAX_VALUE && dist[i][k] != Integer.MAX_VALUE) {
+                        dist[j][k] = Math.min(dist[j][k], dist[j][i] + dist[i][k]);
+                    }
+                }
+            }
+        }
+        int[] ans = new int[n - 1];
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                ans[dist[i][j] - 1] += dfs(adj, dist, i, -1, i, j);
+            }
+        }
+        return ans;
+    }
+
+    public int dfs(List<Integer>[] adj, int[][] dist, int u, int parent, int x, int y) {
+        if (dist[u][x] > dist[x][y] || dist[u][y] > dist[x][y]) {
+            return 1;
+        }
+        if ((dist[u][y] == dist[x][y] && u < x) || (dist[u][x] == dist[x][y] && u < y)) {
+            return 1;
+        }
+        int ret = 1;
+        for (int v : adj[u]) {
+            if (v != parent) {
+                ret *= dfs(adj, dist, v, u, x, y);
+            }
+        }
+        if (dist[u][x] + dist[u][y] > dist[x][y]) {
+            ret++;
+        }
+        return ret;
     }
 
     //2538. 最大价值和与最小价值和的差值
