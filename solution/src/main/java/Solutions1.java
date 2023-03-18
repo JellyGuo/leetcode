@@ -3623,7 +3623,72 @@ public class Solutions1 {
     }
 
     //1948
+    class Triee {
+        Map<String, Triee> children;
+        boolean isEnd;
+        String word;
+        List<List<String>> paths;
+
+        public Triee(String word) {
+            this.word = word;
+            paths = new ArrayList<>();
+            children = new HashMap<>();
+        }
+
+        public void insert(List<String> path) {
+            Triee node = this;
+            for (String word : path) {
+                Triee child = node.children.get(word);
+                if (child == null) {
+                    child = new Triee(word);
+                    node.children.put(word, child);
+                }
+                child.paths.add(path);
+                node = child;
+            }
+            node.isEnd = true;
+        }
+    }
+
     public List<List<String>> deleteDuplicateFolder(List<List<String>> paths) {
+        Map<String, List<Triee>> map = new HashMap<>();
+        Triee trie = new Triee("");
+        for (List<String> path : paths) {
+            trie.insert(path);
+        }
+        dfs(trie, map);
+        Set<Integer> idx = new HashSet<>();
+        for (Map.Entry<String, List<Triee>> entry : map.entrySet()) {
+            if (entry.getValue().size() == 1) continue;
+            for (Triee each : entry.getValue()) {
+                for (List<String> p : each.paths) {
+                    idx.add(paths.indexOf(p));
+                }
+            }
+        }
+        List<List<String>> ans = new ArrayList<>();
+        for (int i = 0; i < paths.size(); i++) {
+            if (idx.contains(i)) continue;
+            ans.add(paths.get(i));
+        }
+        return ans;
+    }
+
+    private String dfs(Triee trie, Map<String, List<Triee>> map) {
+        if (trie.children.isEmpty()) return "(" + trie.word + ")";
+        List<String> childStr = new ArrayList<>();
+        for (Triee child : trie.children.values()) {
+            childStr.add(dfs(child, map));
+        }
+        childStr.sort(String::compareTo);
+        String key = String.join("", childStr);
+        List<Triee> ls = map.getOrDefault(key, new ArrayList<>());
+        ls.add(trie);
+        map.put(key, ls);
+        return "(" + key + trie.word + ")";
+    }
+
+    public List<List<String>> deleteDuplicateFolder1(List<List<String>> paths) {
         TrieNode root = new TrieNode();
         for (List<String> path : paths) {
             TrieNode curr = root;
@@ -4897,7 +4962,7 @@ public class Solutions1 {
         return ans;
     }
 
-    //6316. 重排数组以得到最大前缀分数
+    //2588. 重排数组以得到最大前缀分数
     // 竞赛int相加溢出，开long
     public int maxScore(int[] nums) {
         int n = nums.length;
@@ -4942,7 +5007,7 @@ public class Solutions1 {
     }
 
     // 560 和为K的子数组(和为k的子数组个数)
-    // 53 最大子数组和 dp 523 连续子数组和 325 和等于k的最长子数组长度 525 连续数组 560 和为k的子数组
+    // 53 最大子数组和 dp   523 连续子数组和 325 和等于k的最长子数组长度 525 连续数组 560 和为k的子数组
 // 前缀和
     public int subarraySum(int[] nums, int k) {
         Map<Integer, Integer> map = new HashMap<>();
@@ -5212,6 +5277,37 @@ public class Solutions1 {
             cnt[odd] += 1;
         }
         return ans;
+    }
+
+    //2389. 和有限的最长子序列 前缀和+二分
+    public int[] answerQueries(int[] nums, int[] queries) {
+        Arrays.sort(nums);
+        int n = nums.length;
+        int m = queries.length;
+        int[] sum = new int[n];
+        sum[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            sum[i] = sum[i - 1] + nums[i];
+        }
+        int[] ans = new int[m];
+        for (int i = 0; i < m; i++) {
+            int idx = binarySearch(sum, queries[i]);
+            ans[i] = sum[idx] <= queries[i] ? idx + 1 : 0;
+        }
+        return ans;
+    }
+
+    private int binarySearch(int[] sum, int x) {
+        int l = 0, r = sum.length - 1;
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            if (sum[mid] <= x) {
+                l = mid;
+            } else {
+                r = mid - 1;
+            }
+        }
+        return l;
     }
 
     //面试题 17.24. 最大子矩阵   53的二维拓展
@@ -5866,6 +5962,79 @@ public class Solutions1 {
         return unionFind.isConnect(source, destination);
     }
 
+    //1615. 最大网络秩
+    public int maximalNetworkRank(int n, int[][] roads) {
+        boolean[][] connect = new boolean[n][n];
+        int[] degree = new int[n];
+        for (int[] road : roads) {
+            connect[road[0]][road[1]] = true;
+            connect[road[1]][road[0]] = true;
+            degree[road[0]]++;
+            degree[road[1]]++;
+        }
+        int max = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int sum = degree[i] + degree[j] - (connect[i][j] ? 1 : 0);
+                max = Math.max(max, sum);
+            }
+        }
+        return max;
+    }
+
+    public int maximalNetworkRank2(int n, int[][] roads) {
+        boolean[][] connect = new boolean[n][n];
+        int[] degree = new int[n];
+        for (int[] road : roads) {
+            connect[road[0]][road[1]] = true;
+            connect[road[1]][road[0]] = true;
+            degree[road[0]]++;
+            degree[road[1]]++;
+        }
+        int first = -1, second = -1;
+        List<Integer> firstList = new ArrayList<>();
+        List<Integer> secondList = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            if (degree[i] > first) {
+                second = first;
+                secondList.clear();
+                secondList.addAll(firstList);
+                first = degree[i];
+                firstList.clear();
+                firstList.add(i);
+            } else if (degree[i] == first) {
+                firstList.add(i);
+            } else if (degree[i] > second) {
+                second = degree[i];
+                secondList.clear();
+                secondList.add(i);
+            } else if (degree[i] == second) {
+                secondList.add(i);
+            }
+        }
+        if (firstList.size() == 1) {
+            int u = firstList.get(0);
+            for (int v : secondList) {
+                if (!connect[u][v]) {
+                    return first + second;
+                }
+            }
+            return first + second - 1;
+        }else {
+            int m = roads.length;
+            if (firstList.size() * (firstList.size() - 1) / 2 > m) {
+                return first * 2;
+            }
+            for (int u : firstList) {
+                for (int v : firstList) {
+                    if (u != v && !connect[u][v]) {
+                        return first * 2;
+                    }
+                }
+            }
+            return first * 2 - 1;
+        }
+    }
     //2059. 转化数字的最小运算数
     public int minimumOperations(int[] nums, int start, int goal) {
         if (start == goal) return 0;

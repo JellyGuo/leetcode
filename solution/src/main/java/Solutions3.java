@@ -6253,6 +6253,22 @@ public class Solutions3 {
         return energyHour + expHour;
     }
 
+    public int minNumberOfHours2(int initialEnergy, int initialExperience, int[] energy, int[] experience) {
+        int minEnergy = 0;
+        int sumEnergy = 0;
+        for (int e : energy) {
+            sumEnergy += e;
+        }
+        minEnergy = Math.max(0, sumEnergy + 1 - initialEnergy);
+        int minExp = 0;
+        for (int exp : experience) {
+            minExp = Math.max(minExp, exp + 1 - initialExperience);
+            initialExperience += exp;
+        }
+        minExp = Math.max(0, minExp);
+        return minEnergy + minExp;
+    }
+
     //2384. 最大回文数字
     public String largestPalindromic(String num) {
         // 定义暂存数组
@@ -6918,6 +6934,19 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+    //1605. 给定行和列的和求可行矩阵
+    public int[][] restoreMatrix(int[] rowSum, int[] colSum) {
+        int m = rowSum.length, n = colSum.length;
+        int[][] matrix = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                matrix[i][j] = Math.min(rowSum[i], colSum[j]);
+                rowSum[i] -= matrix[i][j];
+                colSum[j] -= matrix[i][j];
+            }
+        }
+        return matrix;
     }
 
     //1663. 具有给定数值的最小字符串
