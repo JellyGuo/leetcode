@@ -966,24 +966,24 @@ public class Solution {
     }
 
     public long kthLargestLevelSum(TreeNode root, int k) {
-        if(root == null) return -1;
-        PriorityQueue<Long> pq  = new PriorityQueue<>(Comparator.reverseOrder());
+        if (root == null) return -1;
+        PriorityQueue<Long> pq = new PriorityQueue<>(Comparator.reverseOrder());
         Queue<TreeNode> queue = new ArrayDeque<>();
         queue.offer(root);
-        while (!queue.isEmpty()){
+        while (!queue.isEmpty()) {
             int size = queue.size();
             long sum = 0;
-            for(int i=0;i<size;i++){
+            for (int i = 0; i < size; i++) {
                 TreeNode tmp = queue.poll();
                 sum += tmp.val;
-                if(tmp.left!=null) queue.offer(tmp.left);
-                if(tmp.right!=null) queue.offer(tmp.right);
+                if (tmp.left != null) queue.offer(tmp.left);
+                if (tmp.right != null) queue.offer(tmp.right);
             }
             pq.offer(sum);
         }
-        if(pq.size()<k) return -1;
+        if (pq.size() < k) return -1;
         long ans = -1;
-        for(int i=0;i<k;i++){
+        for (int i = 0; i < k; i++) {
             ans = pq.poll().longValue();
         }
         return ans;
@@ -1026,7 +1026,7 @@ public class Solution {
         int revenue = 0;
         int turns = 1;
         int exist = 0;
-        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[0]-o1[0]);
+        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[0] - o1[0]);
         for (int customer : customers) {
             if (customer + remain <= 4) {
                 exist = (customer + remain);
@@ -1035,22 +1035,22 @@ public class Solution {
                 remain = customer + remain - 4;
             }
             revenue += exist * boardingCost - turns * runningCost;
-            pq.offer(new int[]{revenue,turns});
+            pq.offer(new int[]{revenue, turns});
             turns++;
         }
         while (remain >= 4) {
             exist += 4;
             remain -= 4;
             revenue += exist * boardingCost - turns * runningCost;
-            pq.offer(new int[]{revenue,turns});
+            pq.offer(new int[]{revenue, turns});
             turns++;
         }
         if (remain > 0) {
             exist += remain;
             revenue += exist * boardingCost - turns * runningCost;
-            pq.offer(new int[]{revenue,turns});
+            pq.offer(new int[]{revenue, turns});
         }
-        return  pq.peek()[0]>0?pq.peek()[1]:-1;
+        return pq.peek()[0] > 0 ? pq.peek()[1] : -1;
     }
 
     public int vowelStrings(String[] words, int left, int right) {
@@ -1061,8 +1061,8 @@ public class Solution {
         set.add('o');
         set.add('u');
         int ans = 0;
-        for(int i=left;i<=right;i++){
-            if(set.contains(words[i].charAt(0))&& set.contains(words[i].charAt(words[i].length()-1))){
+        for (int i = left; i <= right; i++) {
+            if (set.contains(words[i].charAt(0)) && set.contains(words[i].charAt(words[i].length() - 1))) {
                 ans++;
             }
         }
@@ -1074,24 +1074,24 @@ public class Solution {
         int n = nums.length;
         Arrays.sort(nums);
         long[] sum = new long[n];
-        sum[0] = nums[n-1];
-        int ans = sum[0]>0?1:0;
-        for(int i=1;i<n;i++){
-            sum[i] = sum[i-1]+nums[n-1-i];
-            if(sum[i]>0) ans ++;
+        sum[0] = nums[n - 1];
+        int ans = sum[0] > 0 ? 1 : 0;
+        for (int i = 1; i < n; i++) {
+            sum[i] = sum[i - 1] + nums[n - 1 - i];
+            if (sum[i] > 0) ans++;
         }
         return ans;
     }
 
     public int maxScore2(int[] nums) {
         int n = nums.length;
-        List<Integer> ls =Arrays.stream(nums).boxed().collect(Collectors.toList());
-        ls.sort((o1, o2) -> o2-o1);
-        int[] sum = new int[n+1];
+        List<Integer> ls = Arrays.stream(nums).boxed().collect(Collectors.toList());
+        ls.sort((o1, o2) -> o2 - o1);
+        int[] sum = new int[n + 1];
         int ans = 0;
-        for(int i=1;i<=n;i++){
-            sum[i] = sum[i-1]+ls.get(i-1);
-            if(sum[i]>0) ans++;
+        for (int i = 1; i <= n; i++) {
+            sum[i] = sum[i - 1] + ls.get(i - 1);
+            if (sum[i] > 0) ans++;
         }
         return ans;
     }
@@ -1099,20 +1099,22 @@ public class Solution {
     public long beautifulSubarrays(int[] nums) {
         int n = nums.length;
         long ans = 0;
-        for(int i=0;i<n;i++){
+        for (int i = 0; i < n; i++) {
             int x = nums[i];
-            if(x==0) ans++;
-            for(int j=i+1;j<n;j++){
-                x^=nums[j];
-                if(x==0) ans++;
+            if (x == 0) ans++;
+            for (int j = i + 1; j < n; j++) {
+                x ^= nums[j];
+                if (x == 0) ans++;
             }
         }
         return ans;
     }
 
+
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.minOperationsMaxProfit(new int[]{10,10,6,4,7},3,8);
+        solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
         ListNode l2 = new ListNode(2);

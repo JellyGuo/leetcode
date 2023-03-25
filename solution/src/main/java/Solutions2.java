@@ -3439,6 +3439,31 @@ public class Solutions2 {
         return dp[row][column][k];
     }
 
+    //2596. 检查骑士巡视方案
+    public boolean checkValidGrid(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int target = m * n - 1;
+        boolean[][] visited = new boolean[m][n];
+        visited[0][0] = true;
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{0, 0});
+        int idx = 1;
+        while (!queue.isEmpty()) {
+            int[] cell = queue.poll();
+            int x = cell[0], y = cell[1];
+            for (int[] dire : directions) {
+                int newX = x + dire[0], newY = y + dire[1];
+                if (newX >= 0 && newX < m && newY >= 0 && newY < n && !visited[newX][newY] && grid[newX][newY] == idx) {
+                    if (idx == target) return true;
+                    visited[newX][newY] = true;
+                    queue.offer(new int[]{newX, newY});
+                    idx++;
+                }
+            }
+        }
+        return false;
+    }
+
     // 面试08.14 布尔运算 自顶向下 记忆化DFS
     Integer[][][] countEvalMemo;
 
@@ -7205,6 +7230,33 @@ public class Solutions2 {
         return idx;
     }
 
+    //1626. 无矛盾的最佳球队
+    public int bestTeamScore(int[] scores, int[] ages) {
+        int n = scores.length;
+        int[][] array = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            array[i] = new int[]{ages[i], scores[i]};
+        }
+        Arrays.sort(array, (o1, o2) -> {
+            if (o1[0] != o2[0]) return o1[0] - o2[0];
+            return o1[1] - o2[1];
+        });
+        int[] dp = new int[n];
+        dp[0] = array[0][1];
+        int max = dp[0];
+        for (int i = 1; i < n; i++) {
+            dp[i] = array[i][1];
+            for (int j = 0; j < i; j++) {
+                if (array[j][1] <= array[i][1]) {
+                    dp[i] = Math.max(dp[i], dp[j] + array[i][1]);
+                }
+            }
+            max = Math.max(max, dp[i]);
+        }
+        return max;
+
+    }
+
     //1691. 堆叠长方体的最大高度
     public int maxHeight(int[][] cuboids) {
         int n = cuboids.length;
@@ -10634,6 +10686,31 @@ public class Solutions2 {
         // k-1个挡板(k个背包)和相减
         while (--k > 0) {
             ans += large.poll() - small.poll();
+        }
+        return ans;
+    }
+
+    //2593. 标记所有元素后数组的分数
+    public long findScore(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> {
+            if (o1[0] != o2[0]) {
+                return o1[0] - o2[0];
+            }
+            return o1[1] - o2[1];
+        });
+        for (int i = 0; i < n; i++) {
+            pq.offer(new int[]{nums[i], i});
+        }
+        long ans = 0;
+        while (!pq.isEmpty() && set.size() < n) {
+            int[] cell = pq.poll();
+            if (set.contains(cell[1])) continue;
+            ans += cell[0];
+            set.add(cell[1]);
+            if (cell[1] > 0) set.add(cell[1] - 1);
+            if (cell[1] < n - 1) set.add(cell[1] + 1);
         }
         return ans;
     }

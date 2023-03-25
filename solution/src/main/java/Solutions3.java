@@ -478,6 +478,42 @@ public class Solutions3 {
         return (k & 1) ^ 1 ^ kthGrammar(n - 1, (k + 1) / 2);
     }
 
+    //1625. 执行操作后字典序最小的字符串 裴蜀定理
+    public String findLexSmallestString(String s, int a, int b) {
+        int n = s.length();
+        String res = s;
+        s = s + s;
+        int g = gcd(b, n);
+
+        for (int i = 0; i < n; i += g) {
+            char[] t = s.substring(i, i + n).toCharArray();
+            add(t, n, a, 1);
+            if (b % 2 != 0) {
+                add(t, n, a, 0);
+            }
+            String tStr = new String(t);
+            if (tStr.compareTo(res) < 0) {
+                res = tStr;
+            }
+        }
+        return res;
+    }
+
+    public void add(char[] t, int n, int a, int start) {
+        int minVal = 10, times = 0;
+        for (int i = 0; i < 10; i++) {
+            int added = ((t[start] - '0') + i * a) % 10;
+            if (added < minVal) {
+                minVal = added;
+                times = i;
+            }
+        }
+        for (int i = start; i < n; i += 2) {
+            t[i] = (char) ('0' + ((t[i] - '0') + times * a) % 10);
+        }
+    }
+
+
     //1784. 检查二进制字符串字段
     //给你一个二进制字符串 s ，该字符串 不含前导零 。
 // 如果 s 包含 零个或一个由连续的 '1' 组成的字段 ，返回 true 。否则，返回 false 。
@@ -5813,6 +5849,34 @@ public class Solutions3 {
         return res;
     }
 
+    //299. 猜数字游戏
+    public String getHint(String secret, String guess) {
+        int n = secret.length();
+        char[] chars = secret.toCharArray();
+        Map<Character, Integer> cnt = new HashMap<>();
+        for (char c : chars) {
+            cnt.put(c, cnt.getOrDefault(c, 0) + 1);
+        }
+        int cntA = 0, cntB = 0;
+        Set<Integer> set = new HashSet<>();
+        for (int i = 0; i < n; i++) {
+            if (chars[i] == guess.charAt(i)) {
+                set.add(i);
+                cntA++;
+                cnt.put(chars[i], cnt.get(chars[i]) - 1);
+                if (cnt.get(chars[i]) == 0) cnt.remove(chars[i]);
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (set.contains(i)) continue;
+            if (cnt.containsKey(guess.charAt(i))) {
+                cntB++;
+                cnt.put(guess.charAt(i), cnt.get(guess.charAt(i)) - 1);
+                if (cnt.get(guess.charAt(i)) == 0) cnt.remove(guess.charAt(i));
+            }
+        }
+        return cntA + "A" + cntB + "B";
+    }
 
     //539 最小时间差
     public int findMinDifference(List<String> timePoints) {
@@ -6228,12 +6292,27 @@ public class Solutions3 {
         return ans;
     }
 
-    //6307. 递枕头
+    //2582. 递枕头
     public int passThePillow(int n, int time) {
         int k = time / (n - 1);
         int r = time % (n - 1);
         if (k % 2 == 0) return 1 + r;
         return n - r;
+    }
+
+    //2595. 奇偶位数
+    public int[] evenOddBit(int n) {
+        int odd = 0, even = 0;
+        int i = 0;
+        while (n > 0) {
+            if (n % 2 == 1) {
+                if (i % 2 == 0) even++;
+                else odd++;
+            }
+            n /= 2;
+            i++;
+        }
+        return new int[]{even, odd};
     }
 
     //2383. 赢得比赛需要的最少训练时长
@@ -7367,6 +7446,32 @@ public class Solutions3 {
         return ans >= 3;
     }
 
+    //2591. 将钱分给最多的儿童
+    public int distMoney(int money, int children) {
+        money -= children;
+        if (money < 0) return -1;
+        int ans = Math.min(money / 7, children);
+        money -= ans * 7;
+        children -= ans;
+        if ((children == 0 && money > 0) || (children == 1 && money == 3)) ans--;
+        return ans;
+
+    }
+
+    //2592. 最大化数组的伟大值 田忌赛马+双指针+贪心
+    public int maximizeGreatness(int[] nums) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        int ans = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            if (nums[r] > nums[l]) {
+                ans++;
+                l++;
+            }
+        }
+        return ans;
+    }
+
     //870. 优势洗牌 田忌赛马
     //给定两个大小相等的数组 nums1 和 nums2，nums1 相对于 nums2 的优势可以用满足 nums1[i] > nums2[i] 的索引 i 的数目来描述。
 // 返回 nums1 的任意排列，使其相对于 nums2 的优势最大化。
@@ -7656,6 +7761,24 @@ public class Solutions3 {
         }
         if (a != c) return n - evenCnt[a] - oddCnt[c];
         else return n - Math.max(evenCnt[a] + oddCnt[d], oddCnt[c] + evenCnt[b]);
+    }
+
+    //2598. 执行操作后的最大 MEX
+    public int findSmallestInteger(int[] nums, int value) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : nums) {
+            int r = (num % value + value) % value;
+            map.put(r, map.getOrDefault(r, 0) + 1);
+        }
+        int ans = 0;
+        int r = ans % value;
+        while (map.containsKey(r)) {
+            map.put(r, map.get(r) - 1);
+            if (map.get(r) == 0) map.remove(r);
+            ans++;
+            r = ans % value;
+        }
+        return ans;
     }
 
     // endregion--------------------------------------------------------------------------------------------------
@@ -8145,6 +8268,44 @@ public class Solutions3 {
         }
     }
 
+    //1630. 等差子数组
+    public List<Boolean> checkArithmeticSubarrays(int[] nums, int[] l, int[] r) {
+        int n = nums.length, m = l.length;
+        List<Boolean> ans = new ArrayList<>();
+        for (int i = 0; i < m; i++) {
+            int left = l[i], right = r[i];
+            int min = nums[left], max = nums[left];
+            for (int j = left + 1; j <= right; j++) {
+                min = Math.min(min, nums[j]);
+                max = Math.max(max, nums[j]);
+            }
+            if (max - min == 0) {
+                ans.add(true);
+                continue;
+            }
+            if ((max - min) % (right - left) != 0) {
+                ans.add(false);
+                continue;
+            }
+            int d = (max - min) / (right - left);
+            boolean[] seen = new boolean[right - left + 1];
+            boolean flag = true;
+            for (int j = left; j <= right; j++) {
+                if ((nums[j] - min) % d != 0) {
+                    flag = false;
+                    break;
+                }
+                int t = (nums[j] - min) / d;
+                if (seen[t]) {
+                    flag = false;
+                    break;
+                }
+                seen[t] = true;
+            }
+            ans.add(flag);
+        }
+        return ans;
+    }
     //2530. 执行 K 次操作后的最大分数
     public long maxKelements(int[] nums, int k) {
         PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
@@ -8675,6 +8836,65 @@ public class Solutions3 {
             }
         }
         return r > l ? r - l + 1 : 0;
+    }
+
+    //1574. 删除最短的子数组使剩余数组有序
+    //将数组分成三部分：原数组=开头非递减部分+中间被删除部分+末尾非递减部分，其中每一部分都可以为空
+    //单独求一个开头非递减部分或末尾非递减部分都很好求，但问题是，开头非递减部分的最后一个元素要不大于末尾非递减部分的第一个元素。
+    // 这可能就需要我们对开头或结尾的长度进行取舍。
+    //方法也很简单，首先我们求出最长的末尾非递减部分，如果整个数组都是非递减的，直接返回0。否则，原数组必定可以被分成非空的三部分。
+    //我们只需要使用再一个指针left从数组头部开始往后在非递减区间移动，从数组开头到left所指元素为开头非递减部分
+    //如果arr[left]>arr[right]，就不断让right后移（减小末尾非递减部分以增大开头非递减部分），若right已经移出数组范围则不进行此判断
+    //在left后移的过程中，不断判断答案的最小值即可
+    public int findLengthOfShortestSubarray(int[] arr) {
+        int n = arr.length;
+        int i = 0, j = n - 1;
+        while (i < n - 1 && arr[i] <= arr[i + 1]) {
+            i++;
+        }
+        while (j > 0 && arr[j] >= arr[j - 1]) {
+            j--;
+        }
+        if (i >= j) return 0;
+        int ans = Math.min(n - i - 1, j);
+        for (int l = 0; l <= i; l++) {
+            int r = binarySearch1574(arr, arr[l], j);
+            ans = Math.min(ans, r - l - 1);
+        }
+        return ans;
+    }
+
+    private int binarySearch1574(int[] arr, int x, int l) {
+        int r = arr.length;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (arr[mid] >= x) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return r;
+    }
+
+    public int findLengthOfShortestSubarrayDualPointer(int[] arr) {
+        int n = arr.length;
+        int i = 0, j = n - 1;
+        while (i < n - 1 && arr[i] <= arr[i + 1]) {
+            i++;
+        }
+        while (j > 0 && arr[j] >= arr[j - 1]) {
+            j--;
+        }
+        if (i >= j) return 0;
+        int ans = Math.min(n - i - 1, j);
+        for (int l = 0,r=j; l <= i; l++) {
+            while(r<n && arr[r]<arr[l]){
+                r++;
+            }
+            ans = Math.min(ans, r - l - 1);
+        }
+        return ans;
     }
 
     //逐层排序二叉树所需的最少操作数目

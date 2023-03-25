@@ -592,6 +592,30 @@ public class Solutions1 {
         }
     }
 
+    //2597. 美丽子集的数目
+    int ans2597;
+    public int beautifulSubsets(int[] nums, int k) {
+        Map<Integer, Integer> map = new HashMap<>();
+        dfs(nums, 0, k, map);
+        return ans2597 - 1;//减去空集这一情况
+    }
+
+    private void dfs(int[] nums, int idx, int k, Map<Integer, Integer> map) {
+        ans2597++;
+        if (idx == nums.length) {
+            return;
+        }
+        for (int i = idx; i < nums.length; i++) {
+            int prev = nums[i] - k, next = nums[i] + k;
+            if (!map.containsKey(prev) && !map.containsKey(next)) {
+                map.put(nums[i], map.getOrDefault(nums[i], 0) + 1);
+                dfs(nums, i + 1, k, map);
+                map.put(nums[i], map.get(nums[i]) - 1);
+                if (map.get(nums[i]) == 0) map.remove(nums[i]);
+            }
+        }
+    }
+
     //offer 38 字符串排列
     //输入一个字符串，打印出该字符串中字符的所有排列。
 // 输入：s = "abc"
@@ -7962,6 +7986,147 @@ public class Solutions1 {
     }
 // endregion ----------------------------------------------------------------------------------------------------------
 
+    //region-------------------------------------------匈牙利算法/KM算法-------------------------------------------------
+    //1947. 最大兼容性评分和
+    int[] lx;
+    int[] ly;
+    boolean[] sx;
+    boolean[] sy;
+    int[] match;
+    int[] slack;
+    int[][] points;
+
+    public int maxCompatibilitySum(int[][] students, int[][] mentors) {
+        m = students.length;
+        lx = new int[m];
+        ly = new int[m];
+        sx = new boolean[m];
+        sy = new boolean[m];
+        match = new int[m];
+        slack = new int[m];
+        points = new int[m][m];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < m; j++) {
+                points[i][j] = samePoint(students[i], mentors[j]);
+                lx[i] = Math.max(points[i][j], lx[i]);
+            }
+        }
+        Arrays.fill(ly, 0);
+        Arrays.fill(match, -1);
+        for (int i = 0; i < m; i++) {
+            Arrays.fill(slack, Integer.MAX_VALUE);
+            while (true) {
+                Arrays.fill(sx, false);
+                Arrays.fill(sy, false);
+                if (match(i)) break;
+                int min = Integer.MAX_VALUE;
+                for (int y = 0; y < m; y++) {
+                    if(!sy[y]) min = Math.min(min, slack[y]);
+                }
+                for (int idx = 0; idx < m; idx++) {
+                    if (sx[idx]) lx[idx] -= min;
+                    if (sy[idx]) ly[idx] += min;
+                    else slack[idx] -= min;
+                }
+            }
+        }
+        int ans = 0;
+        for (int y = 0; y < m; y++) {
+            if (match[y] != -1) ans += lx[match[y]] + ly[y];
+        }
+        return ans;
+    }
+
+    private boolean match(int x) {
+        sx[x] = true;
+        for (int y = 0; y < m; y++) {
+            if (sy[y]) continue;
+            int gap = lx[x] + ly[y] - points[x][y];
+            if (gap == 0) {
+                sy[y] = true;
+                if (match[y] == -1 || match(match[y])) {
+                    match[y] = x;
+                    return true;
+                }
+            } else {
+                slack[y] = Math.min(slack[y], gap);
+            }
+        }
+        return false;
+    }
+
+    private int samePoint(int[] s, int[] m) {
+        int n = s.length;
+        int point = 0;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == m[i]) point++;
+        }
+        return point;
+    }
+    //2172. 数组的最大与和
+    int[][] edges;
+    public int maximumANDSum(int[] nums, int numSlots) {
+        m = nums.length;
+        n = 2 * numSlots;
+        lx = new int[m];
+        ly = new int[n];
+        sx = new boolean[m];
+        sy = new boolean[n];
+        p = new int[n];
+        slack = new int[n];
+        edges = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < numSlots; j++) {
+                edges[i][j] = edges[i][j + numSlots] = (nums[i] & (j + 1));
+                lx[i] = Math.max(edges[i][j], lx[i]);
+            }
+        }
+        Arrays.fill(ly, 0);
+        Arrays.fill(p, -1);
+        for (int i = 0; i < m; i++) {
+            Arrays.fill(slack, Integer.MAX_VALUE);
+            while (true) {
+                Arrays.fill(sx, false);
+                Arrays.fill(sy, false);
+                if (match(i)) break;
+                int min = Integer.MAX_VALUE;
+                for (int y = 0; y < n; y++) {
+                    if (!sy[y]) min = Math.min(min, slack[y]);
+                }
+                for (int x = 0; x < m; x++) {
+                    if (sx[x]) lx[x] -= min;
+                }
+                for(int y=0;y<n;y++){
+                    if (sy[y]) ly[y] += min;
+                    else slack[y] -= min;
+                }
+            }
+        }
+        int ans = 0;
+        for (int y = 0; y < n; y++) {
+            if (p[y] != -1) ans += lx[p[y]] + ly[y];
+        }
+        return ans;
+    }
+
+    private boolean match2172(int x) {
+        sx[x] = true;
+        for (int y = 0; y < n; y++) {
+            if (sy[y]) continue;
+            int gap = lx[x] + ly[y] - edges[x][y];
+            if (gap == 0) {
+                sy[y] = true;
+                if (p[y] == -1 || match2172(p[y])) {
+                    p[y] = x;
+                    return true;
+                }
+            } else {
+                slack[y] = Math.min(slack[y], gap);
+            }
+        }
+        return false;
+    }
+    //endregion
     // region ------------------------------------------------并查集------------------------------------------------------
 
     // 399 计算除法
