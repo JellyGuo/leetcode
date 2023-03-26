@@ -5947,6 +5947,49 @@ public class Solutions1 {
         a.add('u');
         return a.contains(word.charAt(0)) && a.contains(word.charAt(word.length() - 1));
     }
+
+    //6357. 使数组元素全部相等的最少操作次数
+    public List<Long> minOperationsTLE(int[] nums, int[] queries) {
+        List<Long> ans = new ArrayList<>();
+        for (int query : queries) {
+            long res = 0;
+            for (int num : nums) {
+                res += Math.abs(num - query);
+            }
+            ans.add(res);
+        }
+        return ans;
+    }
+
+    public List<Long> minOperations(int[] nums, int[] queries) {
+        Arrays.sort(nums);
+        List<Long> ans = new ArrayList<>();
+        int n = nums.length;
+        long[] sum = new long[n];
+        sum[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            sum[i] = sum[i - 1] + nums[i];
+        }
+        for (int query : queries) {
+            if (query < nums[0]) {
+                ans.add(sum[n - 1] - (long) n * query);
+                continue;
+            }
+            int l = 0, r = n - 1;
+            while (l < r) {
+                int mid = l + r + 1 >> 1;
+                if (nums[mid] <= query) {
+                    l = mid;
+                } else {
+                    r = mid - 1;
+                }
+            }
+            long leftSize = l + 1, rightSize = n - l - 1;
+            long res = leftSize * query - sum[l] + (sum[n - 1] - sum[l] - rightSize * query);
+            ans.add(res);
+        }
+        return ans;
+    }
     // endregion ---------------------------------------------------------------------------------------------------
 
     //region  ---------------------------------------------图论BFS/DFS-----------------------------------------------

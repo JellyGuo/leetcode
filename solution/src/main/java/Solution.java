@@ -1110,10 +1110,108 @@ public class Solution {
         return ans;
     }
 
+    public boolean primeSubOperation(int[] nums) {
+        int n = nums.length;
+        int[] primes = new int[]{
+                2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
+                109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223,
+                227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337,
+                347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457,
+                461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593,
+                599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719,
+                727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857,
+                859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997
+        };
+        for (int i = n - 2; i >= 0; i--) {
+            int next = nums[i + 1];
+            int cur = nums[i];
+            if (cur < next) continue;
+            // 至少减少
+            int needMinus = cur - next + 1;
+            // 找到大于等于needMinus的第一个质数
+            int prime = findPrime(needMinus, primes);
+            if (prime >= nums[i] || prime < needMinus) return false;
+            nums[i] -= prime;
+        }
+        return true;
+    }
 
+    private int findPrime(int x, int[] primes) {
+        int l = 0, r = primes.length - 1;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (primes[mid] >= x) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return primes[l];
+    }
+
+    //3 1 6 8
+    // 1-14             4
+    // 2-1+1+4+6=12     6
+    // 3-2+3+5=10       8
+    // 4-1+3+2+4=9      9
+    // 5-2+4+1+3=10;    8
+    // 6-3+5+2=10       8
+    // 7-4+6+1+1=12     6
+    // 8-5+7+2=14       4
+    // 2 3 6 9
+    // 2 5 11 20
+    //2-0 1 4 7=12
+    //3-1 0 3 6=10
+    //4-2 1 2 5=10
+    //5-3 2 1 4=10
+    //6-4 3 0 3=10
+    //7-5 4 1 2=12
+    //8-6 5 2 1=14
+    //9-7 6 3 0=16
+    public List<Long> minOperations(int[] nums, int[] queries) {
+        Arrays.sort(nums);
+        List<Long> ans = new ArrayList<>();
+        int n = nums.length;
+        long[] sum = new long[n];
+        sum[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            sum[i] = sum[i - 1] + nums[i];
+        }
+        for (int query : queries) {
+            if (query < nums[0]) {
+                ans.add(sum[n - 1] - (long) n * query);
+                continue;
+            }
+            int l = 0, r = n - 1;
+            while (l < r) {
+                int mid = l + r + 1 >> 1;
+                if (nums[mid] <= query) {
+                    l = mid;
+                } else {
+                    r = mid - 1;
+                }
+            }
+            long leftSize = l + 1, rightSize = n - l - 1;
+            long res = leftSize * query - sum[l] + (sum[n - 1] - sum[l] - rightSize * query);
+            ans.add(res);
+        }
+        return ans;
+    }
+
+    public boolean findSubarrays(int[] nums) {
+        int n = nums.length;
+        Set<Integer> set = new HashSet<>();
+        for (int i = 0; i < n - 1; i++) {
+            int sum = nums[i] + nums[i + 1];
+            if (set.contains(sum)) return true;
+            set.add(sum);
+        }
+        return false;
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
+        solution.minOperations(new int[]{47, 50, 97, 58, 87, 72, 41, 63, 41, 51, 17, 21, 7, 100, 69, 66, 79, 92, 84, 9, 57, 26, 26, 28, 83, 38}, new int[]{3});
         solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
