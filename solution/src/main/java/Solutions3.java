@@ -2927,6 +2927,15 @@ public class Solutions3 {
         return (int) Math.sqrt(n);
     }
 
+    //1641. 统计字典序元音字符串的数目
+    //https://leetcode.cn/problems/count-sorted-vowel-strings/solution/zhong-xue-shu-xue-ke-pu-n-ge-xiao-qiu-fang-dao-m-g/
+    // n个小球放到m个盒子里：
+    // 1.每个盒子不能为空：把n分成m份，n-1个位置中间放m-1个隔板C(n-1,m-1)
+    // 2.每个盒子可以为空：m个盒子每个先放1个小球，剩余的随便放=》n+m个小球不能为空的放到m个盒子=》C(n+m-1,m-1)
+    public int countVowelStrings(int n) {
+        return (n + 4) * (n + 3) * (n + 2) * (n + 1) / 24;
+    }
+
     // 458. 可怜的小猪  香农熵 lg(n)/lg(t+1)<=k
     // 8 只砝码 7轻1重,最多2次称重一定找出重的 lg(8)/lg(2+1)<=2 3 3 2
     // 只有1轮，1只猪 死 / 不死 2种状态，x只 2^x种状态，验证2^x桶水
@@ -4058,6 +4067,18 @@ public class Solutions3 {
             }
         }
         return true;
+    }
+
+    //831. 隐藏个人信息
+    public String maskPII(String s) {
+        String[] country = {"", "+*-", "+**-", "+***-"};
+        int at = s.indexOf("@");
+        if (at > 0) {
+            s = s.toLowerCase();
+            return (s.charAt(0) + "*****" + s.substring(at - 1)).toLowerCase();
+        }
+        s = s.replaceAll("[^0-9]", "");
+        return country[s.length() - 10] + "***-***-" + s.substring(s.length() - 4);
     }
 
     //1138. 字母板上的路径
@@ -8576,6 +8597,54 @@ public class Solutions3 {
             }
         }
         return count;
+    }
+
+    //1637. 两点之间不包含任何点的最宽垂直区域
+    public int maxWidthOfVerticalArea(int[][] points) {
+        int n = points.length;
+        Arrays.sort(points, (o1, o2) -> o1[0] - o2[0]);
+        int max = 0;
+        for (int i = 1; i < n; i++) {
+            max = Math.max(max, points[i][0] - points[i - 1][0]);
+        }
+        return max;
+    }
+
+    //桶排序
+    public int maxWidthOfVerticalArea2(int[][] points) {
+        int n = points.length;
+        int[] nums = new int[n];
+        for (int i = 0; i < n; ++i) {
+            nums[i] = points[i][0];
+        }
+        final int inf = 1 << 30;
+        int mi = inf, mx = -inf;
+        for (int v : nums) {
+            mi = Math.min(mi, v);
+            mx = Math.max(mx, v);
+        }
+        int bucketSize = Math.max(1, (mx - mi) / (n - 1));
+        int bucketCount = (mx - mi) / bucketSize + 1;
+        int[][] buckets = new int[bucketCount][2];
+        for (int[] bucket : buckets) {
+            bucket[0] = inf;
+            bucket[1] = -inf;
+        }
+        for (int v : nums) {
+            int i = (v - mi) / bucketSize;
+            buckets[i][0] = Math.min(buckets[i][0], v);
+            buckets[i][1] = Math.max(buckets[i][1], v);
+        }
+        int prev = inf;
+        int ans = 0;
+        for (int[] bucket : buckets) {
+            if (bucket[0] > bucket[1]) {
+                continue;
+            }
+            ans = Math.max(ans, bucket[0] - prev);
+            prev = bucket[1];
+        }
+        return ans;
     }
 
     // 88 合并两个有序数组

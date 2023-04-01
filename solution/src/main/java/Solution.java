@@ -1209,9 +1209,57 @@ public class Solution {
         return false;
     }
 
+    public String maskPII(String s) {
+        if (s.contains("@")) return maskEmail(s);
+        return maskTel(s);
+    }
+
+    private String maskEmail(String s) {
+        char[] chars = s.toCharArray();
+        int n = chars.length;
+        StringBuilder res = new StringBuilder();
+        int i = 0;
+        while (i < n && chars[i] != '@') {
+            i++;
+        }
+        String name = s.substring(0, i).toLowerCase();
+        res.append(name.charAt(0)).append("*****").append(name.charAt(name.length() - 1)).append("@");
+        int j = i;
+        while (j < n && chars[j] != '.') {
+            j++;
+        }
+        String field = s.substring(i + 1, j).toLowerCase();
+        res.append(field).append(s.substring(j).toLowerCase());
+        return res.toString();
+    }
+
+    private String maskTel(String s) {
+        int n = s.length();
+        StringBuilder ss = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            if (s.charAt(i) <= '9' && s.charAt(i) >= '0') {
+                ss.append(s.charAt(i));
+            }
+        }
+        n = ss.length();
+        String tel = ss.substring(n - 10);
+        String nationCode = ss.substring(0, n - 10);
+        String show = tel.substring(tel.length() - 4);
+        StringBuilder res = new StringBuilder();
+        if (nationCode.length() != 0) {
+            res.append("+");
+            for (int i = 0; i < nationCode.length(); i++) {
+                res.append("*");
+            }
+            res.append("-");
+        }
+        res.append("***").append("-").append("***").append("-").append(show);
+        return res.toString();
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.minOperations(new int[]{47, 50, 97, 58, 87, 72, 41, 63, 41, 51, 17, 21, 7, 100, 69, 66, 79, 92, 84, 9, 57, 26, 26, 28, 83, 38}, new int[]{3});
+        solution.maskPII("86-(10)12345678");
         solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);

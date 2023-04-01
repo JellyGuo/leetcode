@@ -2415,7 +2415,7 @@ public class Solutions2 {
         return ans;
     }
 
-    //6136. 算术三元组的数目
+    //2367. 算术三元组的数目
     public int arithmeticTriplets(int[] nums, int diff) {
         int cnt = 0;
         Set<Integer> set = new HashSet<>();
@@ -3260,6 +3260,62 @@ public class Solutions2 {
             map.put(index, wordBreaks);
         }
         return map.get(index);
+    }
+
+    //1641. 统计字典序元音字符串的数目
+    int ans1641 = 0;
+    public int countVowelStrings(int n) {
+        dfs1641(0, 0, n);
+        return ans1641;
+    }
+
+    private void dfs1641(int idx, int len, int n) {
+        if (len >= n) {
+            ans1641++;
+            return;
+        }
+        for (int i = idx; i < 5; i++) {
+            dfs1641(i, len + 1, n);
+        }
+    }
+
+    private int[][] memo1641;
+
+    public int countVowelStringsMemo(int n) {
+        //表示当前已经选了 i 个元音字母，且最后一个元音字母是 j 的方案数
+        memo1641 = new int[n][5];
+        return dfs1641memo(0, 0,n);
+    }
+
+    private int dfs1641memo(int i, int j,int n) {
+        if (i >= n) {
+            return 1;
+        }
+        if (memo1641[i][j] != 0) {
+            return memo1641[i][j];
+        }
+        int ans = 0;
+        for (int k = j; k < 5; ++k) {
+            ans += dfs1641memo(i + 1, k,n);
+        }
+        return memo1641[i][j] = ans;
+    }
+
+    //DP+前缀
+    //记 dp[i][j] 表示长度为 i+1，以 j 结尾的按字典序排列的字符串数量，那么状态转移方程如下：
+    //那么状态转移方程如下
+    //dp[i][j]=  1,i=0
+    // sum(dp[i−1][k])(k=[0,j])
+    //因此长度为 n 的按字典序排列的字符串数量为 sum(dp[n−1][j]) k=[0,4]。因为 dp[i] 的计算只涉及 dp[i−1] 部分的数据，同时 dp[i] 等价于 dp[i−1] 的前缀和
+    public int countVowelStringsDP(int n) {
+        int[] dp = new int[5];
+        Arrays.fill(dp, 1);
+        for (int i = 1; i < n; i++) {
+            for (int j = 1; j < 5; j++) {
+                dp[j] += dp[j - 1];
+            }
+        }
+        return Arrays.stream(dp).sum();
     }
 
     // 312 戳气球
@@ -6734,6 +6790,51 @@ public class Solutions2 {
             }
         }
         return dp[m][n];
+    }
+
+    //1638. 统计只差一个字符的子串数目
+    // 枚举
+    public int countSubstrings(String s, String t) {
+        int m = s.length(), n = t.length();
+        int ans = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                int diff = 0;
+                for (int k = 0; i + k < m && j + k < n; k++) {
+                    diff += (s.charAt(i + k) == t.charAt(j + k)) ? 0 : 1;
+                    if (diff > 1) break;
+                    if (diff == 1) ans++;
+                }
+            }
+        }
+        return ans;
+    }
+
+    // DP 最长公共子串
+    public int countSubstrings2(String s, String t) {
+        int m = s.length(), n = t.length();
+        int ans = 0;
+        int[][] dpl = new int[m + 1][n + 1];
+        int[][] dpr = new int[m + 1][n + 1];
+        // 此处即为最长公共子串的dp做法
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                dpl[i][j] = s.charAt(i - 1) == t.charAt(j - 1) ? dpl[i - 1][j - 1] + 1 : 0;
+            }
+        }
+        for (int i = m - 1; i >= 0; i--) {
+            for (int j = n - 1; j >= 0; j--) {
+                dpr[i][j] = s.charAt(i) == t.charAt(j) ? dpr[i + 1][j + 1] + 1 : 0;
+            }
+        }
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (s.charAt(i - 1) != t.charAt(j - 1)) {
+                    ans += (dpl[i - 1][j - 1] + 1) * (dpr[i][j] + 1);
+                }
+            }
+        }
+        return ans;
     }
 
 
