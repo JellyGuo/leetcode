@@ -4478,8 +4478,8 @@ public class Solutions3 {
         set.add('o');
         set.add('u');
         int ans = 0;
-        for(int i=left;i<=right;i++){
-            if(set.contains(words[i].charAt(0))&& set.contains(words[i].charAt(words[i].length()-1))){
+        for (int i = left; i <= right; i++) {
+            if (set.contains(words[i].charAt(0)) && set.contains(words[i].charAt(words[i].length() - 1))) {
                 ans++;
             }
         }
@@ -6425,6 +6425,31 @@ public class Solutions3 {
         return false;
     }
 
+    //6363. 转换二维数组
+    public List<List<Integer>> findMatrix(int[] nums) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+        }
+        List<List<Integer>> res = new ArrayList<>();
+        while (!map.isEmpty()) {
+            List<Integer> list = new ArrayList<>();
+            Set<Integer> keySet = new HashSet<>();
+            for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+                list.add(entry.getKey());
+                entry.setValue(entry.getValue() - 1);
+                if (entry.getValue() == 0) {
+                    keySet.add(entry.getKey());
+                }
+            }
+            for (int k : keySet) {
+                map.remove(k);
+            }
+            res.add(list);
+        }
+        return res;
+    }
+
 
     //1224. 最大相等频率
     public int maxEqualFreq(int[] nums) {
@@ -7047,6 +7072,7 @@ public class Solutions3 {
         }
         return ans;
     }
+
     //1605. 给定行和列的和求可行矩阵
     public int[][] restoreMatrix(int[] rowSum, int[] colSum) {
         int m = rowSum.length, n = colSum.length;
@@ -7494,7 +7520,7 @@ public class Solutions3 {
     public int kItemsWithMaximumSum(int numOnes, int numZeros, int numNegOnes, int k) {
         if (k <= numOnes) return k;
         if (k <= numOnes + numZeros) return numOnes;
-        return numOnes-(k-numOnes-numZeros);
+        return numOnes - (k - numOnes - numZeros);
     }
 
 
@@ -8346,6 +8372,7 @@ public class Solutions3 {
         }
         return ans;
     }
+
     //2530. 执行 K 次操作后的最大分数
     public long maxKelements(int[] nums, int k) {
         PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);
@@ -8976,8 +9003,8 @@ public class Solutions3 {
         }
         if (i >= j) return 0;
         int ans = Math.min(n - i - 1, j);
-        for (int l = 0,r=j; l <= i; l++) {
-            while(r<n && arr[r]<arr[l]){
+        for (int l = 0, r = j; l <= i; l++) {
+            while (r < n && arr[r] < arr[l]) {
                 r++;
             }
             ans = Math.min(ans, r - l - 1);
@@ -11112,7 +11139,7 @@ public class Solutions3 {
             int needMinus = cur - next + 1;
             // 找到大于等于needMinus的第一个质数
             int prime = findPrime(needMinus, primes);
-            if (prime >= nums[i] || prime<needMinus) return false;
+            if (prime >= nums[i] || prime < needMinus) return false;
             nums[i] -= prime;
         }
         return true;

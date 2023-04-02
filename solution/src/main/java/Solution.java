@@ -1257,9 +1257,67 @@ public class Solution {
         return res.toString();
     }
 
+    public int findTheLongestBalancedSubstring(String s) {
+        int n = s.length();
+        int max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            while (r < n && s.charAt(r) == '0') {
+                r++;
+            }
+            int cntZero = r - l;
+            int idx = r;
+            while (r < n && s.charAt(r) == '1') {
+                r++;
+            }
+            int cntOne = r - idx;
+            max = Math.max(max, Math.min(cntOne, cntZero));
+            l = r;
+        }
+        return 2 * max;
+    }
+
+    public List<List<Integer>> findMatrix(int[] nums) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+        }
+        List<List<Integer>> res = new ArrayList<>();
+        while (!map.isEmpty()) {
+            List<Integer> list = new ArrayList<>();
+            Set<Integer> keySet = new HashSet<>();
+            for (int k : map.keySet()) {
+                list.add(k);
+                map.put(k, map.get(k) - 1);
+                if (map.get(k) == 0) {
+                    keySet.add(k);
+                }
+            }
+
+            res.add(list);
+        }
+        return res;
+    }
+
+    public int miceAndCheese(int[] reward1, int[] reward2, int k) {
+        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[0] - o1[0]);
+        int n = reward1.length;
+        for (int i = 0; i < n; i++) {
+            pq.offer(new int[]{reward1[i] - reward2[i], i});
+        }
+        int ans = 0;
+        while (k-- > 0 &&!pq.isEmpty()) {
+            ans+=reward1[pq.poll()[1]];
+        }
+        while (!pq.isEmpty()) {
+            ans+=reward2[pq.poll()[1]];
+        }
+        return ans;
+    }
+
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.maskPII("86-(10)12345678");
+        solution.findTheLongestBalancedSubstring("0100");
         solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);

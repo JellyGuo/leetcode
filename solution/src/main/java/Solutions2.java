@@ -985,7 +985,7 @@ public class Solutions2 {
         return left >= right;
     }
 
-    // 6246 追加字符以获得子序列
+    // 2486 追加字符以获得子序列
     public int appendCharacters(String s, String t) {
         int m = s.length(), n = t.length();
         int idx1 = 0, idx2 = 0;
@@ -998,6 +998,26 @@ public class Solutions2 {
             idx2++;
         }
         return n - idx2;
+    }
+
+    //6362. 最长平衡子字符串
+    public int findTheLongestBalancedSubstring(String s) {
+        int n = s.length();
+        int max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            while (r < n && s.charAt(r) == '0') {
+                r++;
+            }
+            int cntZero = r - l;
+            l = r;
+            while (r < n && s.charAt(r) == '1') {
+                r++;
+            }
+            int cntOne = r - l;
+            max = Math.max(max, Math.min(cntOne, cntZero));
+            l = r;
+        }
+        return 2 * max;
     }
 
     // 面试01.05 一次编辑
@@ -1356,7 +1376,7 @@ public class Solutions2 {
         int x = 0;
         for (int num : nums) {
             x ^= num;
-            ans += map.getOrDefault(x,0);
+            ans += map.getOrDefault(x, 0);
             map.put(x, map.getOrDefault(x, 0) + 1);
         }
         return ans;
@@ -3264,6 +3284,7 @@ public class Solutions2 {
 
     //1641. 统计字典序元音字符串的数目
     int ans1641 = 0;
+
     public int countVowelStrings(int n) {
         dfs1641(0, 0, n);
         return ans1641;
@@ -3279,26 +3300,24 @@ public class Solutions2 {
         }
     }
 
-    private int[][] memo1641;
-
     public int countVowelStringsMemo(int n) {
         //表示当前已经选了 i 个元音字母，且最后一个元音字母是 j 的方案数
-        memo1641 = new int[n][5];
-        return dfs1641memo(0, 0,n);
+        int[][] memo  = new int[n][5];
+        return dfs1641memo(0, 0, n,memo);
     }
 
-    private int dfs1641memo(int i, int j,int n) {
+    private int dfs1641memo(int i, int j, int n,int[][] memo) {
         if (i >= n) {
             return 1;
         }
-        if (memo1641[i][j] != 0) {
-            return memo1641[i][j];
+        if (memo[i][j] != 0) {
+            return memo[i][j];
         }
         int ans = 0;
         for (int k = j; k < 5; ++k) {
-            ans += dfs1641memo(i + 1, k,n);
+            ans += dfs1641memo(i + 1, k, n,memo);
         }
-        return memo1641[i][j] = ans;
+        return memo[i][j] = ans;
     }
 
     //DP+前缀
@@ -3318,6 +3337,36 @@ public class Solutions2 {
         return Arrays.stream(dp).sum();
     }
 
+    //1039. 多边形三角剖分的最低得分
+    public int minScoreTriangulation(int[] values) {
+        int n = values.length;
+        int[][] memo = new int[n][n];
+        for (int i = 0; i < n; ++i) {
+            Arrays.fill(memo[i], -1); // -1 表示没有访问过
+        }
+        return dfs1039(0, n - 1, memo, values);
+    }
+
+    private int dfs1039(int i, int j, int[][] memo, int[] values) {
+        if (i + 1 == j) return 0; // 只有两个点，无法组成三角形
+        if (memo[i][j] != -1) return memo[i][j];
+        int res = Integer.MAX_VALUE;
+        for (int k = i + 1; k < j; ++k) // 枚举顶点 k
+            res = Math.min(res, dfs1039(i, k, memo, values) + dfs1039(k, j, memo, values) + values[i] * values[j] * values[k]);
+        return memo[i][j] = res;
+    }
+
+    public int minScoreTriangulationDP(int[] v) {
+        int n = v.length;
+        int[][] f = new int[n][n];
+        for (int i = n - 3; i >= 0; --i)
+            for (int j = i + 2; j < n; ++j) {
+                f[i][j] = Integer.MAX_VALUE;
+                for (int k = i + 1; k < j; ++k)
+                    f[i][j] = Math.min(f[i][j], f[i][k] + f[k][j] + v[i] * v[j] * v[k]);
+            }
+        return f[0][n - 1];
+    }
     // 312 戳气球
     public int maxCoins(int[] nums) {
         int n = nums.length;
@@ -10812,6 +10861,23 @@ public class Solutions2 {
             set.add(cell[1]);
             if (cell[1] > 0) set.add(cell[1] - 1);
             if (cell[1] < n - 1) set.add(cell[1] + 1);
+        }
+        return ans;
+    }
+
+    //6364. 老鼠和奶酪
+    public int miceAndCheese(int[] reward1, int[] reward2, int k) {
+        PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[0] - o1[0]);
+        int n = reward1.length;
+        for (int i = 0; i < n; i++) {
+            pq.offer(new int[]{reward1[i] - reward2[i], i});
+        }
+        int ans = 0;
+        while (k-- > 0 && !pq.isEmpty()) {
+            ans += reward1[pq.poll()[1]];
+        }
+        while (!pq.isEmpty()) {
+            ans += reward2[pq.poll()[1]];
         }
         return ans;
     }
