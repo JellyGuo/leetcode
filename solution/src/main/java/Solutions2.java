@@ -7852,6 +7852,85 @@ public class Solutions2 {
 
     // endregion--------------------------------------------------------------------
     //region------------------------------------------区间DP------------------------------------------------------
+    //区间动态规划三部曲   回文子串
+    //1.定义状态：dp[i, j]为区间[i, j]的最优解
+    //2.定义状态转移方程：最常见的写法为：dp[i,j] = max/min{dp[i,j], dp[i, k] + dp[k+1, j] + cost}。
+    //  选取[i, j]之间的一个分界点k，分别计算[i, k]和[k+1, j]的最优解，从而组合出[i, j]的最优解。
+    //3.初始化：dp[i][i] = 常数。区间长度为1时的最优解应当是已知的。
+    //写法1：
+    //for (int i = n; i >= 1; --i) {
+    //	for (int j = i + 1; j <= n; ++j) {
+    //		for (int k = i; k < j; ++k) {
+    //			dp[i,j] = max/min(dp[i,j], dp[i,k] + dp[k+1, j] + cost)
+    //		}
+    //	}
+    //}
+    //写法2：
+    //for (int len = 2; len <= n; ++len) {
+    //	for (int i = 1; i + len - 1  <= n; ++i) {
+    //		int j = i + len - 1;
+    //		for (int k = i; k < j; ++k) {
+    //			dp[i,j] = max/min(dp[i,j], dp[i,k] + dp[k+1, j] + cost)
+    //		}
+    //	}
+    //}
+    //1000. 合并石头的最低成本
+    //定义dp[i][j][k]为合并第i堆到第j堆石头为k堆的成本，状态转移方程有关键两点：
+    //dp[i][j][1] = dp[i][j][k] + sum(i, j)。不能直接求出合并为1堆的成本，得先合并成k堆。
+    //dp[i][j][m] = min(dp[i][p][1] + dp[p + 1][j][m - 1])，i <= p < j，2 <= m <= k。
+    // 这里m为堆数，不能直接用k是因为右部分的存在，要对右部分继续划分求解的话，子问题就必须有合并成m堆的情况。
+    public int mergeStones(int[] stones, int k) {
+        int n = stones.length;
+        if ((n - 1) % (k - 1) != 0) return -1;
+        int MAX_VALUE = 9999999;
+        int[][][] dp = new int[n + 1][n + 1][k + 1];
+        int[] sum = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            sum[i] = sum[i - 1] + stones[i - 1];
+        }
+        for (int i = 1; i <= n; i++) {
+            for (int j = i + 1; j <= n; j++) {
+                for (int m = 2; m <= k; m++) {
+                    dp[i][j][m] = MAX_VALUE;
+                }
+            }
+            dp[i][i][1] = 0;
+        }
+        for (int len = 2; len <= n; len++) {
+            for (int i = 1; i + len - 1 <= n; i++) {
+                int j = i + len - 1;
+                //分成k堆时，从分成2堆开始自底向上
+                for (int m = 2; m <= k; m++) {
+                    for (int p = i; p < j; p += k - 1) {
+                        // m堆只能是1堆和m-1堆
+                        dp[i][j][m] = Math.min(dp[i][j][m], dp[i][p][1] + dp[p + 1][j][m - 1]);
+                    }
+                }
+                // 合并成1堆要先分成k堆
+                dp[i][j][1] = dp[i][j][k] + sum[j] - sum[i - 1];
+            }
+        }
+        return dp[1][n][1];
+    }
+
+    public int mergeStones2(int[] stones, int k) {
+        int n = stones.length;
+        if ((n - 1) % (k - 1) != 0) return -1;
+        int[][] dp = new int[n + 1][n + 1];
+        int[] sum = new int[n + 1];
+        for (int i = 1; i <= n; ++i) sum[i] = sum[i - 1] + stones[i - 1];
+        for (int len = k; len <= n; ++len) { // 枚举区间长度
+            for (int i = 1; i + len - 1 <= n; ++i) { // 枚举区间起点
+                int j = i + len - 1;
+                dp[i][j] = Integer.MAX_VALUE;
+                for (int p = i; p < j; p += k - 1) {  // 枚举分界点
+                    dp[i][j] = Math.min(dp[i][j], dp[i][p] + dp[p + 1][j]);
+                }
+                if ((j - i) % (k - 1) == 0) dp[i][j] += sum[j] - sum[i - 1];
+            }
+        }
+        return dp[1][n];
+    }
 // 62 不同路径
     public int uniquePaths(int m, int n) {
         int[][] dp = new int[m][n];

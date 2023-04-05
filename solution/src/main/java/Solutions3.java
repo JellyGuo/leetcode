@@ -2136,7 +2136,23 @@ public class Solutions3 {
         nums[m] = temp;
     }
 
+    //1053. 交换一次的先前排列  贪心
+    public int[] prevPermOpt1(int[] arr) {
+        int n = arr.length;
+        for (int i = n - 2; i >= 0; i--) {
+            if (arr[i] <= arr[i + 1]) continue;
+            int j = n - 1;
+            while (arr[j] >= arr[i] || arr[j] == arr[j - 1]) {
+                j--;
+            }
+            swap(arr, i, j);
+            break;
+        }
+        return arr;
+    }
 
+
+    //575. 分糖果
     public int distributeCandies(int[] candies) {
         Set<Integer> set = new HashSet<>();
         for (int i : candies) {
@@ -2210,6 +2226,20 @@ public class Solutions3 {
                 l = l / g * nums[j];
                 if (l == k) ans++;
                 if (l > k) break;
+            }
+        }
+        return ans;
+    }
+
+    //2427. 公因子的数目
+    public int commonFactors(int a, int b) {
+        int g = gcd(a, b);
+        int ans = 0;
+        for (int i = 1; i * i <= g; i++) {
+            if (g % i == 0) {
+                ans++;
+                if (i * i != g) ans++;
+
             }
         }
         return ans;
