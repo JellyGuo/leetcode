@@ -3083,6 +3083,32 @@ public class Solutions3 {
         return (amount[0] + amount[1] + amount[2] + 1) / 2;
     }
 
+    //1040 移动石子直到连续 II 思维题 medium top1
+    public int[] numMovesStonesII(int[] stones) {
+        int n = stones.length;
+        Arrays.sort(stones);
+        if (stones[n - 1] - stones[0] + 1 - n == 0) return new int[]{0, 0};
+        // 每次把最左侧/右侧 移到最近的坑位，这样s[0]和s[1]间/s[n-1]和s[n-2]的坑位被丢弃
+        // 最左侧/右侧连续两个相连，滚动把最左侧/右侧的依次往中间坑位移动，等价于剩余坑位数 = 一共可以移stones[n - 1] - stones[1] + 1-(n-1)次
+        // 等价于总坑位数-左右侧两个最小的坑位数
+        int max = Math.max(stones[n - 2] - stones[0] + 1, stones[n - 1] - stones[1] + 1) - (n - 1);
+//        max = (stones[n - 1] - stones[0] + 1 - n) - Math.min(stones[2] - stones[1] + 1 - 2, stones[n - 1] - stones[n - 2] + 1 - 2);
+        int min = n;
+        // 设定一个大小为n的滑动窗口，使得窗口内石子最多，剩余的坑位 即为需要移动的最小次数
+        for (int i = 0, j = 0; i < n; i++) {
+            while (j + 1 < n && stones[j + 1] - stones[i] + 1 <= n) {
+                j++;
+            }
+            int cost = n - (j - i + 1);
+            // 特殊情况 n-1个连续,此时要移2次
+            if (j - i + 1 == n - 1 && stones[j] - stones[i] + 1 == n - 1) {
+                cost = 2;
+            }
+            min = Math.min(cost, min);
+        }
+        return new int[]{min, max};
+    }
+
     //----------------------------------------------------- 数学--------------------------------------------
 
     // a b 快速相乘
@@ -4987,6 +5013,36 @@ public class Solutions3 {
             columnNumber /= 26;
         }
         return sb.reverse().toString();
+    }
+
+    //1017. 负二进制转换  进制模拟
+    public String baseNeg2(int n) {
+        if (n == 0 || n == 1) {
+            return String.valueOf(n);
+        }
+        StringBuilder res = new StringBuilder();
+        while (n != 0) {
+            int remainder = n & 1;
+            res.append(remainder);
+            n -= remainder;
+            n /= -2;
+        }
+        return res.reverse().toString();
+    }
+
+    public String baseNeg2Two(int n) {
+        if (n == 0 || n == 1) {
+            return String.valueOf(n);
+        }
+        StringBuilder res = new StringBuilder();
+        while (n != 0) {
+            int remainder = n % (-2);
+            res.append(Math.abs(remainder));
+            // 负数取余，会有余数=-1的情况，即奇数位上的1
+            // 需要左边一位和当前位一正一负凑出来
+            n = remainder < 0 ? (n / (-2) + 1) : (n / (-2));
+        }
+        return res.reverse().toString();
     }
 
     // 58最后一个单词长度

@@ -3302,11 +3302,11 @@ public class Solutions2 {
 
     public int countVowelStringsMemo(int n) {
         //表示当前已经选了 i 个元音字母，且最后一个元音字母是 j 的方案数
-        int[][] memo  = new int[n][5];
-        return dfs1641memo(0, 0, n,memo);
+        int[][] memo = new int[n][5];
+        return dfs1641memo(0, 0, n, memo);
     }
 
-    private int dfs1641memo(int i, int j, int n,int[][] memo) {
+    private int dfs1641memo(int i, int j, int n, int[][] memo) {
         if (i >= n) {
             return 1;
         }
@@ -3315,7 +3315,7 @@ public class Solutions2 {
         }
         int ans = 0;
         for (int k = j; k < 5; ++k) {
-            ans += dfs1641memo(i + 1, k, n,memo);
+            ans += dfs1641memo(i + 1, k, n, memo);
         }
         return memo[i][j] = ans;
     }
@@ -3367,6 +3367,7 @@ public class Solutions2 {
             }
         return f[0][n - 1];
     }
+
     // 312 戳气球
     public int maxCoins(int[] nums) {
         int n = nums.length;
@@ -5783,6 +5784,115 @@ public class Solutions2 {
         return dp[n][k];
     }
 
+    //1125. 最小的必要团队 状态压缩+01背包
+    //状态压缩位运算技巧：
+    // 1.把元素x变成集合{x} :1<<x
+    // 2.判断元素x是否在集合A中：((A>>x)&1)==1
+    // 3.集合A和集合B的并集 A|B
+    // 4.计算A/B，表示从集合A中去掉集合B中的元素：A&~B
+    // 5.全集：(1<<n)-1
+    // 记忆化搜索
+    public int[] smallestSufficientTeam(String[] reqSkills, List<List<String>> people) {
+        Map<String, Integer> sid = new HashMap<>();
+        int m = reqSkills.length;
+        for (int i = 0; i < m; ++i)
+            sid.put(reqSkills[i], i); // 字符串映射到下标
+
+        int n = people.size();
+        int[] mask = new int[n];
+        for (int i = 0; i < n; ++i)
+            for (String s : people.get(i)) // 把 people[i] 压缩成一个二进制数 mask[i]
+                mask[i] |= 1 << sid.get(s);
+
+        int u = 1 << m;
+        long[][] memo = new long[n][u];
+        for (int i = 0; i < n; i++)
+            Arrays.fill(memo[i], -1); // -1 表示还没有计算过
+        long res = dfs1125(n - 1, u - 1, memo, mask);
+
+        int[] ans = new int[Long.bitCount(res)];
+        for (int i = 0, j = 0; i < n; ++i)
+            if (((res >> i) & 1) > 0)
+                ans[j++] = i; // 所有在 res 中的下标
+        return ans;
+    }
+
+    private long dfs1125(int i, int j, long[][] memo, int[] mask) {
+        if (j == 0) return 0; // 背包已装满
+        int n = mask.length;
+        if (i < 0) return (1L << n) - 1; // 没法装满背包，返回全集，这样下面比较集合大小会取更小的
+        if (memo[i][j] != -1) return memo[i][j];
+        long res = dfs1125(i - 1, j, memo, mask); // 不选 mask[i]
+        long res2 = dfs1125(i - 1, j & ~mask[i], memo, mask) | (1L << i); // 选 mask[i]
+        return memo[i][j] = Long.bitCount(res) < Long.bitCount(res2) ? res : res2;
+    }
+
+    public int[] smallestSufficientTeamDP(String[] reqSkills, List<List<String>> people) {
+        Map<String, Integer> map = new HashMap<>();
+        int m = reqSkills.length;
+        for (int i = 0; i < m; i++) {
+            map.put(reqSkills[i], i); // 字符串映射到下标
+        }
+        int n = people.size();
+        int u = 1 << m;
+        long[][] dp = new long[n + 1][u];//前i个人中选择一些，并集=j，需要的最小人数(用集合表示 101 表示选0，2)
+        Arrays.fill(dp[0], (1L << n) - 1); // 对应所有人，这样在后面取min的时候会取更小的
+        dp[0][0] = 0;
+        for (int i = 0; i < n; i++) {
+            int mask = 0;// 把 people[i] 压缩成一个二进制数 mask
+            for (String s : people.get(i)) {
+                mask |= 1 << map.get(s);
+            }
+            for (int j = 1; j < u; j++) {
+                long res1 = dp[i][j]; //不选当前mask
+                long res2 = dp[i][j & ~mask] | (1L << i); //选当前mask
+                // 此处选的是人少的集合
+                dp[i + 1][j] = Long.bitCount(res1) < Long.bitCount(res2) ? res1 : res2;
+            }
+        }
+        long res = dp[n][u - 1];
+        int[] ans = new int[Long.bitCount(res)];
+        for (int i = 0, j = 0; i < n; i++) {
+            if (((res >> i) & 1) == 1) {
+                ans[j++] = i;
+            }
+        }
+        return ans;
+    }
+
+    //一维空间优化
+    public int[] smallestSufficientTeamOneDim(String[] reqSkills, List<List<String>> people) {
+        Map<String, Integer> map = new HashMap<>();
+        int m = reqSkills.length;
+        for (int i = 0; i < m; i++) {
+            map.put(reqSkills[i], i); // 字符串映射到下标
+        }
+        int n = people.size();
+        int u = 1 << m;
+        long[] dp = new long[u];//前i个人中选择一些，并集=j，需要的最小人数(用集合表示 101 表示选0，2)
+        Arrays.fill(dp, (1L << n) - 1); // 对应所有人，这样在后面取min的时候会取更小的
+        dp[0]= 0;
+        for (int i = 0; i < n; i++) {
+            int mask = 0;// 把 people[i] 压缩成一个二进制数 mask
+            for (String s : people.get(i)) {
+                mask |= 1 << map.get(s);
+            }
+            for (int j = u-1; j >0; j--) {
+                long res1 = dp[j]; //不选当前mask
+                long res2 = dp[j & ~mask] | (1L << i); //选当前mask
+                // 此处选的是人少的集合
+                dp[j] = Long.bitCount(res1) < Long.bitCount(res2) ? res1 : res2;
+            }
+        }
+        long res = dp[u - 1];
+        int[] ans = new int[Long.bitCount(res)];
+        for (int i = 0, j = 0; i < n; i++) {
+            if (((res >> i) & 1) == 1) {
+                ans[j++] = i;
+            }
+        }
+        return ans;
+    }
     //endregion------------------------------------------------------------------------------------------
 
     //region----------------------------------------------- 完全背包 每件可以取无数次---------------------------------------
@@ -7931,7 +8041,8 @@ public class Solutions2 {
         }
         return dp[1][n];
     }
-// 62 不同路径
+
+    // 62 不同路径
     public int uniquePaths(int m, int n) {
         int[][] dp = new int[m][n];
         for (int i = 0; i < m; i++) {
