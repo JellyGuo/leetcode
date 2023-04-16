@@ -4028,6 +4028,24 @@ public class Solutions3 {
         return res.toArray(new int[R * C][2]);
     }
 
+    //1041. 困于环中的机器人
+    public boolean isRobotBounded(String instructions) {
+        int[][] direction = new int[][]{{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        int directionIdx = 0;
+        int x = 0, y = 0;
+        for (char c : instructions.toCharArray()) {
+            if (c == 'G') {
+                x += direction[directionIdx][0];
+                y += direction[directionIdx][1];
+            } else if (c == 'R') {
+                directionIdx = (directionIdx + 1) % 4;
+            } else {
+                directionIdx = (directionIdx + 3) % 4;
+            }
+        }
+        return (x == 0 && y == 0) || directionIdx != 0;
+    }
+
     // 73 矩阵置0
     public void setZeroes(int[][] mat) {
         int m = mat.length, n = mat[0].length;
@@ -4388,6 +4406,55 @@ public class Solutions3 {
             if (i > 0) cnt++;
         }
         return cnt;
+    }
+
+    //2399. 检查相同字母间的距离
+    public boolean checkDistances(String s, int[] distance) {
+        Map<Integer, int[]> map = new HashMap<>();
+        for (int i = 0; i < s.length(); i++) {
+            int idx = s.charAt(i) - 'a';
+            if (map.containsKey(idx)) {
+                map.get(idx)[1] = i;
+            } else {
+                map.put(idx, new int[]{i, -1});
+            }
+        }
+        for (Map.Entry<Integer, int[]> entry : map.entrySet()) {
+            if ((entry.getValue()[1] - entry.getValue()[0]-1) != distance[entry.getKey()]) return false;
+        }
+        return true;
+    }
+
+    //2404. 出现最频繁的偶数元素
+    public int mostFrequentEven(int[] nums) {
+        TreeMap<Integer, Integer> cnt = new TreeMap<>();
+        int max = 0;
+        for (int num : nums) {
+            if ((num & 1) == 0) {
+                cnt.put(num, cnt.getOrDefault(num, 0) + 1);
+                max = Math.max(cnt.get(num), max);
+            }
+        }
+        for (Map.Entry<Integer, Integer> entry : cnt.entrySet()) {
+            if (entry.getValue() == max) return entry.getKey();
+        }
+        return -1;
+    }
+
+    //2614. 对角线上的质数
+    public int diagonalPrime(int[][] nums) {
+        int max = 0;
+        int n = nums.length;
+        for (int i = 0; i < n; i++) {
+            if (isPrime(nums[i][i])) {
+                max = Math.max(max, nums[i][i]);
+            }
+            if (isPrime(nums[i][n - 1 - i])) {
+                max = Math.max(max, nums[i][n - 1 - i]);
+
+            }
+        }
+        return max;
     }
 
     //2185. 统计包含给定前缀的字符串
@@ -5031,7 +5098,7 @@ public class Solutions3 {
     }
 
     public String baseNeg2Two(int n) {
-        if (n == 0 || n == 1) {
+        if (n == 0 || n == 1) {  
             return String.valueOf(n);
         }
         StringBuilder res = new StringBuilder();
@@ -7602,13 +7669,52 @@ public class Solutions3 {
         return ans;
     }
 
-    //6354. K 件物品的最大和
+    //2600. K 件物品的最大和
     public int kItemsWithMaximumSum(int numOnes, int numZeros, int numNegOnes, int k) {
         if (k <= numOnes) return k;
         if (k <= numOnes + numZeros) return numOnes;
         return numOnes - (k - numOnes - numZeros);
     }
 
+    //2607. 使子数组元素和相等
+    //中位数贪心+裴蜀定理
+    public long makeSubKSumEqual(int[] arr, int k) {
+        int n = arr.length;
+        int g = gcd(n, k);
+        long ans = 0;
+        for (int i = 0; i < g; i++) {
+            List<Integer> ls = new ArrayList<>();
+            for (int j = i; j < n; j += g) {
+                ls.add(arr[j]);
+            }
+            Collections.sort(ls);
+            int mid = ls.get(ls.size() / 2);
+            for (int num : ls) {
+                ans += Math.abs(num - mid);
+            }
+        }
+        return ans;
+    }
+
+    //2605. 从两个数字数组里生成最小数字
+    public int minNumber(int[] nums1, int[] nums2) {
+        int min1 = Integer.MAX_VALUE, min2 = Integer.MAX_VALUE;
+        Set<Integer> set1 = new HashSet<>();
+        TreeSet<Integer> treeSet = new TreeSet<>();
+        for (int num : nums1) {
+            min1 = Math.min(min1, num);
+            set1.add(num);
+        }
+        for (int num : nums2) {
+            min2 = Math.min(min2, num);
+            if(set1.contains(num)){
+                treeSet.add(num);
+            }
+        }
+        if(!treeSet.isEmpty()) return treeSet.first();
+        if (min1 < min2) return min1 * 10 + min2;
+        return min2 * 10 + min1;
+    }
 
     //2592. 最大化数组的伟大值 田忌赛马+双指针+贪心
     public int maximizeGreatness(int[] nums) {
@@ -10226,6 +10332,42 @@ public class Solutions3 {
             else left = mid;
         }
         return right;
+    }
+
+    //2616. 最小化数对的最大差值
+    // 转化为满足差值X的最大对数>=p的最小X
+    // 差值越小，对数约少
+    public int minimizeMax(int[] nums, int p) {
+        Arrays.sort(nums);
+        int n = nums.length;
+        int l = 0, r = nums[n - 1] - nums[0];
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (getCnt2616(mid, nums) >= p) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    // 贪心求对数 类似198打家劫舍 可用dp求
+    // 选nums[0]和nums[1]+剩下n-2个数的对数 => pair(n-2)+1
+    // 不选nums[0]=>pair(n-1)
+    // pair(n-1) <= pair(n-3)+1 选nums[1]和nums[2]+剩下n-3个数的对数
+    // 而pair(n-2)>pair(n-3)
+    //所以 pair(n) 最大的对数是pair(n-2)+1,即nums[0]和nums[1]放一起选
+    private int getCnt2616(int x, int[] nums) {
+        int n = nums.length;
+        int cnt = 0;
+        for (int i = 0; i < n - 1; i++) {
+            if (nums[i + 1] - nums[i] <= x) {
+                cnt++;
+                i++;
+            }
+        }
+        return cnt;
     }
 
     //1011. 在 D 天内送达包裹的能力

@@ -876,6 +876,18 @@ public class Solutions1 {
         }
     }
 
+    //1147. 段式回文
+    public int longestDecomposition(String text) {
+        if (text.equals("")) return 0;
+        int n = text.length();
+        for (int i = 1; i <= n / 2; i++) {
+            if (text.substring(0, i).equals(text.substring(n - i))) {
+                return 2 + longestDecomposition(text.substring(i, n - i));
+            }
+        }
+        return 1;
+    }
+
     // 131 分割回文串
     // 131 分割回文串1
     // 132 分割回文串2 dp预处理
@@ -5948,7 +5960,7 @@ public class Solutions1 {
         return a.contains(word.charAt(0)) && a.contains(word.charAt(word.length() - 1));
     }
 
-    //6357. 使数组元素全部相等的最少操作次数
+    //2602. 使数组元素全部相等的最少操作次数
     public List<Long> minOperationsTLE(int[] nums, int[] queries) {
         List<Long> ans = new ArrayList<>();
         for (int query : queries) {
@@ -5990,9 +6002,69 @@ public class Solutions1 {
         }
         return ans;
     }
+
+    //2615. 等值距离和
+    public long[] distance(int[] nums) {
+        int n = nums.length;
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        long[] ans = new long[n];
+        for (int i = 0; i < n; i++) {
+            List<Integer> ls = map.getOrDefault(nums[i], new ArrayList<>());
+            ls.add(i);
+            map.put(nums[i], ls);
+        }
+        for (List<Integer> ls : map.values()) {
+            int m = ls.size();
+            long[] sum = new long[m + 1];
+            for (int i = 1; i <= m; i++) {
+                sum[i] = sum[i - 1] + ls.get(i - 1);
+            }
+            for (int i = 0; i < m; i++) {
+                int cur = ls.get(i);
+                // cur-ls[0]+cur-ls[1]...+cur-ls[i-1]
+                int prevCnt = i;
+                long leftSum = prevCnt * (long) cur - sum[i];
+                // ls[i+1]-cur+..ls[m-1]-cur
+                int afterCnt = m - 1 - (i + 1) + 1;
+                long rightSum = sum[m] - sum[i + 1] - afterCnt * (long) cur;
+                ans[cur] = leftSum + rightSum;
+            }
+        }
+        return ans;
+    }
     // endregion ---------------------------------------------------------------------------------------------------
 
     //region  ---------------------------------------------图论BFS/DFS-----------------------------------------------
+
+    //1042. 不邻接植花 颜色标记法
+    public int[] gardenNoAdj(int n, int[][] paths) {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        for (int[] path : paths) {
+            add2map(map, path[0], path[1]);
+            add2map(map, path[1], path[0]);
+        }
+        int[] ans = new int[n];
+        for (int i = 1; i <= n; i++) {
+            boolean[] colored = new boolean[5];
+            for (int near : map.getOrDefault(i, new ArrayList<>())) {
+                colored[ans[near - 1]] = true;
+            }
+            for (int j = 1; j <= 4; j++) {
+                if (!colored[j]) {
+                    ans[i - 1] = j;
+                    break;
+                }
+            }
+        }
+        return ans;
+    }
+
+    private void add2map(Map<Integer, List<Integer>> map, int x, int y) {
+        List<Integer> ls = map.getOrDefault(x, new ArrayList<>());
+        ls.add(y);
+        map.put(x, ls);
+    }
+
     // 1971. 寻找图中是否存在路径
     public boolean validPath(int n, int[][] edges, int source, int destination) {
         if (source == destination) return true;

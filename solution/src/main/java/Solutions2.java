@@ -959,6 +959,34 @@ public class Solutions2 {
         return i + j == m;
     }
 
+    //1023. 驼峰式匹配
+    public List<Boolean> camelMatch(String[] queries, String pattern) {
+        List<Boolean> ans = new ArrayList<>();
+        for (String query : queries) {
+            ans.add(checkCamelMatch(query, pattern));
+        }
+        return ans;
+    }
+
+    private boolean checkCamelMatch(String query, String pattern) {
+        int m = query.length(), n = pattern.length();
+        int i = 0, j = 0;
+        while (i < m && j < n) {
+            if (query.charAt(i) == pattern.charAt(j)) {
+                i++;
+                j++;
+            } else if (query.charAt(i) >= 'a' && query.charAt(i) <= 'z') {
+                i++;
+            } else {
+                return false;
+            }
+        }
+        if (j == n && i < m) {
+            while (i < m && query.charAt(i) >= 'a' && query.charAt(i) <= 'z') i++;
+        }
+        return j == n && i == m;
+    }
+
     //1616. 分割两个字符串得到回文串
     public boolean checkPalindromeFormation(String a, String b) {
         return checkConcatenation(a, b) || checkConcatenation(b, a);
@@ -4784,6 +4812,24 @@ public class Solutions2 {
         int mid = (left + right) / 2;
         //连续子数组最大和 从左边，从右边，从中间到两边
         return Math.max(maxMidArraySum(nums, left, right, mid), Math.max(maxSubArraySum(nums, left, mid), maxSubArraySum(nums, mid + 1, right)));
+    }
+
+    //2606. 找到最大开销的子字符串
+    public int maximumCostSubstring(String s, String chars, int[] vals) {
+        Map<Character, Integer> value = new HashMap<>();
+        int n = chars.length();
+        for (int i = 0; i < n; i++) {
+            value.put(chars.charAt(i), vals[i]);
+        }
+        int m = s.length();
+        int[] dp = new int[m + 1];
+        int max = 0;
+        for (int i = 1; i <= m; i++) {
+            int v = value.getOrDefault(s.charAt(i - 1), s.charAt(i - 1) - 'a' + 1);
+            dp[i] = Math.max(dp[i - 1] + v, v);
+            max = Math.max(dp[i], max);
+        }
+        return max;
     }
 
     // 325 和等于k的最长子数组长度
@@ -10356,6 +10402,24 @@ public class Solutions2 {
         while (start < end) {
             swap(chars, start++, end--);
         }
+    }
+
+    //1019. 链表中的下一个更大节点
+    public int[] nextLargerNodes(ListNode head) {
+        List<Integer> list = new ArrayList<>();
+        while (head != null) {
+            list.add(head.val);
+            head = head.next;
+        }
+        int[] ans = new int[list.size()];
+        Stack<Integer> stack = new Stack<>();
+        for (int i = 0; i < list.size(); i++) {
+            while (!stack.isEmpty() && list.get(stack.peek()) < list.get(i)) {
+                ans[stack.pop()] = list.get(i);
+            }
+            stack.push(i);
+        }
+        return ans;
     }
 
     // 456 132模式 枚举3

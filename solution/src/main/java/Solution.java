@@ -1315,74 +1315,53 @@ public class Solution {
     }
 
 
-    public int[] smallestSufficientTeam(String[] reqSkills, List<List<String>> people) {
-        Map<String, Integer> map = new HashMap<>();
-        int m = reqSkills.length;
-        for (int i = 0; i < m; i++) {
-            map.put(reqSkills[i], i); // 字符串映射到下标
-        }
-        int n = people.size();
-        int u = 1 << m;
-        long[][] dp = new long[n + 1][u];//前i个人中选择一些，并集=j，需要的最小人数(用集合表示 101 表示选0，2)
-        Arrays.fill(dp[0], (1L << n) - 1); // 对应所有人，这样在后面取min的时候会取更小的
-        dp[0][0] = 0;
-        for (int i = 0; i < n; i++) {
-            int mask = 0;// 把 people[i] 压缩成一个二进制数 mask
-            for (String s : people.get(i)) {
-                mask |= 1 << map.get(s);
-            }
-            for (int j = 1; j < u; j++) {
-                long res1 = dp[i][j]; //不选当前mask
-                long res2 = dp[i][j & ~mask] | (1L << i); //选当前mask
-                // 此处选的是人少的集合
-                dp[i + 1][j] = Long.bitCount(res1) < Long.bitCount(res2) ? res1 : res2;
+    public boolean checkDistances(String s, int[] distance) {
+        Map<Integer, int[]> map = new HashMap<>();
+        for (int i = 0; i < s.length(); i++) {
+            int idx = s.charAt(i) - 'a';
+            if (map.containsKey(idx)) {
+                map.get(idx)[1] = i;
+            } else {
+                map.put(idx, new int[]{i, -1});
             }
         }
-        long res = dp[n][u - 1];
-        int[] ans = new int[Long.bitCount(res)];
-        for (int i = 0, j = 0; i < n; i++) {
-            if (((res >> i) & 1) == 1) {
-                ans[j++] = i;
+        for (Map.Entry<Integer, int[]> entry : map.entrySet()) {
+            if ((entry.getValue()[1] - entry.getValue()[0] - 1) != distance[entry.getKey()]) return false;
+        }
+        return true;
+    }
+
+    public int[] gardenNoAdj(int n, int[][] paths) {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        for (int[] path : paths) {
+            add2map(map, path[0], path[1]);
+            add2map(map, path[1], path[0]);
+        }
+        int[] ans = new int[n];
+        for (int i = 1; i <= n; i++) {
+            boolean[] colored = new boolean[5];
+            for (int near : map.getOrDefault(i, new ArrayList<>())) {
+                colored[ans[near - 1]] = true;
+            }
+            for (int j = 1; j <= 4; j++) {
+                if (!colored[j]) {
+                    ans[i - 1] = j;
+                    break;
+                }
             }
         }
         return ans;
     }
 
-    public int[] smallestSufficientTeam2(String[] reqSkills, List<List<String>> people) {
-        Map<String, Integer> sid = new HashMap<String, Integer>();
-        int m = reqSkills.length;
-        for (int i = 0; i < m; ++i)
-            sid.put(reqSkills[i], i); // 字符串映射到下标
-
-        int n = people.size(), u = 1 << m;
-        // f[i+1][j] 表示从前 i 个集合中选择一些集合，并集等于 j，需要选择的最小集合
-        long[][] f = new long[n + 1][u];
-        Arrays.fill(f[0], (1L << n) - 1); // 对应记忆化搜索中的 if (i < 0) return all;
-        f[0][0] = 0;
-        for (int i = 0; i < n; ++i) {
-            int mask = 0;
-            for (String s : people.get(i)) // 把 people[i] 压缩成一个二进制数 mask
-                mask |= 1 << sid.get(s);
-            for (int j = 1; j < u; ++j) {
-                long res = f[i][j]; // 不选 mask
-                long res2 = f[i][j & ~mask] | (1L << i); // 选 mask
-                f[i + 1][j] = Long.bitCount(res) < Long.bitCount(res2) ? res : res2;
-            }
-        }
-
-        long res = f[n][u - 1];
-        int[] ans = new int[Long.bitCount(res)];
-        for (int i = 0, j = 0; i < n; ++i)
-            if (((res >> i) & 1) > 0)
-                ans[j++] = i; // 所有在 res 中的下标
-        return ans;
+    private void add2map(Map<Integer, List<Integer>> map, int x, int y) {
+        List<Integer> ls = map.getOrDefault(x, new ArrayList<>());
+        ls.add(y);
+        map.put(x, ls);
     }
 
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.smallestSufficientTeam2(new String[]{"java", "nodejs", "reactjs"},
-                Arrays.asList(Arrays.asList("java"), Arrays.asList("nodejs"), Arrays.asList("nodejs", "reactjs")));
         solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
