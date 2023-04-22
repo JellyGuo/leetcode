@@ -3144,6 +3144,21 @@ public class Solutions1 {
         return false;
     }
 
+    //1026. 节点与其祖先之间的最大差值
+    public int maxAncestorDiff(TreeNode root) {
+        return maxAncestorDiffDfs(root, root.val, root.val);
+    }
+
+    private int maxAncestorDiffDfs(TreeNode root, int min, int max) {
+        if (root == null) return 0;
+        int diff = Math.max(Math.abs(root.val - min), Math.abs(max - root.val));
+        min = Math.min(min, root.val);
+        max = Math.max(max, root.val);
+        diff = Math.max(diff, maxAncestorDiffDfs(root.left, min, max));
+        diff = Math.max(diff, maxAncestorDiffDfs(root.right, min, max));
+        return diff;
+    }
+
     //563 二叉树坡度
     int tilt = 0;
 
@@ -4560,6 +4575,39 @@ public class Solutions1 {
         TreeNode left = getRoot(node.left, n);
         TreeNode right = getRoot(node.right, n);
         return left != null ? left : right;
+    }
+
+    //2641. 二叉树的堂兄弟节点 II
+    public TreeNode replaceValueInTree(TreeNode root) {
+        root.val = 0;
+        Queue<List<TreeNode>> queue = new ArrayDeque<>();
+        List<TreeNode> ls = new ArrayList<>();
+        ls.add(root);
+        queue.offer(ls);
+        while (!queue.isEmpty()) {
+            List<TreeNode> curLevel = queue.poll();
+            List<TreeNode> nextLevel = new ArrayList<>();
+            int nextLevelSum = 0;
+            for (TreeNode node : curLevel) {
+                if (node.left != null) {
+                    nextLevelSum += node.left.val;
+                    nextLevel.add(node.left);
+                }
+                if (node.right != null) {
+                    nextLevelSum += node.right.val;
+                    nextLevel.add(node.right);
+                }
+            }
+            for (TreeNode node : curLevel) {
+                int childrenSum = (node.left == null ? 0 : node.left.val) + (node.right == null ? 0 : node.right.val);
+                if (node.left != null) node.left.val = nextLevelSum - childrenSum;
+                if (node.right != null) node.right.val = nextLevelSum - childrenSum;
+            }
+            if (nextLevel.size() > 0) {
+                queue.offer(nextLevel);
+            }
+        }
+        return root;
     }
 
     //310 最小高度树
@@ -6029,6 +6077,20 @@ public class Solutions1 {
                 long rightSum = sum[m] - sum[i + 1] - afterCnt * (long) cur;
                 ans[cur] = leftSum + rightSum;
             }
+        }
+        return ans;
+    }
+
+    //2640. 一个数组所有前缀的分数
+    public long[] findPrefixScore(int[] nums) {
+        int n = nums.length;
+        int max = 0;
+        long sum = 0;
+        long[] ans = new long[n];
+        for (int i = 0; i < n; i++) {
+            max = Math.max(max, nums[i]);
+            sum += (max + nums[i]);
+            ans[i] = sum;
         }
         return ans;
     }

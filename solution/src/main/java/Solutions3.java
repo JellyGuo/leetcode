@@ -4420,7 +4420,7 @@ public class Solutions3 {
             }
         }
         for (Map.Entry<Integer, int[]> entry : map.entrySet()) {
-            if ((entry.getValue()[1] - entry.getValue()[0]-1) != distance[entry.getKey()]) return false;
+            if ((entry.getValue()[1] - entry.getValue()[0] - 1) != distance[entry.getKey()]) return false;
         }
         return true;
     }
@@ -4439,6 +4439,90 @@ public class Solutions3 {
             if (entry.getValue() == max) return entry.getKey();
         }
         return -1;
+    }
+
+    //2413. 最小偶倍数
+    public int smallestEvenMultiple(int n) {
+        if (n % 2 == 0) return n;
+        return 2 * n / gcd(n, 2);
+    }
+
+    //2639查询网格图中每一列的宽度
+    public int[] findColumnWidth(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[] ans = new int[n];
+        for (int j = 0; j < n; j++) {
+            int max = 0;
+            for (int i = 0; i < m; i++) {
+                max = Math.max(max, cntDigit(grid[i][j]));
+            }
+            ans[j] = max;
+        }
+        return ans;
+    }
+
+    private int cntDigit(int x) {
+        if (x == 0) return 1;
+        int len = x < 0 ? 1 : 0;
+        x = Math.abs(x);
+        while (x != 0) {
+            len++;
+            x /= 10;
+        }
+        return len;
+    }
+
+    //2644. 找出可整除性得分最大的整数
+    public int maxDivScore(int[] nums, int[] divisors) {
+        int ans = 0, maxCnt = -1;
+        for (int i = 0; i < divisors.length; i++) {
+            int cnt = 0;
+            for (int num : nums) {
+                cnt += (num % divisors[i] == 0 ? 1 : 0);
+            }
+            if (cnt > maxCnt) {
+                maxCnt = cnt;
+                ans = divisors[i];
+            } else if (cnt == maxCnt && divisors[i] < ans) {
+                ans = divisors[i];
+            }
+        }
+        return ans;
+    }
+
+    //2643. 一最多的行
+    public int[] rowAndMaximumOnes(int[][] mat) {
+        int[] ans = new int[2];
+        for (int i = 0; i < mat.length; i++) {
+            int sum = 0;
+            for (int j = 0; j < mat[i].length; j++) {
+                sum += mat[i][j];
+            }
+            if (sum > ans[1]) {
+                ans[0] = i;
+                ans[1] = sum;
+            }
+        }
+        return ans;
+    }
+
+    //2409. 统计共同度过的日子数
+    public int countDaysTogether(String arriveAlice, String leaveAlice, String arriveBob, String leaveBob) {
+        int[] months = new int[]{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        int[] sum = new int[13];
+        for (int i = 1; i <= 12; i++) {
+            sum[i] = sum[i - 1] + months[i - 1];
+        }
+        int as = convertDate(sum, arriveAlice), ae = convertDate(sum, leaveAlice);
+        int bs = convertDate(sum, arriveBob), be = convertDate(sum, leaveBob);
+        if (as > be || bs > ae) return 0;
+        return Math.min(Math.min(ae - as + 1, be - bs + 1), Math.min(ae - bs + 1, be - as + 1));
+    }
+
+    private int convertDate(int[] sum, String date) {
+        int month = Integer.parseInt(date.split("-")[0]);
+        int day = Integer.parseInt(date.split("-")[1]);
+        return sum[month - 1] + day;
     }
 
     //2614. 对角线上的质数
@@ -5098,7 +5182,7 @@ public class Solutions3 {
     }
 
     public String baseNeg2Two(int n) {
-        if (n == 0 || n == 1) {  
+        if (n == 0 || n == 1) {
             return String.valueOf(n);
         }
         StringBuilder res = new StringBuilder();
@@ -7598,6 +7682,19 @@ public class Solutions3 {
         return cnt;
     }
 
+    //2645. 构造有效字符串的最少插入数
+    public int addMinimum(String word) {
+        int n = word.length();
+        int k = 0;
+        for (int i = 1; i < n; i++) {
+            if (word.charAt(i) <= word.charAt(i - 1)) {
+                k++;
+            }
+        }
+        return 3 * (k + 1) - n;
+
+    }
+
     //334 递增的三元子序列 O(n)
     public boolean increasingTriplet(int[] nums) {
         int n = nums.length;
@@ -7707,11 +7804,11 @@ public class Solutions3 {
         }
         for (int num : nums2) {
             min2 = Math.min(min2, num);
-            if(set1.contains(num)){
+            if (set1.contains(num)) {
                 treeSet.add(num);
             }
         }
-        if(!treeSet.isEmpty()) return treeSet.first();
+        if (!treeSet.isEmpty()) return treeSet.first();
         if (min1 < min2) return min1 * 10 + min2;
         return min2 * 10 + min1;
     }
@@ -10332,6 +10429,57 @@ public class Solutions3 {
             else left = mid;
         }
         return right;
+    }
+
+    //2646. 最小化旅行的价格总和
+    private List<Integer>[] g;
+    private int[] price, cnt;
+    private int end;
+
+    public int minimumTotalPrice(int n, int[][] edges, int[] price, int[][] trips) {
+        g = new ArrayList[n];
+        Arrays.setAll(g, e -> new ArrayList<>());
+        for (int[] e : edges) {
+            int x = e[0], y = e[1];
+            g[x].add(y);
+            g[y].add(x); // 建树
+        }
+        this.price = price;
+
+        cnt = new int[n];
+        for (int[] t : trips) {
+            end = t[1];
+            path(t[0], -1);
+        }
+
+        int[] p = dfs(0, -1);
+        return Math.min(p[0], p[1]);
+    }
+
+    private boolean path(int x, int fa) {
+        if (x == end) { // 到达终点（注意树只有唯一的一条简单路径）
+            ++cnt[x]; // 统计从 start 到 end 的路径上的点经过了多少次
+            return true; // 找到终点
+        }
+        for (int y : g[x])
+            if (y != fa && path(y, x)) {
+                ++cnt[x]; // 统计从 start 到 end 的路径上的点经过了多少次
+                return true; // 找到终点
+            }
+        return false; // 未找到终点
+    }
+
+    // 类似 337. 打家劫舍 III https://leetcode.cn/problems/house-robber-iii/
+    private int[] dfs(int x, int fa) {
+        int notHalve = price[x] * cnt[x]; // x 不变
+        int halve = notHalve / 2; // x 减半
+        for (int y : g[x])
+            if (y != fa) {
+                int[] p = dfs(y, x); // 计算 y 不变/减半的最小价值总和
+                notHalve += Math.min(p[0], p[1]); // x 不变，那么 y 可以不变，可以减半，取这两种情况的最小值
+                halve += p[0]; // x 减半，那么 y 只能不变
+            }
+        return new int[]{notHalve, halve};
     }
 
     //2616. 最小化数对的最大差值

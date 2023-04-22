@@ -3310,6 +3310,39 @@ public class Solutions2 {
         return map.get(index);
     }
 
+    //1043. 分隔数组以得到最大和
+    public int maxSumAfterPartitioningMemo(int[] arr, int k) {
+        int n = arr.length;
+        int[] memo = new int[n];
+        Arrays.fill(memo, -1);
+        return maxSumAfterPartitioningDfs(n - 1, arr, memo, k);
+    }
+
+    private int maxSumAfterPartitioningDfs(int i, int[] arr, int[] memo, int k) {
+        if (i < 0) return 0;
+        if (memo[i] != -1) return memo[i];
+        int max = arr[i];
+        int ans = 0;
+        for (int j = i; (j > i - k) && j >= 0; j--) {
+            max = Math.max(max, arr[j]);
+            ans = Math.max(ans,maxSumAfterPartitioningDfs(j - 1,arr,memo,k) + max * (i - j + 1));
+        }
+        return memo[i] = ans;
+    }
+
+    public int maxSumAfterPartitioning(int[] arr, int k) {
+        int n = arr.length;
+        int[] d = new int[n + 1];
+        for (int i = 0; i < n; i++) {
+            int maxValue = arr[i];
+            for (int j = i; j >= 0 && j > i - k; j--) {
+                maxValue = Math.max(maxValue, arr[j]);
+                d[i + 1] = Math.max(d[i + 1], d[j] + maxValue * (i - j + 1));
+            }
+        }
+        return d[n];
+    }
+
     //1641. 统计字典序元音字符串的数目
     int ans1641 = 0;
 
@@ -5228,6 +5261,62 @@ public class Solutions2 {
             }
         }
         return Math.min(dp[n - 1][0], dp[n - 1][1]);
+    }
+
+
+
+    //1187. 使数组严格递增
+    public int makeArrayIncreasing(int[] arr1, int[] arr2) {
+        Arrays.sort(arr2);
+        List<Integer> list = new ArrayList<>();
+        int prev = -1;
+        for (int num : arr2) {
+            if (num != prev) {
+                list.add(num);
+                prev = num;
+            }
+        }
+        int m = arr1.length, n = list.size();
+        // 以i结尾，交换j次的最小值
+        int[][] dp = new int[m + 1][Math.min(m, n) + 1];
+        for (int[] d : dp) {
+            Arrays.fill(d, Integer.MAX_VALUE);
+        }
+        dp[0][0] = -1;
+        for (int i = 1; i <= m; i++) {
+            for (int j = 0; j <= Math.min(i, n); j++) {
+                // 保留arr1[i-1],不进行交换
+                // 需要满足递增，此时最小值即为arr[i-1]
+                if (arr1[i - 1] > dp[i - 1][j]) {
+                    dp[i][j] = arr1[i - 1];
+                }
+                // 若前i-1个在j-1次交换后满足递增，那么i可以交换成一个大于dp[i-1][j-1]的最小值
+                if (j > 0 && dp[i - 1][j - 1] != Integer.MAX_VALUE) {
+                    // 每次找最小，找了j-1次，所以这次查找可以从j-1开始找
+                    int idx = binarySearch(list, dp[i - 1][j - 1], j - 1);
+                    if (idx < list.size()) {
+                        dp[i][j] = Math.min(dp[i][j], list.get(idx));
+                    }
+                }
+                if (i == m && dp[i][j] != Integer.MAX_VALUE) {
+                    return j;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int binarySearch(List<Integer> list, int x, int l) {
+        int r = list.size();
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (list.get(mid) > x) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
     }
 
     //1664. 生成平衡数组的方案数
@@ -7338,6 +7427,24 @@ public class Solutions2 {
             if (dp[i] == max) ans += cnt[i];
         }
         return ans;
+    }
+
+    //1027. 最长等差数列
+    public int longestArithSeqLength(int[] nums) {
+        int n = nums.length;
+        int ans = 0;
+        // 以i结尾 公差为j的最长长度
+        int[][] f = new int[n][1001];
+        for (int i = 1; i < n; ++i) {
+            //枚举i前面的元素
+            for (int k = 0; k < i; ++k) {
+                //公差范围[-500，500]，j>=0故+500
+                int j = nums[i] - nums[k] + 500;
+                f[i][j] = Math.max(f[i][j], f[k][j] + 1);
+                ans = Math.max(ans, f[i][j]);
+            }
+        }
+        return ans + 1;
     }
 
 //1223. 掷骰子模拟  高维dp
