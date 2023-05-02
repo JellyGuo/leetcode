@@ -3109,6 +3109,30 @@ public class Solutions3 {
         return new int[]{min, max};
     }
 
+    //2654. 使数组所有元素变成 1 的最少操作次数
+    public int minOperations2654(int[] nums) {
+        int n = nums.length, gcdAll = 0, cnt1 = 0;
+        for (int x : nums) {
+            gcdAll = gcd(gcdAll, x);
+            if (x == 1) ++cnt1;
+        }
+        if (gcdAll > 1) return -1;
+        if (cnt1 > 0) return n - cnt1;
+
+        int minSize = n;
+        for (int i = 0; i < n; ++i) {
+            int g = 0;
+            for (int j = i; j < n; ++j) {
+                g = gcd(g, nums[j]);
+                if (g == 1) {
+                    // 这里本来是 j-i+1，把 +1 提出来合并到 return 中
+                    minSize = Math.min(minSize, j - i + 1);
+                    break;
+                }
+            }
+        }
+        return (minSize - 1) + (n - 1);
+    }
     //----------------------------------------------------- 数学--------------------------------------------
 
     // a b 快速相乘
@@ -4155,6 +4179,29 @@ public class Solutions3 {
         return country[s.length() - 10] + "***-***-" + s.substring(s.length() - 4);
     }
 
+    //970. 强整数 枚举
+    public List<Integer> powerfulIntegers(int x, int y, int bound) {
+        Set<Integer> set = new HashSet<Integer>();
+        int value1 = 1;
+        for (int i = 0; i < 21; i++) {
+            int value2 = 1;
+            for (int j = 0; j < 21; j++) {
+                int value = value1 + value2;
+                if (value <= bound) {
+                    set.add(value);
+                } else {
+                    break;
+                }
+                value2 *= y;
+            }
+            if (value1 > bound) {
+                break;
+            }
+            value1 *= x;
+        }
+        return new ArrayList<Integer>(set);
+    }
+
     //1138. 字母板上的路径
     public String alphabetBoardPath(String target) {
         int cx = 0, cy = 0;
@@ -4501,6 +4548,22 @@ public class Solutions3 {
             if (sum > ans[1]) {
                 ans[0] = i;
                 ans[1] = sum;
+            }
+        }
+        return ans;
+    }
+
+    //2651. 计算列车到站时间
+    public int findDelayedArrivalTime(int arrivalTime, int delayedTime) {
+        return (arrivalTime + delayedTime) % 24;
+    }
+
+    //2652. 倍数求和
+    public int sumOfMultiples(int n) {
+        int ans = 0;
+        for (int i = 1; i <= n; i++) {
+            if (i % 3 == 0 || i % 5 == 0 || i % 7 == 0) {
+                ans += i;
             }
         }
         return ans;
@@ -7537,6 +7600,23 @@ public class Solutions3 {
         return ans;
     }
 
+    //1033. 移动石子直到连续
+    public int[] numMovesStones(int a, int b, int c) {
+        int x = Math.min(Math.min(a, b), c);
+        int z = Math.max(Math.max(a, b), c);
+        int y = a + b + c - x - z;
+
+        int[] res = new int[2];
+        res[0] = 2;
+        if (z - y == 1 && y - x == 1) {
+            res[0] = 0;
+        } else if (z - y <= 2 || y - x <= 2) {
+            res[0] = 1;
+        }
+        res[1] = z - x - 2;
+        return res;
+    }
+
     // 1154 一年中的第几天
     public int dayOfYear(String date) {
         String[] strings = date.split("-");
@@ -9172,6 +9252,21 @@ public class Solutions3 {
 
         for (int[] ppl : people) list.add(ppl[1], ppl);
         return list.toArray(new int[people.length][]);
+    }
+
+    //2418. 按身高排序
+    public String[] sortPeople(String[] names, int[] heights) {
+        int n = names.length;
+        int[][] arr = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            arr[i] = new int[]{heights[i], i};
+        }
+        Arrays.sort(arr, (o1, o2) -> o2[0] - o1[0]);
+        String[] ans = new String[n];
+        for (int i = 0; i < n; i++) {
+            ans[i] = names[arr[i][1]];
+        }
+        return ans;
     }
 
 
@@ -11415,6 +11510,34 @@ public class Solutions3 {
             }
         }
         return true;
+    }
+
+    //2423. 删除字符使频率相同
+    public boolean equalFrequency(String word) {
+        int[] cnt = new int[26];
+        for (char c : word.toCharArray()) {
+            cnt[c - 'a']++;
+        }
+        Map<Integer, Integer> freCnt = new HashMap<>();
+        for (int fre : cnt) {
+            if (fre == 0) continue;
+            freCnt.put(fre, freCnt.getOrDefault(fre, 0) + 1);
+        }
+        for (int fre : cnt) {
+            if (fre == 0) continue;
+            freCnt.put(fre, freCnt.get(fre) - 1);
+            if (freCnt.get(fre) == 0) freCnt.remove(fre);
+            if (fre - 1 > 0) {
+                freCnt.put(fre - 1, freCnt.getOrDefault(fre - 1, 0) + 1);
+            }
+            if (freCnt.size() == 1) return true;
+            if (fre - 1 > 0) {
+                freCnt.put(fre - 1, freCnt.get(fre - 1) - 1);
+                if (freCnt.get(fre - 1) == 0) freCnt.remove(fre - 1);
+            }
+            freCnt.put(fre, freCnt.getOrDefault(fre, 0) + 1);
+        }
+        return false;
     }
 
     //2513. 最小化两个数组中的最大值

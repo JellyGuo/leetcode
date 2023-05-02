@@ -1217,6 +1217,25 @@ public class Solutions2 {
         return ans;
     }
 
+    //1163. 按字典序排在最后的子串
+    public String lastSubstring(String s) {
+        int i = 0, j = 1, n = s.length();
+        while (j < n) {
+            int k = 0;
+            while (j + k < n && s.charAt(i + k) == s.charAt(j + k)) {
+                k++;
+            }
+            if (j + k < n && s.charAt(i + k) < s.charAt(j + k)) {
+                int t = i;
+                i = j;
+                j = Math.max(j + 1, t + k + 1);
+            } else {
+                j = j + k + 1;
+            }
+        }
+        return s.substring(i);
+    }
+
     // 1209 删除字符串中的所有相邻重复项2
     // 双指针
     public String removeDuplicates(String s, int k) {
@@ -3095,6 +3114,32 @@ public class Solutions2 {
         return cnt + max;
     }
 
+    //2653. 滑动子数组的美丽值
+    public int[] getSubarrayBeauty(int[] nums, int k, int x) {
+        int n = nums.length;
+        int[] ans = new int[n - k + 1];
+        TreeMap<Integer, Integer> cnt = new TreeMap<>();
+        for (int l = 0, r = 0; r < n; r++) {
+            cnt.put(nums[r], cnt.getOrDefault(nums[r], 0) + 1);
+            if (r - l + 1 == k) {
+                int tmp = x;
+                for (Map.Entry<Integer, Integer> entry : cnt.entrySet()) {
+                    if (entry.getValue() >= tmp) {
+                        ans[l] = entry.getKey() < 0 ? entry.getKey() : 0;
+                        break;
+                    }
+                    tmp -= entry.getValue();
+                }
+                cnt.put(nums[l], cnt.get(nums[l]) - 1);
+                if (cnt.get(nums[l]) == 0) {
+                    cnt.remove(nums[l]);
+                }
+                l++;
+            }
+        }
+        return ans;
+    }
+
     // endregion ---------------------------------------------------------------------------------
     //------------------------------------------DP------------------------------------------------------
     //region ------------------------------------------记忆化搜索 DFS/DP------------------------------------------------------
@@ -3308,6 +3353,34 @@ public class Solutions2 {
             map.put(index, wordBreaks);
         }
         return map.get(index);
+    }
+
+    //1376. 通知所有员工所需的时间
+    int headID;  // 公司总负责人 ID
+    int[] manager;  // manager[i] 表示第 i 名员工的直属负责人
+    int[] informTime;  // informTime[i] 表示第 i 名员工通知直属下属所需时间
+    Map<Integer, Integer> memo1376 = new HashMap<>();  // 记忆化搜索缓存
+
+    public int numOfMinutes(int n, int headID, int[] manager, int[] informTime) {
+        this.headID = headID;
+        this.manager = manager;
+        this.informTime = informTime;
+        int res = 0;  // 记录最长时间
+        for (int i = 0; i < n; i++) {
+            res = Math.max(res, dfs1376(i));  // 对每个员工遍历，更新最长时间
+        }
+        return res;
+    }
+
+    public int dfs1376(int cur) {
+        if (cur == headID) {  // 当前节点为根节点
+            return 0;
+        }
+        if (!memo1376.containsKey(cur)) {  // 检查缓存中是否已经存在当前节点的时间
+            int res = dfs1376(manager[cur]) + informTime[manager[cur]];  // 递归遍历当前节点的直属上级节点，返回时间和
+            memo1376.put(cur, res);  // 将当前节点到根节点的时间加入缓存中
+        }
+        return memo1376.get(cur);  // 返回当前节点到根节点的时间
     }
 
     //1043. 分隔数组以得到最大和
@@ -4912,6 +4985,61 @@ public class Solutions2 {
         return max;
     }
 
+    //1031. 两个非重叠子数组的最大和 前缀和+DP+滑动窗口
+    //dp[i][0]: 从 A[0]-A[i] 连续 L 长度子数组最大的元素和
+    //dp[i][1]: 从 A[0]-A[i] 连续 M 长度子数组最大的元素和
+    //dp[i][2]: 从 A[i]-A[A.size()-1] 连续 L 长度子数组最大的元素和
+    //dp[i][3]: 从 A[i]-A[A.size()-1] 连续 M 长度子数组最大的元素和
+    public int maxSumTwoNoOverlap(int[] nums, int firstLen, int secondLen) {
+        int n = nums.length;
+        int[] sum = new int[n];
+        sum[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            sum[i] = sum[i - 1] + nums[i];
+        }
+        int[][] dp = new int[n][4];
+        int max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            if (r - l + 1 == firstLen) {
+                max = Math.max(max, sum[r] - (l > 0 ? sum[l - 1] : 0));
+                dp[r][0] = max;
+                l++;
+            }
+        }
+        max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            if (r - l + 1 == secondLen) {
+                max = Math.max(max, sum[r] - (l > 0 ? sum[l - 1] : 0));
+                dp[r][1] = max;
+                l++;
+            }
+        }
+        max = 0;
+        for (int l = n - 1, r = n - 1; l >= 0; l--) {
+            if (r - l + 1 == firstLen) {
+                max = Math.max(max, sum[r] - (l > 0 ? sum[l - 1] : 0));
+                dp[l][2] = max;
+                r--;
+            }
+        }
+        max = 0;
+        for (int l = n - 1, r = n - 1; l >= 0; l--) {
+            if (r - l + 1 == secondLen) {
+                max = Math.max(max, sum[r] - (l > 0 ? sum[l - 1] : 0));
+                dp[l][3] = max;
+                r--;
+            }
+        }
+        int res = 0;
+        for (int i = firstLen; i <= n - secondLen; i++) {
+            res = Math.max(res, dp[i - 1][0] + dp[i][3]);
+        }
+        for (int i = secondLen; i <= n - firstLen; i++) {
+            res = Math.max(res, dp[i - 1][1] + dp[i][2]);
+        }
+        return res;
+    }
+
     // 764 最大加号标志
     public int orderOfLargestPlusSign(int n, int[][] mines) {
         int[][] dp = new int[n][n];
@@ -5263,6 +5391,25 @@ public class Solutions2 {
         return Math.min(dp[n - 1][0], dp[n - 1][1]);
     }
 
+    //1105. 填充书架
+    public int minHeightShelves(int[][] books, int shelfWidth) {
+        int n = books.length;
+        // 以i结尾的书架最小高度和
+        int[] dp = new int[n + 1];
+        Arrays.fill(dp, 1000000);
+        dp[0] = 0;
+        for (int i = 0; i < n; i++) {
+            int curWidth = 0, maxHeight = 0;
+            // 枚举i前面的j，对应[j,i]之间的k放在最后一层书架，高度即为[j,i]的最大高度
+            for (int j = i; j >= 0; j--) {
+                curWidth += books[j][0];
+                if (curWidth > shelfWidth) break;
+                maxHeight = Math.max(maxHeight, books[j][1]);
+                dp[i + 1] = Math.min(dp[i + 1], dp[j] + maxHeight);
+            }
+        }
+        return dp[n];
+    }
 
 
     //1187. 使数组严格递增
@@ -7445,6 +7592,58 @@ public class Solutions2 {
             }
         }
         return ans + 1;
+    }
+
+    //1048. 最长字符串链 LIS 问题
+    public int longestStrChain(String[] words) {
+        int n = words.length;
+        Arrays.sort(words, Comparator.comparingInt(String::length));
+        int[] dp = new int[n];
+        int max = 0;
+        for (int i = 0; i < n; i++) {
+            dp[i] = 1;
+            for (int j = 0; j < i; j++) {
+                if (isPrev(words, j, i)) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+            max = Math.max(dp[i], max);
+        }
+        return max;
+    }
+
+    private boolean isPrev(String[] words, int x, int y) {
+        if (words[x].length() + 1 != words[y].length()) return false;
+        int idx1 = 0, idx2 = 0;
+        int diff = 0;
+        while (idx1 < words[x].length() && idx2 < words[y].length()) {
+            if (words[x].charAt(idx1) == words[y].charAt(idx2)) {
+                idx1++;
+                idx2++;
+            } else {
+                idx2++;
+                diff++;
+            }
+        }
+        if (diff == 0 && idx1 == words[x].length() && words[y].length() - idx2 == 1) return true;
+        return diff == 1;
+    }
+
+    public int longestStrChain2(String[] words) {
+        Arrays.sort(words, Comparator.comparingInt(String::length));
+        Map<String, Integer> cnt = new HashMap<>();
+        int max = 0;
+        for (String word : words) {
+            cnt.put(word, 1);
+            for (int i = 0; i < word.length(); i++) {
+                String prev = word.substring(0, i) + word.substring(i + 1);
+                if (cnt.containsKey(prev)) {
+                    cnt.put(word, Math.max(cnt.get(word), cnt.get(prev) + 1));
+                }
+            }
+            max = Math.max(cnt.get(word),max);
+        }
+        return max;
     }
 
 //1223. 掷骰子模拟  高维dp
