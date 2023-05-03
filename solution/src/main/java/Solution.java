@@ -1359,6 +1359,24 @@ public class Solution {
         map.put(x, ls);
     }
 
+    public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<>();
+        for (char c : s.toCharArray()) {
+            if (c == 'a' || c == 'b') {
+                stack.push(c);
+            } else if (stack.size() >= 2 && stack.peek() == 'b') {
+                char b = stack.pop();
+                if (stack.peek() == 'a') {
+                    stack.pop();
+                } else {
+                    stack.push(b);
+                }
+            }else {
+                return false;
+            }
+        }
+        return stack.isEmpty();
+    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
