@@ -594,6 +594,7 @@ public class Solutions1 {
 
     //2597. 美丽子集的数目
     int ans2597;
+
     public int beautifulSubsets(int[] nums, int k) {
         Map<Integer, Integer> map = new HashMap<>();
         dfs(nums, 0, k, map);
@@ -5069,7 +5070,7 @@ public class Solutions1 {
         for (int num : nums) {
             x ^= num;
             // 之前有多少个异或和为x的，就能与当前组成异或和=0的子数组
-            ans += map.getOrDefault(x,0);
+            ans += map.getOrDefault(x, 0);
             map.put(x, map.getOrDefault(x, 0) + 1);
         }
         return ans;
@@ -5499,6 +5500,17 @@ public class Solutions1 {
             }
         }
         return new int[0];
+    }
+
+    //1010. 总持续时间可被 60 整除的歌曲
+    public int numPairsDivisibleBy60(int[] time) {
+        int ans = 0;
+        int[] cnt = new int[60];
+        for (int t : time) {
+            ans += cnt[(60 - t % 60) % 60];
+            cnt[t % 60]++;
+        }
+        return ans;
     }
 
     //面试题 16.21. 交换和
@@ -6221,7 +6233,7 @@ public class Solutions1 {
                 }
             }
             return first + second - 1;
-        }else {
+        } else {
             int m = roads.length;
             if (firstList.size() * (firstList.size() - 1) / 2 > m) {
                 return first * 2;
@@ -6236,6 +6248,7 @@ public class Solutions1 {
             return first * 2 - 1;
         }
     }
+
     //2059. 转化数字的最小运算数
     public int minimumOperations(int[] nums, int start, int goal) {
         if (start == goal) return 0;
@@ -8198,7 +8211,7 @@ public class Solutions1 {
                 if (match(i)) break;
                 int min = Integer.MAX_VALUE;
                 for (int y = 0; y < m; y++) {
-                    if(!sy[y]) min = Math.min(min, slack[y]);
+                    if (!sy[y]) min = Math.min(min, slack[y]);
                 }
                 for (int idx = 0; idx < m; idx++) {
                     if (sx[idx]) lx[idx] -= min;
@@ -8240,8 +8253,10 @@ public class Solutions1 {
         }
         return point;
     }
+
     //2172. 数组的最大与和
     int[][] edges;
+
     public int maximumANDSum(int[] nums, int numSlots) {
         m = nums.length;
         n = 2 * numSlots;
@@ -8273,7 +8288,7 @@ public class Solutions1 {
                 for (int x = 0; x < m; x++) {
                     if (sx[x]) lx[x] -= min;
                 }
-                for(int y=0;y<n;y++){
+                for (int y = 0; y < n; y++) {
                     if (sy[y]) ly[y] += min;
                     else slack[y] -= min;
                 }

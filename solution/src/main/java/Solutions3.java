@@ -4202,6 +4202,47 @@ public class Solutions3 {
         return new ArrayList<Integer>(set);
     }
 
+    //1419. 数青蛙
+    public int minNumberOfFrogs(String croakOfFrogs) {
+        if (croakOfFrogs.length() % 5 != 0) {
+            return -1;
+        }
+        int res = 0, frogNum = 0;
+        int[] cnt = new int[4];
+        Map<Character, Integer> map = new HashMap<Character, Integer>() {{
+            put('c', 0);
+            put('r', 1);
+            put('o', 2);
+            put('a', 3);
+            put('k', 4);
+        }};
+        for (int i = 0; i < croakOfFrogs.length(); i++) {
+            char c = croakOfFrogs.charAt(i);
+            int t = map.get(c);
+            if (t == 0) {
+                cnt[t]++;
+                frogNum++;
+                if (frogNum > res) {
+                    res = frogNum;
+                }
+            } else {
+                if (cnt[t - 1] == 0) {
+                    return -1;
+                }
+                cnt[t - 1]--;
+                if (t == 4) {
+                    frogNum--;
+                } else {
+                    cnt[t]++;
+                }
+            }
+        }
+        if (frogNum > 0) {
+            return -1;
+        }
+        return res;
+    }
+
     //1138. 字母板上的路径
     public String alphabetBoardPath(String target) {
         int cx = 0, cy = 0;
@@ -11538,6 +11579,23 @@ public class Solutions3 {
             freCnt.put(fre, freCnt.getOrDefault(fre, 0) + 1);
         }
         return false;
+    }
+
+    //2432. 处理用时最长的那个任务的员工
+    public int hardestWorker(int n, int[][] logs) {
+        int lastTime = 0;
+        int maxTime = 0;
+        int maxId = -1;
+        for (int[] log : logs) {
+            if (log[1] - lastTime > maxTime) {
+                maxTime = log[1] - lastTime;
+                maxId = log[0];
+            } else if (log[1] - lastTime == maxTime && log[0] < maxId) {
+                maxId = log[0];
+            }
+            lastTime = log[1];
+        }
+        return maxId;
     }
 
     //2513. 最小化两个数组中的最大值

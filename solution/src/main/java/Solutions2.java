@@ -1970,6 +1970,29 @@ public class Solutions2 {
         return low;
     }
 
+    //2106. 摘水果 hard
+    public int maxTotalFruits(int[][] fruits, int startPos, int k) {
+        int n = fruits.length;
+        int sum = 0;
+        int max = 0;
+        for (int l = 0, r = 0; r < n; r++) {
+            sum += fruits[r][1];
+            while (l <= r && step(fruits, startPos, l, r) > k) {
+                sum -= fruits[l][1];
+                l++;
+            }
+            max = Math.max(max, sum);
+        }
+        return max;
+    }
+
+    // 覆盖[l,r]区间的最小步数
+    // s<l => r-s  s>r => s-l
+    // l<s<r => min(s-l,r-s)+r-l
+    private int step(int[][] fruits, int startPos, int l, int r) {
+        return Math.min(Math.abs(fruits[r][0] - startPos), Math.abs(startPos - fruits[l][0])) + fruits[r][0] - fruits[l][0];
+    }
+
     //1838. 最高频元素的频数
     // sum = [1,3,7] r=2的时候，r前面有r-l个数字，全都需要补成nums[r] 的话需要nums[r]*(r-l)-sum次
     public int maxFrequency(int[] nums, int k) {
