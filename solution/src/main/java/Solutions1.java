@@ -592,6 +592,22 @@ public class Solutions1 {
         }
     }
 
+    //2437. 有效时间的数目 枚举
+    // 分开枚举小时和分钟，最终结果相乘
+    public int countTime(String time) {
+        return f(time.substring(0, 2), 24) * f(time.substring(3), 60);
+    }
+
+    private int f(String s, int m) {
+        int cnt = 0;
+        for (int i = 0; i < m; ++i) {
+            boolean a = s.charAt(0) == '?' || s.charAt(0) - '0' == i / 10;
+            boolean b = s.charAt(1) == '?' || s.charAt(1) - '0' == i % 10;
+            cnt += a && b ? 1 : 0;
+        }
+        return cnt;
+    }
+
     //2597. 美丽子集的数目
     int ans2597;
 
@@ -7280,6 +7296,70 @@ public class Solutions1 {
         dfs(node.right, node, map);
     }
 
+    //1263. 推箱子 Hard
+    public int minPushBox(char[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int sx = -1, sy = -1, bx = -1, by = -1; // 玩家、箱子的初始位置
+        for (int x = 0; x < m; x++) {
+            for (int y = 0; y < n; y++) {
+                if (grid[x][y] == 'S') {
+                    sx = x;
+                    sy = y;
+                } else if (grid[x][y] == 'B') {
+                    bx = x;
+                    by = y;
+                }
+            }
+        }
+
+        int[] d = {0, -1, 0, 1, 0};
+
+        int[][] dp = new int[m * n][m * n];
+        for (int i = 0; i < m * n; i++) {
+            Arrays.fill(dp[i], Integer.MAX_VALUE);
+        }
+        Queue<int[]> queue = new ArrayDeque<int[]>();
+        dp[sx * n + sy][bx * n + by] = 0; // 初始状态的推动次数为 0
+        queue.offer(new int[]{sx * n + sy, bx * n + by});
+        while (!queue.isEmpty()) {
+            Queue<int[]> queue1 = new ArrayDeque<int[]>();
+            while (!queue.isEmpty()) {
+                int[] arr = queue.poll();
+                int s1 = arr[0], b1 = arr[1];
+                int sx1 = s1 / n, sy1 = s1 % n, bx1 = b1 / n, by1 = b1 % n;
+                if (grid[bx1][by1] == 'T') { // 箱子已被推到目标处
+                    return dp[s1][b1];
+                }
+                for (int i = 0; i < 4; i++) { // 玩家向四个方向移动到另一个状态
+                    int sx2 = sx1 + d[i], sy2 = sy1 + d[i + 1], s2 = sx2*n+sy2;
+                    if (!ok(grid, m, n, sx2, sy2)) { // 玩家位置不合法
+                        continue;
+                    }
+                    if (bx1 == sx2 && by1 == sy2) { // 推动箱子
+                        int bx2 = bx1 + d[i], by2 = by1 + d[i + 1], b2 = bx2*n+by2;
+                        if (!ok(grid, m, n, bx2, by2) || dp[s2][b2] <= dp[s1][b1] + 1) { // 箱子位置不合法 或 状态已访问
+                            continue;
+                        }
+                        dp[s2][b2] = dp[s1][b1] + 1;
+                        queue1.offer(new int[]{s2, b2});
+                    } else {
+                        if (dp[s2][b1] <= dp[s1][b1]) { // 状态已访问
+                            continue;
+                        }
+                        dp[s2][b1] = dp[s1][b1];
+                        queue.offer(new int[]{s2, b1});
+                    }
+                }
+            }
+            queue = queue1;
+        }
+        return -1;
+    }
+
+    public boolean ok(char[][] grid, int m, int n, int x, int y) { // 不越界且不在墙上
+        return x >= 0 && x < m && y >= 0 && y < n && grid[x][y] != '#';
+    }
+
     //863 二叉树中所有距离为K的节点
     public List<Integer> distanceK(TreeNode root, TreeNode target, int k) {
         Map<Integer, TreeNode> parents = new HashMap<>();
@@ -7872,6 +7952,34 @@ public class Solutions1 {
         int jbottom = dfs(grid, i, j + 1, visited);
         visited[i][j] = false;
         return grid[i][j] + Math.max(Math.max(ileft, iright), Math.max(jtop, jbottom));
+    }
+
+    //2658. 网格图中鱼的最大数目
+    public int findMaxFish(int[][] grid) {
+        this.m = grid.length;
+        this.n = grid[0].length;
+        boolean[][] visited = new boolean[m][n];
+        int max = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] > 0 && !visited[i][j]) {
+                    max = Math.max(max, dfs(i, j, grid, visited));
+                }
+            }
+        }
+        return max;
+    }
+
+    private int dfs(int x, int y, int[][] grid, boolean[][] visited) {
+        if (x < 0 || x >= m || y < 0 || y >= n || grid[x][y] == 0 || visited[x][y]) return 0;
+        int fish = grid[x][y];
+        visited[x][y] = true;
+        for (int[] dire : directions) {
+            int newX = x + dire[0];
+            int newY = y + dire[1];
+            fish += dfs(newX, newY, grid, visited);
+        }
+        return fish;
     }
 
     // 面试08.02 迷路的机器人
@@ -9289,6 +9397,36 @@ public class Solutions1 {
         List<Integer> ls = map.getOrDefault(edge[0], new ArrayList<>());
         ls.add(edge[1]);
         map.put(edge[0], ls);
+    }
+
+
+    //2662. 前往目标的最小代价
+    public int minimumCost(int[] start, int[] target, int[][] specialRoads) {
+        long t = (long) target[0] << 32 | target[1];
+        Map<Long, Integer> dis = new HashMap<>();
+        dis.put(t, Integer.MAX_VALUE);
+        dis.put((long) start[0] << 32 | start[1], 0);
+        Set<Long> vis = new HashSet<>();
+        for (; ; ) {
+            long v = -1;
+            int dv = -1;
+            for (Map.Entry<Long, Integer> e : dis.entrySet())
+                if (!vis.contains(e.getKey()) && (dv < 0 || e.getValue() < dv)) {
+                    v = e.getKey();
+                    dv = e.getValue();
+                }
+            if (v == t) return dv; // 到终点的最短路已确定
+            vis.add(v);
+            int vx = (int) (v >> 32), vy = (int) (v & Integer.MAX_VALUE);
+            // 更新到终点的最短路
+            dis.merge(t, dv + target[0] - vx + target[1] - vy, Math::min);
+            for (int[] r : specialRoads) {
+                int d = dv + Math.abs(r[0] - vx) + Math.abs(r[1] - vy) + r[4];
+                long w = (long) r[2] << 32 | r[3];
+                if (d < dis.getOrDefault(w, Integer.MAX_VALUE))
+                    dis.put(w, d);
+            }
+        }
     }
     // endregion-------------------------------------------------------------------------------------------------------
     // region -------------------------------------------------------最小生成树----------------------------------------------

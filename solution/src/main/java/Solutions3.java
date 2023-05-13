@@ -2576,6 +2576,31 @@ public class Solutions3 {
         return -1;
     }
 
+    //1016. 子串能表示从 1 到 N 数字的二进制串
+    public boolean queryString(String s, int n) {
+        for (int i = 1; i <= n; i++) {
+            String sub = Integer.toBinaryString(i);
+            if (s.indexOf(sub) == -1) return false;
+        }
+        return true;
+    }
+
+    public boolean queryString2(String s, int n) {
+        Set<Integer> set = new HashSet<>();
+        int len = s.length();
+        char[] chars = s.toCharArray();
+        for (int i = 0; i < len; i++) {
+            int c = chars[i] - '0';
+            if (c == 0) continue;
+            for (int j = i + 1; c <= n; j++) {
+                set.add(c);
+                if (j == len) break;
+                c = ((c << 1) | (chars[j] - '0'));
+            }
+        }
+        return set.size() == n;
+    }
+
     //1044. 最长重复子串 字符串哈希
     //https://leetcode.cn/problems/longest-duplicate-substring/solution/zui-chang-zhong-fu-zi-chuan-by-leetcode-0i9rd/
     //我们可以使用 Rabin-Karp 算法对固定长度的字符串进行编码。当两个字符串的编码相同时，则这两个字符串也相同。
@@ -4645,6 +4670,120 @@ public class Solutions3 {
         return max;
     }
 
+    //2656. K 个元素的最大和
+    public int maximizeSum(int[] nums, int k) {
+        int max = 0;
+        for (int num : nums) {
+            max = Math.max(max, num);
+        }
+        int sum = 0;
+        while (k-- > 0) {
+            sum += max;
+            max++;
+        }
+        return sum;
+    }
+
+    //2657. 找到两个数组的前缀公共数组
+    public int[] findThePrefixCommonArray(int[] A, int[] B) {
+        int n = A.length;
+        int[] cntA = new int[n + 1];
+        int[] cntB = new int[n + 1];
+        int[] C = new int[n];
+        for (int i = 0; i < n; i++) {
+            cntA[A[i]]++;
+            cntB[B[i]]++;
+            for (int j = 0; j <= n; j++) {
+                C[i] += (cntA[j] > 0 && cntB[j] > 0) ? 1 : 0;
+            }
+        }
+        return C;
+    }
+
+    //2660. 保龄球游戏的获胜者
+    public int isWinner(int[] player1, int[] player2) {
+        int value1 = value(player1);
+        int value2 = value(player2);
+        if (value1 == value2) return 0;
+        return value1 > value2 ? 1 : 2;
+    }
+
+    private int value(int[] player) {
+        if (player.length == 0) return 0;
+        if (player.length == 1) return player[0];
+        int pp = -1, p = player[0];
+        int ans = player[0];
+        for (int i = 1; i < player.length; i++) {
+            if (p == 10 || pp == 10) {
+                ans += 2 * player[i];
+            } else {
+                ans += player[i];
+            }
+            pp = p;
+            p = player[i];
+        }
+        return ans;
+    }
+
+    //2661. 找出叠涂元素
+    public int firstCompleteIndex(int[] arr, int[][] mat) {
+        int m = mat.length, n = mat[0].length;
+        Map<Integer, int[]> map = new HashMap<>();
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                map.put(mat[i][j], new int[]{i, j});
+            }
+        }
+        int[] row = new int[m];
+        int[] col = new int[n];
+        for (int i = 0; i < arr.length; i++) {
+            int x = map.get(arr[i])[0], y = map.get(arr[i])[1];
+            row[x]++;
+            col[y]++;
+            if (row[x] == n || col[y] == m) return i;
+        }
+        return -1;
+    }
+
+    //2670. 找出不同元素数目差数组
+    public int[] distinctDifferenceArray(int[] nums) {
+        Map<Integer,Integer> preCnt = new HashMap<>();
+        Map<Integer,Integer> sufCnt = new HashMap<>();
+        for(int num:nums){
+            sufCnt.put(num,sufCnt.getOrDefault(num,0)+1);
+        }
+        int[] diff = new int[nums.length];
+        for(int i=0;i<nums.length;i++){
+            preCnt.put(nums[i],preCnt.getOrDefault(nums[i],0)+1);
+            sufCnt.put(nums[i],sufCnt.get(nums[i])-1);
+            if(sufCnt.get(nums[i])==0){
+                sufCnt.remove(nums[i]);
+            }
+            diff[i] = preCnt.size()-sufCnt.size();
+        }
+        return diff;
+    }
+
+    //2672. 有相同颜色的相邻元素数目
+    public int[] colorTheArray(int n, int[][] queries) {
+        int[] arr = new int[n];
+        int[] ans = new int[queries.length];
+        int cnt = 0;
+        for (int i = 0; i < queries.length; i++) {
+            int idx = queries[i][0];
+            int color = queries[i][1];
+            if (arr[idx] > 0) {
+                if (idx > 0 && arr[idx] == arr[idx - 1]) cnt--;
+                if (idx < n - 1 && arr[idx] == arr[idx + 1]) cnt--;
+            }
+            arr[idx] = color;
+            if (idx > 0 && arr[idx] == arr[idx - 1]) cnt++;
+            if (idx < n - 1 && arr[idx] == arr[idx + 1]) cnt++;
+            ans[i] = cnt;
+        }
+        return ans;
+    }
+
     //2185. 统计包含给定前缀的字符串
     public int prefixCount(String[] words, String pref) {
         int cnt = 0;
@@ -5397,6 +5536,22 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //1015. 可被 K 整除的最小整数
+    public int smallestRepunitDivByK(int k) {
+        int resid = 1 % k, len = 1; // resid为余数，len为数字长度，初始值为1
+        Set<Integer> set = new HashSet<Integer>(); // 创建一个无序集合，用于存储余数
+        set.add(resid); // 插入余数1
+        while (resid != 0) { // 当余数为0时退出循环
+            resid = (resid * 10 + 1) % k; // 计算下一个余数
+            len++; // 数字长度+1
+            if (set.contains(resid)) { // 如果余数重复出现，则无解
+                return -1;
+            }
+            set.add(resid); // 将余数插入集合
+        }
+        return len; // 返回数字长度
     }
 
     // 163 缺失的区间
@@ -7439,6 +7594,26 @@ public class Solutions3 {
         return sb.toString();
     }
 
+    //1330. 翻转子数组得到最大的数组值
+    public int maxValueAfterReverse(int[] nums) {
+        int value = 0, n = nums.length;
+        for (int i = 0; i < n - 1; i++) {
+            value += Math.abs(nums[i] - nums[i + 1]);
+        }
+        int mx1 = 0;
+        for (int i = 1; i < n - 1; i++) {
+            mx1 = Math.max(mx1, Math.abs(nums[0] - nums[i + 1]) - Math.abs(nums[i] - nums[i + 1]));
+            mx1 = Math.max(mx1, Math.abs(nums[n - 1] - nums[i - 1]) - Math.abs(nums[i] - nums[i - 1]));
+        }
+        int mx2 = Integer.MIN_VALUE, mn2 = Integer.MAX_VALUE;
+        for (int i = 0; i < n - 1; i++) {
+            int x = nums[i], y = nums[i + 1];
+            mx2 = Math.max(mx2, Math.min(x, y));
+            mn2 = Math.min(mn2, Math.max(x, y));
+        }
+        return value + Math.max(mx1, 2 * (mx2 - mn2));
+    }
+
     //1754. 构造字典序最大的合并字符串
     public String largestMerge(String word1, String word2) {
         int m = word1.length(), n = word2.length();
@@ -8253,6 +8428,16 @@ public class Solutions3 {
             if (map.get(r) == 0) map.remove(r);
             ans++;
             r = ans % value;
+        }
+        return ans;
+    }
+
+    //2673. 使二叉树所有路径值相等的最小代价
+    public int minIncrements(int n, int[] cost) {
+        int ans = 0;
+        for (int i = n / 2; i > 0; i--) { // 从最后一个非叶节点开始算
+            ans += Math.abs(cost[i * 2 - 1] - cost[i * 2]); // 两个子节点变成一样的
+            cost[i - 1] += Math.max(cost[i * 2 - 1], cost[i * 2]); // 累加路径和
         }
         return ans;
     }
@@ -11596,6 +11781,21 @@ public class Solutions3 {
             lastTime = log[1];
         }
         return maxId;
+    }
+
+    //2441. 与对应负数同时存在的最大正整数
+    public int findMaxK(int[] nums) {
+        Set<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.add(num);
+        }
+        int max = -1;
+        for (int num : nums) {
+            if (num > 0 && set.contains(-num)) {
+                max = Math.max(num, max);
+            }
+        }
+        return max;
     }
 
     //2513. 最小化两个数组中的最大值
