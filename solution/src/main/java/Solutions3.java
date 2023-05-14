@@ -9671,6 +9671,34 @@ public class Solutions3 {
         return Math.max(result, tasks.length);
     }
 
+    //1054. 距离相等的条形码
+    public int[] rearrangeBarcodes(int[] barcodes) {
+        int n = barcodes.length;
+        int[] cnt = new int[10001];
+        int max = 0;
+        for (int num : barcodes) {
+            cnt[num]++;
+            max = Math.max(max, cnt[num]);
+        }
+        int even = 0, odd = 1;
+        int half = n / 2;
+        int[] ans = new int[n];
+        for (int i = 0; i < cnt.length; i++) {
+            if (cnt[i] == 0) continue;
+            while (cnt[i] > 0 && cnt[i] <= half && odd < n) {
+                ans[odd] = i;
+                cnt[i]--;
+                odd += 2;
+            }
+            while (cnt[i] > 0) {
+                ans[even] = i;
+                cnt[i]--;
+                even += 2;
+            }
+        }
+        return ans;
+    }
+
     // 1403 非递增顺序的最小子序列
     public List<Integer> minSubsequence(int[] nums) {
         Arrays.sort(nums);

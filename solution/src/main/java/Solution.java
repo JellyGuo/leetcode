@@ -1371,15 +1371,43 @@ public class Solution {
                 } else {
                     stack.push(b);
                 }
-            }else {
+            } else {
                 return false;
             }
         }
         return stack.isEmpty();
     }
 
+    public int[] rearrangeBarcodes(int[] barcodes) {
+        int n = barcodes.length;
+        int[] cnt = new int[10000];
+        int max = 0;
+        for (int num : barcodes) {
+            cnt[num]++;
+            max = Math.max(max, cnt[num]);
+        }
+        int even = 0, odd = 1;
+        int half = n / 2;
+        int[] ans = new int[n];
+        for (int i = 0; i < cnt.length; i++) {
+            if (cnt[i] == 0) continue;
+            while (cnt[i] > 0 && cnt[i] <= half && odd < n) {
+                ans[odd] = i;
+                cnt[i]--;
+                odd += 2;
+            }
+            while (cnt[i] > 0) {
+                ans[even] = i;
+                cnt[i]--;
+                even += 2;
+            }
+        }
+        return ans;
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
+        solution.rearrangeBarcodes(new int[]{1,1,1,1,2,2,3,3});
         solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);
