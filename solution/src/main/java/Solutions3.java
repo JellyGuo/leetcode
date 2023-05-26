@@ -4888,6 +4888,63 @@ public class Solutions3 {
         return minMaxGame(newNums);
     }
 
+
+    //2446. 判断两个事件是否存在冲突
+    public boolean haveConflict(String[] event1, String[] event2) {
+        int[] event1int = convert(event1);
+        int[] event2int = convert(event2);
+        return event1int[0]<=event2int[1] && event1int[1]>=event2int[0];
+    }
+
+    private int[] convert(String[] event) {
+        int startHour = Integer.parseInt(event[0].substring(0, 2));
+        int startMinute = Integer.parseInt(event[0].substring(3, 5));
+        int endHour = Integer.parseInt(event[1].substring(0, 2));
+        int endMinute = Integer.parseInt(event[1].substring(3, 5));
+        return new int[]{startHour * 60 + startMinute, endHour * 60 + endMinute};
+    }
+
+    //2451. 差值数组不同的字符串
+    public String oddString(String[] words) {
+        Map<String, Integer> cnt = new HashMap<>();
+        Map<String, String> wordMap = new HashMap<>();
+        for (String word : words) {
+            int n = word.length();
+            StringBuilder key = new StringBuilder();
+            for (int i = 1; i < n; i++) {
+                key.append(word.charAt(i) - word.charAt(i - 1)).append(",");
+            }
+            cnt.put(key.toString(), cnt.getOrDefault(key.toString(), 0) + 1);
+            wordMap.put(key.toString(), word);
+        }
+        for (Map.Entry<String, Integer> entry : cnt.entrySet()) {
+            if (entry.getValue() == 1) return wordMap.get(entry.getKey());
+        }
+        return "";
+    }
+
+    //2682. 找出转圈游戏输家
+    public int[] circularGameLosers(int n, int k) {
+        Set<Integer> set = new HashSet<>();
+        int idx = 0;
+        int i = 0;
+        while (true) {
+            int next = (idx + i * k % n) % n;
+            int no = next+1;
+            if (set.contains(no)) break;
+            set.add(no);
+            idx = next;
+            i++;
+        }
+        int[] ans = new int[n - set.size()];
+        int ii = 0;
+        for (int j = 1; j <= n; j++) {
+            if (set.contains(j)) continue;
+            ans[ii++] = j;
+        }
+        return ans;
+    }
+
     //2544. 交替数字和
     public int alternateDigitSum(int n) {
         int size = String.valueOf(n).length();
@@ -4935,6 +4992,39 @@ public class Solutions3 {
         }
         return ans;
 
+    }
+    //2678. 老人的数目
+    public int countSeniors(String[] details) {
+        int cnt = 0;
+        for (String detail : details) {
+            Integer age = Integer.valueOf(detail.substring(11, 13));
+            if (age > 60) {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+
+    //1072. 按列翻转得到最大值等行数
+    public int maxEqualRowsAfterFlips(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        //求等价行的最大数量[1,0,0,1]=>[1,0,0,1]或[0,1,1,0]
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        for (int i = 0; i < m; i++) {
+            char[] arr = new char[n];
+            Arrays.fill(arr, '0');
+            for (int j = 0; j < n; j++) {
+                // 如果 matrix[i][0] 为 1，则对该行元素进行翻转
+                arr[j] = (char) ('0' + (matrix[i][j] ^ matrix[i][0]));
+            }
+            String s = new String(arr);
+            map.put(s, map.getOrDefault(s, 0) + 1);
+        }
+        int res = 0;
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            res = Math.max(res, entry.getValue());
+        }
+        return res;
     }
 
     // 1742 盒子中小球的最大数量
@@ -5732,6 +5822,42 @@ public class Solutions3 {
 
     private long gcd(long a, long b) {
         return b == 0 ? a : gcd(b, a % b);
+    }
+
+    //1073. 负二进制数相加
+    public int[] addNegabinary(int[] arr1, int[] arr2) {
+        int i = arr1.length - 1, j = arr2.length - 1;
+        int carry = 0;
+        List<Integer> ans = new ArrayList<Integer>();
+        while (i >= 0 || j >= 0 || carry != 0) {
+            int x = carry;
+            if (i >= 0) {
+                x += arr1[i];
+            }
+            if (j >= 0) {
+                x += arr2[j];
+            }
+            if (x >= 2) {
+                ans.add(x - 2);
+                carry = -1;
+            } else if (x >= 0) {
+                ans.add(x);
+                carry = 0;
+            } else {
+                ans.add(1);
+                carry = 1;
+            }
+            --i;
+            --j;
+        }
+        while (ans.size() > 1 && ans.get(ans.size() - 1) == 0) {
+            ans.remove(ans.size() - 1);
+        }
+        int[] arr = new int[ans.size()];
+        for (i = 0, j = ans.size() - 1; j >= 0; i++, j--) {
+            arr[i] = ans.get(j);
+        }
+        return arr;
     }
 
     // 66 加一
@@ -7812,6 +7938,60 @@ public class Solutions3 {
             q.add(cur);
             if (q.size() > k) tot -= q.poll();
             if (q.size() == k) ans = Math.min(ans, tot * ds[i][0]);
+        }
+        return ans;
+    }
+
+    //1090. 受标签影响的最大值
+    public int largestValsFromLabels(int[] values, int[] labels, int numWanted, int useLimit) {
+        int n = values.length;
+        int[][] pairs = new int[n][2];
+        for (int i = 0; i < n; ++i) {
+            pairs[i] = new int[]{values[i], labels[i]};
+        }
+        Arrays.sort(pairs, (a, b) -> b[0] - a[0]);
+        Map<Integer, Integer> cnt = new HashMap<>();
+        int ans = 0, num = 0;
+        for (int i = 0; i < n && num < numWanted; ++i) {
+            int v = pairs[i][0], l = pairs[i][1];
+            if (cnt.getOrDefault(l, 0) < useLimit) {
+                cnt.merge(l, 1, Integer::sum);
+                num += 1;
+                ans += v;
+            }
+        }
+        return ans;
+
+    }
+
+    //LCP 33. 蓄水
+    public int storeWater(int[] bucket, int[] vat) {
+        int n = bucket.length;
+        int maxk = Arrays.stream(vat).max().getAsInt();
+        if (maxk == 0) {
+            return 0;
+        }
+        int res = Integer.MAX_VALUE;
+        for (int k = 1; k <= maxk && k < res; ++k) {
+            int t = 0;
+            for (int i = 0; i < bucket.length; ++i) {
+                t += Math.max(0, (vat[i] + k - 1) / k - bucket[i]);
+            }
+            res = Math.min(res, t + k);
+        }
+        return res;
+    }
+
+    //2680. 最大或值
+    public long maximumOr(int[] nums, int k) {
+        int n = nums.length;
+        int[] suf = new int[n + 1];
+        for (int i = n - 1; i > 0; i--)
+            suf[i] = suf[i + 1] | nums[i];
+        long ans = 0;
+        for (int i = 0, pre = 0; i < n; i++) {
+            ans = Math.max(ans, pre | ((long) nums[i] << k) | suf[i + 1]);
+            pre |= nums[i];
         }
         return ans;
     }

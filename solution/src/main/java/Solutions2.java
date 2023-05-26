@@ -3398,6 +3398,83 @@ public class Solutions2 {
         return map.get(index);
     }
 
+    //1079. 活字印刷
+    public int numTilePossibilities(String tiles) {
+        int[] cnt = new int[26];
+        for (char c : tiles.toCharArray()) {
+            cnt[c - 'A']++;
+        }
+        return dfs1079(cnt);
+    }
+
+    private int dfs1079(int[] cnt) {
+        int sum = 0;
+        for (int i = 0; i < 26; i++) {
+            if (cnt[i] == 0) continue;
+            sum++;
+            // i处的值相同，相同的字母都在此处往下递归，所以只会有1种情况，i增加后，不会再有此时的字母
+            cnt[i]--;
+            sum += dfs1079(cnt);
+            cnt[i]++;
+        }
+        return sum;
+    }
+
+    //1335. 工作计划的最低难度
+    private int[] a1335;
+    private int[][] memo1335;
+
+    public int minDifficulty(int[] a, int d) {
+        int n = a.length;
+        if (n < d) return -1;
+
+        this.a1335 = a;
+        memo1335 = new int[d][n];
+        for (int i = 0; i < d; ++i)
+            Arrays.fill(memo1335[i], -1); // -1 表示还没有计算过
+        return dfs1335(d - 1, n - 1);
+    }
+
+    //用 i+1 天时间完成 a[0] 到 a[j] 这些工作的答案
+    private int dfs1335(int i, int j) {
+        if (memo1335[i][j] != -1) // 之前计算过了
+            return memo1335[i][j];
+        if (i == 0) { // 只有一天，必须完成所有工作
+            int mx = 0;
+            for (int k = 0; k <= j; k++)
+                mx = Math.max(mx, a1335[k]);
+            return memo1335[i][j] = mx;
+        }
+        int res = Integer.MAX_VALUE;
+        int mx = 0;
+        for (int k = j; k >= i; k--) {
+            mx = Math.max(mx, a1335[k]); // 从 a[k] 到 a[j] 的最大值
+            res = Math.min(res, dfs1335(i - 1, k - 1) + mx);
+        }
+        return memo1335[i][j] = res;
+    }
+
+    public int minDifficultyDP(int[] a, int d) {
+        int n = a.length;
+        if (n < d) return -1;
+
+        int[][] f = new int[d][n];
+        f[0][0] = a[0];
+        for (int i = 1; i < n; i++)
+            f[0][i] = Math.max(f[0][i - 1], a[i]);
+        for (int i = 1; i < d; i++) {
+            for (int j = n - 1; j >= i; j--) {
+                f[i][j] = Integer.MAX_VALUE;
+                int mx = 0;
+                for (int k = j; k >= i; k--) {
+                    mx = Math.max(mx, a[k]); // 从 a[k] 到 a[j] 的最大值
+                    f[i][j] = Math.min(f[i][j], f[i - 1][k - 1] + mx);
+                }
+            }
+        }
+        return f[d - 1][n - 1];
+    }
+
     //1376. 通知所有员工所需的时间
     int headID;  // 公司总负责人 ID
     int[] manager;  // manager[i] 表示第 i 名员工的直属负责人
@@ -11483,6 +11560,28 @@ public class Solutions2 {
             ans += reward2[pq.poll()[1]];
         }
         return ans;
+    }
+
+    //2679. 矩阵中的和
+    public int matrixSum(int[][] nums) {
+        int m = nums.length, n = nums[0].length;
+        PriorityQueue<Integer>[] pqs = new PriorityQueue[m];
+        for (int i = 0; i < m; i++) {
+            PriorityQueue<Integer> pq = new PriorityQueue<>();
+            pqs[i] = pq;
+            for (int j = 0; j < n; j++) {
+                pq.offer(nums[i][j]);
+            }
+        }
+        int score = 0;
+        while (n-- > 0) {
+            int max = 0;
+            for (int i = 0; i < m; i++) {
+                max = Math.max(max, pqs[i].poll());
+            }
+            score += max;
+        }
+        return score;
     }
 
     //endregion--------------------------------------------------------------------------------------------------------

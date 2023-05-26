@@ -1942,6 +1942,18 @@ public class Solutions1 {
         return Math.max(height(root.right), height(root.left)) + 1;
     }
 
+    //1080. 根到叶路径上的不足节点
+    public TreeNode sufficientSubset(TreeNode root, int limit) {
+        limit -= root.val;
+        if (root.left == root.right) // root 是叶子
+            // 如果 limit > 0 说明从根到叶子的路径和小于 limit，删除叶子，否则不删除
+            return limit > 0 ? null : root;
+        if (root.left != null) root.left = sufficientSubset(root.left, limit);
+        if (root.right != null) root.right = sufficientSubset(root.right, limit);
+        // 如果儿子都被删除，就删 root，否则不删 root
+        return root.left == null && root.right == null ? null : root;
+    }
+
     //2331. 计算布尔二叉树的值
     public boolean evaluateTree(TreeNode root) {
         return dfs2331(root);
@@ -2150,6 +2162,30 @@ public class Solutions1 {
         maxSum = Math.max(maxSum, cnt);
         map.put(val, cnt);
         return val;
+    }
+
+    //1373. 二叉搜索子树的最大键值和
+    private int ans1373; // 二叉搜索树可以为空
+
+    public int maxSumBST(TreeNode root) {
+        dfs1373(root);
+        return ans1373;
+    }
+
+    private int[] dfs1373(TreeNode node) {
+        if (node == null)
+            return new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE, 0};
+
+        int[] left = dfs1373(node.left); // 递归左子树
+        int[] right = dfs1373(node.right); // 递归右子树
+        int x = node.val;
+        if (x <= left[1] || x >= right[0]) // 不是二叉搜索树
+            return new int[]{Integer.MIN_VALUE, Integer.MAX_VALUE, 0};
+
+        int s = left[2] + right[2] + x; // 这棵子树的所有节点值之和
+        ans = Math.max(ans, s);
+
+        return new int[]{Math.min(left[0], x), Math.max(right[1], x), s};
     }
 
     //1145. 二叉树着色游戏
@@ -7168,6 +7204,34 @@ public class Solutions1 {
         return -1;
     }
 
+    //1377. T 秒后青蛙的位置
+    public double frogPosition(int n, int[][] edges, int t, int target) {
+        List<Integer>[] g = new ArrayList[n + 1];
+        Arrays.setAll(g, e -> new ArrayList<>());
+        g[1].add(0); // 减少额外判断的小技巧
+        for (int[] e : edges) {
+            int x = e[0], y = e[1];
+            g[x].add(y);
+            g[y].add(x); // 建树
+        }
+        long prod = dfs(g, target, 1, 0, t);
+        return prod != 0 ? 1.0 / prod : 0;
+    }
+
+    private long dfs(List<Integer>[] g, int target, int x, int fa, int leftT) {
+        // t 秒后必须在 target（恰好到达，或者 target 是叶子停在原地）
+        if (leftT == 0) return x == target ? 1 : 0;
+        if (x == target) return g[x].size() == 1 ? 1 : 0;
+        for (int y : g[x]) { // 遍历 x 的儿子 y
+            if (y != fa) { // y 不能是父节点
+                long prod = dfs(g, target, y, x, leftT - 1); // 寻找 target
+                if (prod != 0)
+                    return prod * (g[x].size() - 1); // 乘上儿子个数，并直接返回
+            }
+        }
+        return 0; // 未找到 target
+    }
+
     //2045. 到达目的地的第二短时间
     public int secondMinimum(int n, int[][] edges, int time, int change) {
         List<Integer>[] graph = new List[n + 1];
@@ -7331,12 +7395,12 @@ public class Solutions1 {
                     return dp[s1][b1];
                 }
                 for (int i = 0; i < 4; i++) { // 玩家向四个方向移动到另一个状态
-                    int sx2 = sx1 + d[i], sy2 = sy1 + d[i + 1], s2 = sx2*n+sy2;
+                    int sx2 = sx1 + d[i], sy2 = sy1 + d[i + 1], s2 = sx2 * n + sy2;
                     if (!ok(grid, m, n, sx2, sy2)) { // 玩家位置不合法
                         continue;
                     }
                     if (bx1 == sx2 && by1 == sy2) { // 推动箱子
-                        int bx2 = bx1 + d[i], by2 = by1 + d[i + 1], b2 = bx2*n+by2;
+                        int bx2 = bx1 + d[i], by2 = by1 + d[i + 1], b2 = bx2 * n + by2;
                         if (!ok(grid, m, n, bx2, by2) || dp[s2][b2] <= dp[s1][b1] + 1) { // 箱子位置不合法 或 状态已访问
                             continue;
                         }
@@ -9350,6 +9414,36 @@ public class Solutions1 {
         int ans = IntStream.of(dp[src]).min().getAsInt();
 
         return ans >= INF ? -1 : ans;
+    }
+
+    //1091. 二进制矩阵中的最短路径
+    public int shortestPathBinaryMatrix(int[][] grid) {
+        if (grid[0][0] != 0) return -1;
+        int n = grid.length;
+        if (n == 1) return 1;
+        int[][] directions = new int[][]{{-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}};
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{0, 0});
+        boolean[][] visited = new boolean[n][n];
+        visited[0][0] = true;
+        int distance = 1;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int[] cell = queue.poll();
+                for (int[] d : directions) {
+                    int newX = cell[0] + d[0];
+                    int newY = cell[1] + d[1];
+                    if (newX >= 0 && newX < n && newY >= 0 && newY < n && !visited[newX][newY] && grid[newX][newY] == 0) {
+                        if (newX == n - 1 && newY == n - 1) return distance + 1;
+                        queue.offer(new int[]{newX, newY});
+                        visited[newX][newY] = true;
+                    }
+                }
+            }
+            distance += 1;
+        }
+        return -1;
     }
 
     //1129. 颜色交替的最短路径
