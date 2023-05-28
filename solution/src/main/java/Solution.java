@@ -1407,7 +1407,7 @@ public class Solution {
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.rearrangeBarcodes(new int[]{1,1,1,1,2,2,3,3});
+        solution.rearrangeBarcodes(new int[]{1, 1, 1, 1, 2, 2, 3, 3});
         solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
         solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
         ListNode l1 = new ListNode(5);

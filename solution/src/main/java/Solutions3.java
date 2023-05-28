@@ -1919,6 +1919,47 @@ public class Solutions3 {
         }
     }
 
+    //1093. 大样本统计
+    // 找中位数技巧
+    public double[] sampleStats(int[] count) {
+        int n = count.length;
+        int total = Arrays.stream(count).sum();
+        double mean = 0.0;
+        double median = 0.0;
+        int minnum = 256;
+        int maxnum = 0;
+        int mode = 0;
+
+        int left = (total + 1) / 2;
+        int right = (total + 2) / 2;
+        int cnt = 0;
+        int maxfreq = 0;
+        long sum = 0;
+        for (int i = 0; i < n; i++) {
+            sum += (long) count[i] * i;
+            if (count[i] > maxfreq) {
+                maxfreq = count[i];
+                mode = i;
+            }
+            if (count[i] > 0) {
+                if (minnum == 256) {
+                    minnum = i;
+                }
+                maxnum = i;
+            }
+            if (cnt < right && cnt + count[i] >= right) {
+                median += i;
+            }
+            if (cnt < left && cnt + count[i] >= left) {
+                median += i;
+            }
+            cnt += count[i];
+        }
+        mean = (double) sum / total;
+        median = median / 2.0;
+        return new double[]{minnum, maxnum, mean, median, mode};
+    }
+
     // 15 三数之和
     public List<List<Integer>> threeSum(int[] nums) {
         Arrays.sort(nums);
@@ -9072,6 +9113,43 @@ public class Solutions3 {
         return ans;
     }
 
+    //1439. 有序矩阵中的第 k 个最小数组和
+    //二分+双指针做法搜kthSmallest1439binarySearch
+    public int kthSmallest1439(int[][] mat, int k) {
+        int m = mat.length;
+        int[] prev = mat[0];
+        for (int i = 1; i < m; ++i) {
+            prev = merge(prev, mat[i], k);
+        }
+        return prev[k - 1];
+    }
+
+    public int[] merge(int[] f, int[] g, int k) {
+        if (g.length > f.length) {
+            return merge(g, f, k);
+        }
+
+        PriorityQueue<int[]> pq = new PriorityQueue<int[]>((a, b) -> a[2] - b[2]);
+        for (int i = 0; i < g.length; ++i) {
+            pq.offer(new int[]{0, i, f[0] + g[i]});
+        }
+
+        List<Integer> list = new ArrayList<Integer>();
+        while (k > 0 && !pq.isEmpty()) {
+            int[] entry = pq.poll();
+            list.add(entry[2]);
+            if (entry[0] + 1 < f.length) {
+                pq.offer(new int[]{entry[0] + 1, entry[1], f[entry[0] + 1] + g[entry[1]]});
+            }
+            --k;
+        }
+
+        int[] ans = new int[list.size()];
+        for (int i = 0; i < list.size(); ++i) {
+            ans[i] = list.get(i);
+        }
+        return ans;
+    }
     // 937 重新排列日志文件
     // 自定义排序
     public String[] reorderLogFiles(String[] logs) {
@@ -11434,6 +11512,59 @@ public class Solutions3 {
             }
         }
         return cnt;
+    }
+
+    //1439. 有序矩阵中的第 k 个最小数组和
+    public int kthSmallest1439binarySearch(int[][] mat, int k) {
+        int m = mat.length;
+        int[] prev = mat[0];
+        for (int i = 1; i < m; ++i) {
+            prev = merge2(prev, mat[i], k);
+        }
+        return prev[k - 1];
+    }
+
+    public int[] merge2(int[] f, int[] g, int k) {
+        int left = f[0] + g[0], right = f[f.length - 1] + g[g.length - 1], thres = 0;
+        k = Math.min(k, f.length * g.length);
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            int rptr = g.length - 1, cnt = 0;
+            for (int lptr = 0; lptr < f.length; ++lptr) {
+                while (rptr >= 0 && f[lptr] + g[rptr] > mid) {
+                    --rptr;
+                }
+                cnt += rptr + 1;
+            }
+            if (cnt >= k) {
+                thres = mid;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        List<Integer> list = new ArrayList<Integer>();
+        int index = 0;
+        for (int i = 0; i < f.length; ++i) {
+            for (int j = 0; j < g.length; ++j) {
+                int sum = f[i] + g[j];
+                if (sum < thres) {
+                    list.add(sum);
+                } else {
+                    break;
+                }
+            }
+        }
+        while (list.size() < k) {
+            list.add(thres);
+        }
+        int[] ans = new int[list.size()];
+        for (int i = 0; i < list.size(); ++i) {
+            ans[i] = list.get(i);
+        }
+        Arrays.sort(ans);
+        return ans;
     }
 
     // 658 找到K个最接近的元素
