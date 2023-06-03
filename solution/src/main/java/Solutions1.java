@@ -1954,6 +1954,27 @@ public class Solutions1 {
         return root.left == null && root.right == null ? null : root;
     }
 
+    //1110. 删点成林
+    public List<TreeNode> delNodes(TreeNode root, int[] to_delete) {
+        Set<Integer> set = new HashSet<>();
+        for (int d : to_delete) {
+            set.add(d);
+        }
+        List<TreeNode> ans = new ArrayList<>();
+        if (dfs(root, set, ans) != null) ans.add(root);
+        return ans;
+    }
+
+    private TreeNode dfs(TreeNode node, Set<Integer> set, List<TreeNode> ans) {
+        if (node == null) return null;
+        node.left = dfs(node.left, set, ans);
+        node.right = dfs(node.right, set, ans);
+        if (!set.contains(node.val)) return node;
+        if (node.left != null) ans.add(node.left);
+        if (node.right != null) ans.add(node.right);
+        return null;
+    }
+
     //2331. 计算布尔二叉树的值
     public boolean evaluateTree(TreeNode root) {
         return dfs2331(root);

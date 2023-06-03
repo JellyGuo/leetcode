@@ -1007,6 +1007,31 @@ public class Solutions2 {
         return j == n && i == m;
     }
 
+    //1156. 单字符重复子串的最大长度
+    public int maxRepOpt1(String text) {
+        int n = text.length();
+        int[] cnt = new int[26];
+        for (char c : text.toCharArray()) {
+            cnt[c - 'a']++;
+        }
+        int ans = 0;
+        for (int i = 0; i < n; ) {
+            int j = i;
+            while (j < n && text.charAt(j) == text.charAt(i)) {
+                j++;
+            }
+            int l = j - i;
+            int k = j + 1;
+            while (k < n && text.charAt(k) == text.charAt(i)) {
+                k++;
+            }
+            int r = k - 1 - (j + 1) + 1;
+            ans = Math.max(Math.min(l + r + 1, cnt[text.charAt(i)-'a']), ans);
+            i = j;
+        }
+        return ans;
+    }
+
     //1616. 分割两个字符串得到回文串
     public boolean checkPalindromeFormation(String a, String b) {
         return checkConcatenation(a, b) || checkConcatenation(b, a);
@@ -8721,6 +8746,27 @@ public class Solutions2 {
         return max * max;
     }
 
+    //1130. 叶值的最小代价生成树
+    public int mctFromLeafValuesDP(int[] arr) {
+        int n = arr.length;
+        int[][] dp = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(dp[i], Integer.MAX_VALUE / 4);
+        }
+        int[][] mval = new int[n][n];
+        for (int j = 0; j < n; j++) {
+            mval[j][j] = arr[j];
+            dp[j][j] = 0;
+            for (int i = j - 1; i >= 0; i--) {
+                mval[i][j] = Math.max(arr[i], mval[i + 1][j]);
+                for (int k = i; k < j; k++) {
+                    dp[i][j] = Math.min(dp[i][j], dp[i][k] + dp[k + 1][j] + mval[i][k] * mval[k + 1][j]);
+                }
+            }
+        }
+        return dp[0][n - 1];
+    }
+
     //1139. 最大的以 1 为边界的正方形
     public int largest1BorderedSquare(int[][] grid) {
         int m = grid.length, n = grid[0].length;
@@ -10737,6 +10783,28 @@ public class Solutions2 {
         }
 
         return max;
+    }
+
+    //1130. 叶值的最小代价生成树 DP做法搜dp
+    public int mctFromLeafValues(int[] arr) {
+        int res = 0;
+        Deque<Integer> stk = new ArrayDeque<>();
+        for (int x : arr) {
+            while (!stk.isEmpty() && stk.peek() <= x) {
+                int y = stk.pop();
+                if (stk.isEmpty() || stk.peek() > x) {
+                    res += y * x;
+                } else {
+                    res += stk.peek() * y;
+                }
+            }
+            stk.push(x);
+        }
+        while (stk.size() >= 2) {
+            int x = stk.pop();
+            res += stk.peek() * x;
+        }
+        return res;
     }
 
     // 862 和至少为K的最短子数组

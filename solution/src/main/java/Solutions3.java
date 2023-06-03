@@ -4964,6 +4964,18 @@ public class Solutions3 {
         return "";
     }
 
+    //2455. 可被三整除的偶数的平均值
+    public int averageValue(int[] nums) {
+        int sum = 0, cnt = 0;
+        for (int num : nums) {
+            if (num % 6 == 0) {
+                sum += num;
+                cnt++;
+            }
+        }
+        return cnt == 0 ? 0 : sum / cnt;
+    }
+
     //2682. 找出转圈游戏输家
     public int[] circularGameLosers(int n, int k) {
         Set<Integer> set = new HashSet<>();

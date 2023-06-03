@@ -1405,6 +1405,30 @@ public class Solution {
         return ans;
     }
 
+    public int maxRepOpt1(String text) {
+        int n = text.length();
+        int[] cnt = new int[26];
+        for (char c : text.toCharArray()) {
+            cnt[c - 'a']++;
+        }
+        int ans = 0;
+        for (int i = 0; i < n; ) {
+            int j = 0;
+            while (j < n && text.charAt(j) == text.charAt(i)) {
+                j++;
+            }
+            int l = j - i;
+            int k = j + 1;
+            while (k < n && text.charAt(k) == text.charAt(i)) {
+                k++;
+            }
+            int r = k - 1 - (j + 1) + 1;
+            ans = Math.max(Math.min(l + r + 1, cnt[i]), ans);
+            i = j;
+        }
+        return ans;
+    }
+
     public static void main(String[] args) {
         Solution solution = new Solution();
         solution.rearrangeBarcodes(new int[]{1, 1, 1, 1, 2, 2, 3, 3});
