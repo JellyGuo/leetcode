@@ -4788,19 +4788,19 @@ public class Solutions3 {
 
     //2670. 找出不同元素数目差数组
     public int[] distinctDifferenceArray(int[] nums) {
-        Map<Integer,Integer> preCnt = new HashMap<>();
-        Map<Integer,Integer> sufCnt = new HashMap<>();
-        for(int num:nums){
-            sufCnt.put(num,sufCnt.getOrDefault(num,0)+1);
+        Map<Integer, Integer> preCnt = new HashMap<>();
+        Map<Integer, Integer> sufCnt = new HashMap<>();
+        for (int num : nums) {
+            sufCnt.put(num, sufCnt.getOrDefault(num, 0) + 1);
         }
         int[] diff = new int[nums.length];
-        for(int i=0;i<nums.length;i++){
-            preCnt.put(nums[i],preCnt.getOrDefault(nums[i],0)+1);
-            sufCnt.put(nums[i],sufCnt.get(nums[i])-1);
-            if(sufCnt.get(nums[i])==0){
+        for (int i = 0; i < nums.length; i++) {
+            preCnt.put(nums[i], preCnt.getOrDefault(nums[i], 0) + 1);
+            sufCnt.put(nums[i], sufCnt.get(nums[i]) - 1);
+            if (sufCnt.get(nums[i]) == 0) {
                 sufCnt.remove(nums[i]);
             }
-            diff[i] = preCnt.size()-sufCnt.size();
+            diff[i] = preCnt.size() - sufCnt.size();
         }
         return diff;
     }
@@ -4934,7 +4934,7 @@ public class Solutions3 {
     public boolean haveConflict(String[] event1, String[] event2) {
         int[] event1int = convert(event1);
         int[] event2int = convert(event2);
-        return event1int[0]<=event2int[1] && event1int[1]>=event2int[0];
+        return event1int[0] <= event2int[1] && event1int[1] >= event2int[0];
     }
 
     private int[] convert(String[] event) {
@@ -4976,6 +4976,16 @@ public class Solutions3 {
         return cnt == 0 ? 0 : sum / cnt;
     }
 
+    //2465. 不同的平均值数目
+    public int distinctAverages(int[] nums) {
+        Arrays.sort(nums);
+        Set<Integer> set = new HashSet<>();
+        for (int l = 0, r = nums.length - 1; l < r; l++, r--) {
+            set.add(nums[l]+nums[r]);
+        }
+        return set.size();
+    }
+
     //2682. 找出转圈游戏输家
     public int[] circularGameLosers(int n, int k) {
         Set<Integer> set = new HashSet<>();
@@ -4983,7 +4993,7 @@ public class Solutions3 {
         int i = 0;
         while (true) {
             int next = (idx + i * k % n) % n;
-            int no = next+1;
+            int no = next + 1;
             if (set.contains(no)) break;
             set.add(no);
             idx = next;
@@ -5046,6 +5056,7 @@ public class Solutions3 {
         return ans;
 
     }
+
     //2678. 老人的数目
     public int countSeniors(String[] details) {
         int cnt = 0;
@@ -9162,6 +9173,7 @@ public class Solutions3 {
         }
         return ans;
     }
+
     // 937 重新排列日志文件
     // 自定义排序
     public String[] reorderLogFiles(String[] logs) {
