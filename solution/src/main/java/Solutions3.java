@@ -3000,6 +3000,25 @@ public class Solutions3 {
         return Math.max(1, n - 1);
     }
 
+    //2718. 查询后矩阵的和
+    //逆向思维 正难则反
+    public long matrixSumQueries(int n, int[][] queries) {
+        int m = queries.length;
+        Set<Integer>[] vis = new Set[]{new HashSet<>(), new HashSet<>()};
+        long ans = 0;
+        for (int i = m - 1; i >= 0; i--) {
+            if (queries[i][0] == 0) {
+                if (vis[0].contains(queries[i][1])) continue;
+                ans += (n - vis[1].size()) * queries[i][2];
+                vis[0].add(queries[i][1]);
+            } else {
+                if (vis[1].contains(queries[i][1])) continue;
+                ans += (n - vis[0].size()) * queries[i][2];
+                vis[1].add(queries[i][1]);
+            }
+        }
+        return ans;
+    }
 
     //endregion -------------------------------------------------------------------end--------------------------------
     //region----------------------------------------博弈论/数学----------------------------------------------------
@@ -3198,6 +3217,39 @@ public class Solutions3 {
             }
         }
         return (minSize - 1) + (n - 1);
+    }
+
+    //2683. 相邻值的按位异或
+    // a^a=0;
+    //a^b=c 两边同时异或a=》 b= c^a
+    public boolean doesValidArrayExist(int[] derived) {
+        int x = 0;
+        for (int num : derived) {
+            x ^= num;
+        }
+        return x == 0;
+    }
+
+    //2681. 英雄的力量
+    // (a+b) mod m = ((a mod m) + (b mod m)) mod m
+    // (a*b) mod m = ((a mod m) * (b mod m)) mod m
+    // 证明：设a=k1m+r1,b=k2m+r2
+    // (a+b) % m = ((k1+k2)m+(r1+r2)) %m = (r1+r2) % m = ((a%m)+(b%m))%m
+    // (a*b)%m = (k1k2m^2+(k1r2+k2r1)m+r1r2)%m = (r1r2)%m = (a%m)(b%m)%m
+    // 先排序，a,b,c,d,e 设枚举到d,此时a作为最小值，贡献有：b、c选与不选 2^2种方案
+    // c 有 2^1,d有2^0
+    // 设s = a*2^2+b*2^1+c*2^0
+    // 那么d及其左侧元素对答案的贡献=d^3+d^2*s=d^2*(d+s)
+    // 枚举到e：newS = a*2^3+b*2^2+c*2^1+d^0 = 2(a*2^2+b*2^1+c*2^0)+d = 2*s+d
+    public int sumOfPower(int[] nums) {
+        final long MOD = (long) 1e9 + 7;
+        Arrays.sort(nums);
+        long ans = 0, s = 0;
+        for (long x : nums) {
+            ans = (ans + x * x % MOD * (x + s)) % MOD; // 中间模一次防止溢出
+            s = (s * 2 + x) % MOD;
+        }
+        return (int) ans;
     }
     //----------------------------------------------------- 数学--------------------------------------------
 
@@ -4676,6 +4728,126 @@ public class Solutions3 {
         return ans;
     }
 
+    //2352. 相等行列对
+    public int equalPairs(int[][] grid) {
+        int n = grid.length;
+        Map<String, Integer> map = new HashMap<>();
+        for (int[] row : grid) {
+            StringBuilder sb = new StringBuilder();
+            for (int num : row) {
+                sb.append(num).append(",");
+            }
+            sb.deleteCharAt(sb.length()-1);
+            String key = sb.toString();
+            map.put(key, map.getOrDefault(key, 0) + 1);
+        }
+        int ans = 0;
+        for (int j = 0; j < n; j++) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                sb.append(grid[i][j]).append(",");
+            }
+            sb.deleteCharAt(sb.length()-1);
+            String key = sb.toString();
+            if (map.containsKey(key)) {
+                ans += map.get(key);
+            }
+        }
+        return ans;
+    }
+
+    //2460. 对数组执行操作
+    public int[] applyOperations(int[] nums) {
+        int n = nums.length;
+        for (int i = 0; i < n - 1; i++) {
+            if (nums[i] == nums[i + 1]) {
+                nums[i] <<= 1;
+                nums[i + 1] = 0;
+            }
+        }
+        int slow = 0, fast = 0;
+        while (fast < n) {
+            while (slow <= fast && nums[slow] != 0) {
+                slow++;
+            }
+            if (nums[fast] > 0 && slow < fast) {
+                swap(nums, slow, fast);
+            }
+            fast++;
+        }
+        return nums;
+    }
+    
+
+    //2706. 购买两块巧克力
+    public int buyChoco(int[] prices, int money) {
+        int first = 101, second = 101;
+        for (int price : prices) {
+            if (price < first) {
+                second = first;
+                first = price;
+            } else if (price < second) {
+                second = price;
+            }
+        }
+        int left = money - first - second;
+        if (left < 0) return money;
+        return left;
+    }
+
+    //2710. 移除字符串中的尾随零
+    public String removeTrailingZeros(String num) {
+        int ptr = num.length() - 1;
+        while (ptr >= 0 && num.charAt(ptr) == '0') {
+            ptr--;
+        }
+        return num.substring(0, ptr + 1);
+    }
+
+    //2711. 对角线上不同值的数量差
+    public int[][] differenceOfDistinctValues(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[][] ans = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                int x = i, y = j;
+                Set<Integer> topLeftSet = new HashSet<>();
+                Set<Integer> bottomRightSet = new HashSet<>();
+                while (x - 1 >= 0 && y - 1 >= 0) {
+                    topLeftSet.add(grid[--x][--y]);
+                }
+                x = i;
+                y = j;
+                while (x + 1 < m && y + 1 < n) {
+                    bottomRightSet.add(grid[++x][++y]);
+                }
+                ans[i][j] = Math.abs(topLeftSet.size() - bottomRightSet.size());
+            }
+        }
+        return ans;
+    }
+
+    //2716. 最小化字符串长度
+    public int minimizedStringLength(String s) {
+        Set<Character> set = new HashSet<>();
+        for (char c : s.toCharArray()) {
+            set.add(c);
+        }
+        return set.size();
+    }
+
+    //2717. 半有序排列
+    public int semiOrderedPermutation(int[] nums) {
+        int n = nums.length;
+        int l = 0, r = n - 1;
+        for (int i = 0; i < n; i++) {
+            if (nums[i] == 1) l = i;
+            if (nums[i] == n) r = i;
+        }
+        int left = l, right = n - 1 - r;
+        return l > r ? left + right - 1 : left + right;
+    }
+
     //2409. 统计共同度过的日子数
     public int countDaysTogether(String arriveAlice, String leaveAlice, String arriveBob, String leaveBob) {
         int[] months = new int[]{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -4981,7 +5153,7 @@ public class Solutions3 {
         Arrays.sort(nums);
         Set<Integer> set = new HashSet<>();
         for (int l = 0, r = nums.length - 1; l < r; l++, r--) {
-            set.add(nums[l]+nums[r]);
+            set.add(nums[l] + nums[r]);
         }
         return set.size();
     }
@@ -11216,6 +11388,50 @@ public class Solutions3 {
             ops += (num - 1) / y;
         }
         return ops;
+    }
+
+    //1170. 比较字符串最小字母出现频次
+    public int[] numSmallerByFrequency(String[] queries, String[] words) {
+        int n = words.length;
+        int[] fwords = new int[n];
+        for (int i = 0; i < n; i++) {
+            fwords[i] = f(words[i]);
+        }
+        Arrays.sort(fwords);
+        int m = queries.length;
+        int[] ans = new int[m];
+        for (int i = 0; i < m; i++) {
+            int t = f(queries[i]);
+            ans[i] = largeThan(t, fwords);
+        }
+        return ans;
+    }
+
+    private int largeThan(int t, int[] num) {
+        int l = 0, r = num.length - 1;
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            if (num[mid] <= t) {
+                l = mid;
+            } else {
+                r = mid - 1;
+            }
+        }
+        if (num[r] <= t) return num.length - 1 - r;
+        return num.length;
+    }
+
+    private int f(String word) {
+        char[] chars = word.toCharArray();
+        int[] cnt = new int[26];
+        for (char c : chars) {
+            cnt[c - 'a']++;
+        }
+        for (int i = 0; i < 26; i++) {
+            if (cnt[i] == 0) continue;
+            return cnt[i];
+        }
+        return 0;
     }
 
     //1802. 有界数组中指定下标处的最大值

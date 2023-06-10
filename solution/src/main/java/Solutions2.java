@@ -147,6 +147,30 @@ public class Solutions2 {
         }
         return result;
     }
+
+    //2696. 删除子串后的字符串最小长度
+    public int minLength(String s) {
+        Stack<Character> stack = new Stack<>();
+        char[] chars = s.toCharArray();
+        for(char c:chars){
+            if(c =='B'){
+                if(!stack.isEmpty() && stack.peek()=='A'){
+                    stack.pop();
+                }else {
+                    stack.push(c);
+                }
+            }else if(c == 'D'){
+                if(!stack.isEmpty() && stack.peek() == 'C'){
+                    stack.pop();
+                }else {
+                    stack.push(c);
+                }
+            }else {
+                stack.push(c);
+            }
+        }
+        return stack.size();
+    }
 //endregion-----------------------------------------------------------------
 
     //region----------------------------------------------链表-----------------------------------------------
@@ -1091,6 +1115,32 @@ public class Solutions2 {
             l = r;
         }
         return 2 * max;
+    }
+
+    //2697. 字典序最小回文串
+    public static String makeSmallestPalindrome(String s) {
+        int n = s.length();
+        char[] chars = new char[n];
+        int l = 0, r = n - 1;
+        while (l <= r) {
+            if (l == r) {
+                chars[l] = s.charAt(l);
+                l++;
+                r--;
+            } else if (s.charAt(l) == s.charAt(r)) {
+                chars[l] = s.charAt(l++);
+                chars[r] = s.charAt(r--);
+            } else {
+                if (s.charAt(l) < s.charAt(r)) {
+                    chars[l] = s.charAt(l);
+                    chars[r--] = s.charAt(l++);
+                } else {
+                    chars[l++] = s.charAt(r);
+                    chars[r] = s.charAt(r--);
+                }
+            }
+        }
+        return new String(chars);
     }
 
     // 面试01.05 一次编辑
@@ -4218,6 +4268,139 @@ public class Solutions2 {
         return res;
     }
 
+    //2684. 矩阵中移动的最大次数
+    int[][] grid2684;
+    public int maxMoves(int[][] grid) {
+        this.m = grid.length;
+        this.n = grid[0].length;
+        this.grid2684 = grid;
+        int ans = 0;
+        int[][] memo = new int[m][n];
+        for (int i = 0; i < m; i++) {
+            ans = Math.max(dfs2684(i, 0, memo), ans);
+        }
+        return ans;
+    }
+
+    private int dfs2684(int i, int j, int[][] memo) {
+        if (j == n - 1) return 0;
+        if (memo[i][j] > 0) return memo[i][j];
+        int ans = 0;
+        for (int k = Math.max(i - 1, 0); k <= Math.min(i + 1, m - 1); k++) {
+            if (grid2684[k][j + 1] > grid2684[i][j]) {
+                ans = Math.max(ans, dfs2684(k, j + 1, memo) + 1);
+            }
+        }
+        return memo[i][j] = ans;
+    }
+
+    //2698. 求一个整数的惩罚数
+    public int punishmentNumber(int n) {
+        int[] sum = new int[n + 1];
+        for (int i = 1; i <= n; i++) {
+            char[] chars = String.valueOf(i * i).toCharArray();
+            sum[i] = sum[i - 1] + (dfs(chars, i, 0, 0) ? i * i : 0);
+        }
+        return sum[n];
+    }
+
+    private boolean dfs(char[] chars, int i, int idx, int sum) {
+        if (idx == chars.length) {
+            return sum == i;
+        }
+        int x = 0;
+        for (int k = idx; k < chars.length; k++) {
+            x = x * 10 + chars[k] - '0';
+            if(dfs(chars, i, k+1, sum+x)) return true;
+        }
+        return false;
+    }
+
+    //2707. 字符串中的额外字符
+    public int minExtraChar(String s, String[] dictionary) {
+        Set<String> dict = new HashSet<>();
+        for (String word : dictionary) {
+            dict.add(word);
+        }
+        int n = s.length();
+        int[] memo = new int[n];
+        Arrays.fill(memo, -1);
+        return dfs(s, n - 1, memo, dict);
+    }
+
+    // 从0到i的字符串最小剩几个字符
+    private int dfs(String s, int i, int[] memo, Set<String> dict) {
+        if (i < 0) return 0;
+        if (memo[i] != -1) return memo[i];
+        int ans = dfs(s, i - 1, memo, dict) + 1;// 不选当前字符i
+        for (int j = 0; j <= i; j++) {
+            String word = s.substring(j, i + 1);
+            if (dict.contains(word)) {
+                ans = Math.min(ans, dfs(s, j - 1, memo, dict));
+            }
+        }
+        memo[i] = ans;
+        return ans;
+    }
+
+    //1240. 铺瓷砖
+    int ans1240;
+
+    public int tilingRectangle(int n, int m) {
+        ans1240 = Math.max(n, m);
+        boolean[][] rect = new boolean[n][m];
+        dfs(0, 0, rect, 0);
+        return ans1240;
+    }
+
+    public void dfs(int x, int y, boolean[][] rect, int cnt) {
+        int n = rect.length, m = rect[0].length;
+        if (cnt >= ans1240) {
+            return;
+        }
+        if (x >= n) {
+            ans1240 = cnt;
+            return;
+        }
+        /* 检测下一行 */
+        if (y >= m) {
+            dfs(x + 1, 0, rect, cnt);
+            return;
+        }
+        /* 如当前已经被覆盖，则直接尝试下一个位置 */
+        if (rect[x][y]) {
+            dfs(x, y + 1, rect, cnt);
+            return;
+        }
+
+        for (int k = Math.min(n - x, m - y); k >= 1 && isAvailable(rect, x, y, k); k--) {
+            /* 将长度为 k 的正方形区域标记覆盖 */
+            fillUp(rect, x, y, k, true);
+            /* 跳过 k 个位置开始检测 */
+            dfs(x, y + k, rect, cnt + 1);
+            fillUp(rect, x, y, k, false);
+        }
+    }
+
+    public boolean isAvailable(boolean[][] rect, int x, int y, int k) {
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < k; j++) {
+                if (rect[x + i][y + j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public void fillUp(boolean[][] rect, int x, int y, int k, boolean val) {
+        for (int i = 0; i < k; i++){
+            for (int j = 0; j < k; j++) {
+                rect[x + i][y + j] = val;
+            }
+        }
+    }
+
     //913 猫和老鼠
     public int catMouseGame(int[][] graph) {
         int n = graph.length;
@@ -5878,6 +6061,78 @@ public class Solutions2 {
             }
         }
         return Math.min(dp[n][0], Math.min(dp[n][1], dp[n][2]));
+    }
+
+
+    //2708. 一个小组的最大实力值
+    public long maxStrength(int[] nums) {
+        long max = nums[0];
+        long min = nums[0];
+        long res = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            long tmp = max;
+            max = Math.max(Math.max(nums[i] * max, nums[i] * min), Math.max(nums[i], max));
+            min = Math.min(Math.min(nums[i] * min, nums[i] * tmp), Math.min(nums[i], min));
+        }
+        return Math.max(res, max);
+    }
+
+    //2712. 使所有字符相等的最小成本
+    public long minimumCost(String s) {
+        int n = s.length();
+        if (n == 1) return 0L;
+        long ans = Long.MAX_VALUE;
+        char[] chars = s.toCharArray();
+        // [0,i]全部翻成0的代价
+        long[] left0 = new long[n];
+        // [0,i]全部翻成1的代价
+        long[] left1 = new long[n];
+        left0[0] = chars[0] == '0' ? 0 : 1;
+        left1[0] = chars[0] == '1' ? 0 : 1;
+        for (int i = 1; i < n; i++) {
+            if (chars[i] == '0') {
+                left0[i] = left0[i - 1];
+                // 翻转成1，需要前i-1个翻转成0，然后一起翻成1
+                left1[i] = left0[i - 1] + i + 1;
+            } else {
+                left0[i] = left1[i - 1] + i + 1;
+                left1[i] = left1[i - 1];
+            }
+        }
+        long[] right0 = new long[n];
+        long[] right1 = new long[n];
+        right0[n - 1] = chars[n - 1] == '0' ? 0 : 1;
+        right1[n - 1] = chars[n - 1] == '1' ? 0 : 1;
+        for (int i = n - 2; i >= 0; i--) {
+            if (chars[i] == '0') {
+                right0[i] = right0[i + 1];
+                right1[i] = right0[i + 1] + n - i;
+            } else {
+                right0[i] = right1[i + 1] + n - i;
+                right1[i] = right1[i + 1];
+            }
+        }
+        for (int i = 0; i < n - 1; i++) {
+            ans = Math.min(ans, Math.min(left0[i] + right0[i + 1], left1[i] + right1[i + 1]));
+        }
+        return ans;
+    }
+
+    public long minimumCost2(String s) {
+        char[] chars = s.toCharArray();
+        if (chars.length == 1) return 0l;
+
+        int end = chars.length, half = chars.length >> 1;
+        long ans = 0l;
+        char lastChar = chars[0];
+        for (int i = 1; i < end; i++) {
+            if (lastChar == chars[i]) continue;
+            if (i <= half) ans += i;
+            else ans += end - i;
+            lastChar = chars[i];
+        }
+
+        return ans;
     }
 
     // 799 香槟塔 分酒
@@ -9319,6 +9574,39 @@ public class Solutions2 {
         return ans;
     }
 
+    //2719. 统计整数数目
+    private int minSum, maxSum;
+    public int count(String num1, String num2, int minSum, int maxSum) {
+        this.minSum = minSum;
+        this.maxSum = maxSum;
+        int ans = count(num2) - count(num1) + MOD; // 避免负数
+        int sum = 0;
+        for (char c : num1.toCharArray()) sum += c - '0';
+        if (minSum <= sum && sum <= maxSum) ans++; // x=num1 是合法的，补回来
+        return ans % MOD;
+    }
+
+    private int count(String S) {
+        char[] s = S.toCharArray();
+        int n = s.length;
+        int[][] memo = new int[n][Math.min(9 * n, maxSum) + 1];
+        for (int i = 0; i < n; i++)
+            Arrays.fill(memo[i], -1); // -1 表示没有计算过
+        return f(s, memo, 0, 0, true);
+    }
+
+    private int f(char[] s, int[][] memo, int i, int sum, boolean isLimit) {
+        if (sum > maxSum) return 0; // 非法数字
+        if (i == s.length) return sum >= minSum ? 1 : 0;
+        if (!isLimit && memo[i][sum] != -1) return memo[i][sum];
+        int res = 0;
+        int up = isLimit ? s[i] - '0' : 9;
+        for (int d = 0; d <= up; ++d) // 枚举要填入的数字 d
+            res = (res + f(s, memo, i + 1, sum + d, isLimit && d == up)) % MOD;
+        if (!isLimit) memo[i][sum] = res;
+        return res;
+    }
+
     //1397. 找到所有好字符串
     // KMP+数位DP   KMP是算法的皇冠明珠，此题是KMP题目的巅峰
     char[] down;
@@ -11613,7 +11901,7 @@ public class Solutions2 {
         return ans;
     }
 
-    //6364. 老鼠和奶酪
+    //2611. 老鼠和奶酪
     public int miceAndCheese(int[] reward1, int[] reward2, int k) {
         PriorityQueue<int[]> pq = new PriorityQueue<>((o1, o2) -> o2[0] - o1[0]);
         int n = reward1.length;
@@ -11626,6 +11914,22 @@ public class Solutions2 {
         }
         while (!pq.isEmpty()) {
             ans += reward2[pq.poll()[1]];
+        }
+        return ans;
+    }
+
+    // 差分
+    public int miceAndCheese2(int[] reward1, int[] reward2, int k) {
+        int ans = 0;
+        int n = reward1.length;
+        int[] diffs = new int[n];
+        for (int i = 0; i < n; i++) {
+            ans += reward2[i];
+            diffs[i] = reward1[i] - reward2[i];
+        }
+        Arrays.sort(diffs);
+        for (int i = 1; i <= k; i++) {
+            ans += diffs[n - i];
         }
         return ans;
     }
