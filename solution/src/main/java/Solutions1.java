@@ -5247,6 +5247,24 @@ public class Solutions1 {
         return false;
     }
 
+    //1171. 从链表中删去总和值为零的连续节点
+    public ListNode removeZeroSumSublists(ListNode head) {
+        ListNode dummy = new ListNode(0);
+        dummy.next = head;
+        Map<Integer, ListNode> seen = new HashMap<>();
+        int prefix = 0;
+        for (ListNode node = dummy; node != null; node = node.next) {
+            prefix += node.val;
+            seen.put(prefix, node);
+        }
+        prefix = 0;
+        for (ListNode node = dummy; node != null; node = node.next) {
+            prefix += node.val;
+            node.next = seen.get(prefix).next;
+        }
+        return dummy.next;
+    }
+
     //1590. 使数组和能被 P 整除
     public int minSubarray(int[] nums, int p) {
         int n = nums.length;

@@ -1429,63 +1429,17 @@ public class Solution {
         return ans;
     }
 
-    public int[] numSmallerByFrequency(String[] queries, String[] words) {
-        int n = words.length;
-        int[] fwords = new int[n];
-        for (int i = 0; i < n; i++) {
-            fwords[i] = f(words[i]);
-        }
-        Arrays.sort(fwords);
-        int m = queries.length;
-        int[] ans = new int[m];
-        for (int i = 0; i < m; i++) {
-            int t = f(queries[i]);
-            ans[i] = largeThan(t, fwords);
-        }
-        return ans;
-    }
-
-    private int largeThan(int t, int[] num) {
-        int l = 0, r = num.length - 1;
-        while (l < r) {
-            int mid = l + r + 1 >> 1;
-            if (num[mid] <= t) {
-                l = mid;
-            } else {
-                r = mid - 1;
-            }
-        }
-        if (num[r] <= t) return num.length - 1 - r;
-        return num.length;
-    }
-
-    private int f(String word) {
-        char[] chars = word.toCharArray();
-        int[] cnt = new int[26];
-        for (char c : chars) {
-            cnt[c - 'a']++;
-        }
-        for (int i = 0; i < 26; i++) {
-            if (cnt[i] == 0) continue;
-            return cnt[i];
-        }
-        return 0;
-    }
 
     public static void main(String[] args) {
         Solution solution = new Solution();
-        solution.numSmallerByFrequency(new String[]{"cbd"}, new String[]{"zaaaz"});
-        solution.minOperationsMaxProfit(new int[]{10, 10, 6, 4, 7}, 3, 8);
-        solution.countFairPairs(new int[]{0, 1, 7, 4, 4, 5}, 3, 6);
-        ListNode l1 = new ListNode(5);
+        ListNode l1 = new ListNode(1);
         ListNode l2 = new ListNode(2);
-        ListNode l3 = new ListNode(13);
-        ListNode l4 = new ListNode(3);
-        ListNode l5 = new ListNode(8);
+        ListNode l3 = new ListNode(3);
+        ListNode l4 = new ListNode(-3);
+        ListNode l5 = new ListNode(-2);
         l1.next = l2;
         l2.next = l3;
         l3.next = l4;
         l4.next = l5;
-        solution.removeNodes(l1);
     }
 }
