@@ -5925,6 +5925,26 @@ public class Solutions1 {
         return sum;
     }
 
+    //1177. 构建回文串检测
+    public List<Boolean> canMakePaliQueries(String s, int[][] queries) {
+        List<Boolean> ans = new ArrayList<>();
+        int n = s.length();
+        int[][] sum = new int[n + 1][26];
+        char[] chars = s.toCharArray();
+        for (int i = 0; i < n; i++) {
+            sum[i + 1] = sum[i].clone();
+            sum[i + 1][chars[i] - 'a']++;
+        }
+        for (int[] query : queries) {
+            int l = query[0], r = query[1], k = query[2];
+            int m = 0;
+            for (int i = 0; i < 26; i++) {
+                m += ((sum[r + 1][i] - sum[l][i]) % 2);
+            }
+            ans.add((m / 2) <= k);
+        }
+        return ans;
+    }
 
     //1737. 满足三条件之一需改变的最少字符数 字符前缀和
     public int minCharacters(String a, String b) {
@@ -7357,6 +7377,64 @@ public class Solutions1 {
         return result.stream().map(p -> Arrays.asList(p[2], p[3])).limit(fk).collect(Collectors.toList());
     }
 
+    //LCP 41. 黑白翻转棋
+    public int flipChess(String[] chessboard) {
+        int res = 0;
+        for (int i = 0; i < chessboard.length; i++) {
+            for (int j = 0; j < chessboard[i].length(); j++) {
+                if (chessboard[i].charAt(j) == '.') {
+                    res = Math.max(res, bfs(chessboard, i, j));
+                }
+            }
+        }
+        return res;
+    }
+
+    private int bfs(String[] chessboard, int x, int y) {
+        char[][] board = new char[chessboard.length][chessboard[0].length()];
+        int[][] directions = new int[][]{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+        for (int i = 0; i < chessboard.length; i++) {
+            for (int j = 0; j < chessboard[0].length(); j++) {
+                board[i][j] = chessboard[i].charAt(j);
+            }
+        }
+        int cnt = 0;
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{x, y});
+        board[x][y] = 'X';
+        while (!queue.isEmpty()) {
+            int[] cell = queue.poll();
+            for (int[] d : directions) {
+                if (judge(board, cell[0], cell[1], d[0], d[1])) {
+                    int nx = cell[0] + d[0], ny = cell[1] + d[1];
+                    while (board[nx][ny] != 'X') {
+                        queue.offer(new int[]{nx, ny});
+                        board[nx][ny] = 'X';
+                        nx += d[0];
+                        ny += d[1];
+                        cnt++;
+                    }
+                }
+            }
+        }
+        return cnt;
+    }
+
+    private boolean judge(char[][] board, int x, int y, int dx, int dy) {
+        x += dx;
+        y += dy;
+        while (x >= 0 && x < board.length && y >= 0 && y < board[0].length) {
+            if (board[x][y] == 'X') {
+                return true;
+            } else if (board[x][y] == '.') {
+                return false;
+            }
+            x += dx;
+            y += dy;
+        }
+        return false;
+    }
+
     //2385. 感染二叉树需要的总时间
     public int amountOfTime(TreeNode root, int start) {
         Map<Integer, List<Integer>> map = new HashMap<>();
@@ -7812,6 +7890,46 @@ public class Solutions1 {
         }
 
         return uf.getCount();
+    }
+
+    //1254. 统计封闭岛屿的数目
+    static int[][] dir = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    public int closedIsland(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+        int ans = 0;
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 0) {
+                    Queue<int[]> qu = new ArrayDeque<int[]>();
+                    grid[i][j] = 1;
+                    boolean closed = true;
+
+                    qu.offer(new int[]{i, j});
+                    while (!qu.isEmpty()) {
+                        int[] arr = qu.poll();
+                        int cx = arr[0], cy = arr[1];
+                        if (cx == 0 || cy == 0 || cx == m - 1 || cy == n - 1) {
+                            closed = false;
+                        }
+                        for (int d = 0; d < 4; d++) {
+                            int nx = cx + dir[d][0];
+                            int ny = cy + dir[d][1];
+                            if (nx >= 0 && nx < m && ny >= 0 && ny < n && grid[nx][ny] == 0) {
+                                grid[nx][ny] = 1;
+                                qu.offer(new int[]{nx, ny});
+                            }
+                        }
+                    }
+                    if (closed) {
+                        ans++;
+                    }
+                }
+            }
+        }
+        return ans;
     }
 
     // 733 图像渲染

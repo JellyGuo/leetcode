@@ -92,7 +92,7 @@ public class Solutions2 {
                 } else {
                     stack.push(b);
                 }
-            }else {
+            } else {
                 return false;
             }
         }
@@ -152,20 +152,20 @@ public class Solutions2 {
     public int minLength(String s) {
         Stack<Character> stack = new Stack<>();
         char[] chars = s.toCharArray();
-        for(char c:chars){
-            if(c =='B'){
-                if(!stack.isEmpty() && stack.peek()=='A'){
+        for (char c : chars) {
+            if (c == 'B') {
+                if (!stack.isEmpty() && stack.peek() == 'A') {
                     stack.pop();
-                }else {
+                } else {
                     stack.push(c);
                 }
-            }else if(c == 'D'){
-                if(!stack.isEmpty() && stack.peek() == 'C'){
+            } else if (c == 'D') {
+                if (!stack.isEmpty() && stack.peek() == 'C') {
                     stack.pop();
-                }else {
+                } else {
                     stack.push(c);
                 }
-            }else {
+            } else {
                 stack.push(c);
             }
         }
@@ -1050,7 +1050,7 @@ public class Solutions2 {
                 k++;
             }
             int r = k - 1 - (j + 1) + 1;
-            ans = Math.max(Math.min(l + r + 1, cnt[text.charAt(i)-'a']), ans);
+            ans = Math.max(Math.min(l + r + 1, cnt[text.charAt(i) - 'a']), ans);
             i = j;
         }
         return ans;
@@ -3258,6 +3258,25 @@ public class Solutions2 {
         return ans;
     }
 
+    //2730. 找到最长的半重复子字符串
+    public int longestSemiRepetitiveSubstring(String s) {
+        int n = s.length();
+        if (n == 1) return 1;
+        char[] chars = s.toCharArray();
+        Set<Integer> set = new HashSet<>();
+        int ans = 0;
+        for (int l = 0, r = 1; r < n; r++) {
+            if (chars[r] == chars[r - 1]) {
+                while (set.size() > 0) {
+                    set.remove(l++);
+                }
+                set.add(r - 1);
+            }
+            ans = Math.max(r - l + 1, ans);
+        }
+        return ans;
+    }
+
     // endregion ---------------------------------------------------------------------------------
     //------------------------------------------DP------------------------------------------------------
     //region ------------------------------------------记忆化搜索 DFS/DP------------------------------------------------------
@@ -3593,7 +3612,7 @@ public class Solutions2 {
         int ans = 0;
         for (int j = i; (j > i - k) && j >= 0; j--) {
             max = Math.max(max, arr[j]);
-            ans = Math.max(ans,maxSumAfterPartitioningDfs(j - 1,arr,memo,k) + max * (i - j + 1));
+            ans = Math.max(ans, maxSumAfterPartitioningDfs(j - 1, arr, memo, k) + max * (i - j + 1));
         }
         return memo[i] = ans;
     }
@@ -3609,6 +3628,41 @@ public class Solutions2 {
             }
         }
         return d[n];
+    }
+
+    //1595. 连通两组点的最小成本
+    private List<List<Integer>> cost;
+    private int[] minCost;
+    private int[][] memo1595;
+
+    public int connectTwoGroups(List<List<Integer>> cost) {
+        this.cost = cost;
+        int n = cost.size(), m = cost.get(0).size();
+        minCost = new int[m];
+        Arrays.fill(minCost, Integer.MAX_VALUE);
+        for (int j = 0; j < m; j++)
+            for (List<Integer> c : cost)
+                minCost[j] = Math.min(minCost[j], c.get(j));
+
+        memo1595 = new int[n][1 << m];
+        for (int i = 0; i < n; i++)
+            Arrays.fill(memo1595[i], -1); // -1 表示没有计算过
+        return dfs1595(n - 1, (1 << m) - 1);
+    }
+
+    private int dfs1595(int i, int j) {
+        if (i < 0) {
+            int res = 0;
+            for (int k = 0; k < minCost.length; k++)
+                if ((j >> k & 1) == 1) // 第二组的点 k 未连接
+                    res += minCost[k]; // 去第一组找个成本最小的点连接
+            return res;
+        }
+        if (memo1595[i][j] != -1) return memo1595[i][j]; // 之前算过了
+        int res = Integer.MAX_VALUE;
+        for (int k = 0; k < minCost.length; k++) // 第一组的点 i 与第二组的点 k
+            res = Math.min(res, dfs1595(i - 1, j & ~(1 << k)) + cost.get(i).get(k));
+        return memo1595[i][j] = res; // 记忆化
     }
 
     //1641. 统计字典序元音字符串的数目
@@ -4270,6 +4324,7 @@ public class Solutions2 {
 
     //2684. 矩阵中移动的最大次数
     int[][] grid2684;
+
     public int maxMoves(int[][] grid) {
         this.m = grid.length;
         this.n = grid[0].length;
@@ -4311,7 +4366,7 @@ public class Solutions2 {
         int x = 0;
         for (int k = idx; k < chars.length; k++) {
             x = x * 10 + chars[k] - '0';
-            if(dfs(chars, i, k+1, sum+x)) return true;
+            if (dfs(chars, i, k + 1, sum + x)) return true;
         }
         return false;
     }
@@ -4394,7 +4449,7 @@ public class Solutions2 {
     }
 
     public void fillUp(boolean[][] rect, int x, int y, int k, boolean val) {
-        for (int i = 0; i < k; i++){
+        for (int i = 0; i < k; i++) {
             for (int j = 0; j < k; j++) {
                 rect[x + i][y + j] = val;
             }
@@ -6284,6 +6339,130 @@ public class Solutions2 {
     private int gcd(int x, int y) {
         return y > 0 ? gcd(y, x % y) : x;
     }
+
+    //1659. 最大化网格幸福感
+    static final int T = 243, N = 5, M = 6;
+    int tot;
+    int[][] maskBits;
+    int[] ivCount;
+    int[] evCount;
+    int[] innerScore;
+    int[][] interScore;
+    int[][][][] d;
+    // 邻居间的分数
+    static int[][] score = {
+            {0, 0, 0},
+            {0, -60, -10},
+            {0, -10, 40}
+    };
+
+    public int getMaxGridHappiness(int m, int n, int introvertsCount, int extrovertsCount) {
+        this.n = n;
+        this.m = m;
+        // 状态总数为 3^n
+        this.tot = (int) Math.pow(3, n);
+        this.maskBits = new int[T][N];
+        this.ivCount = new int[T];
+        this.evCount = new int[T];
+        this.innerScore = new int[T];
+        this.interScore = new int[T][T];
+        this.d = new int[N][T][M + 1][M + 1];
+
+        initData();
+        // 记忆化搜索数组，初始化为 -1，表示未赋值
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < T; j++) {
+                for (int k = 0; k <= M; k++) {
+                    Arrays.fill(d[i][j][k], -1);
+                }
+            }
+        }
+        return dfs1659(0, 0, introvertsCount, extrovertsCount);
+    }
+
+    public void initData() {
+        // 计算行内分数
+        for (int mask = 0; mask < tot; mask++) {
+            int maskTmp = mask;
+            for (int i = 0; i < n; i++) {
+                int x = maskTmp % 3;
+                maskBits[mask][i] = x;
+                maskTmp /= 3;
+                if (x == 1) {
+                    ivCount[mask]++;
+                    innerScore[mask] += 120;
+                } else if (x == 2) {
+                    evCount[mask]++;
+                    innerScore[mask] += 40;
+                }
+                if (i > 0) {
+                    innerScore[mask] += score[x][maskBits[mask][i - 1]];
+                }
+            }
+        }
+        // 计算行间分数
+        for (int i = 0; i < tot; i++) {
+            for (int j = 0; j < tot; j++) {
+                interScore[i][j] = 0;
+                for (int k = 0; k < n; k++) {
+                    interScore[i][j] += score[maskBits[i][k]][maskBits[j][k]];
+                }
+            }
+        }
+    }
+
+    public int dfs1659(int row, int premask, int iv, int ev) {
+        if (row == m || (iv == 0 && ev == 0)) {
+            return 0;
+        }
+        // 如果该状态已经计算过答案，则直接返回
+        if (d[row][premask][iv][ev] != -1) {
+            return d[row][premask][iv][ev];
+        }
+        // 合法状态，初始值为 0
+        int res = 0;
+        for (int mask = 0; mask < tot; mask++) {
+            // mask 包含的内向人数不能超过 iv ，外向人数不能超过 ev
+            if (ivCount[mask] > iv || evCount[mask] > ev) {
+                continue;
+            }
+            res = Math.max(res, dfs1659(row + 1, mask, iv - ivCount[mask], ev - evCount[mask])
+                    + innerScore[mask]
+                    + interScore[premask][mask]);
+        }
+        d[row][premask][iv][ev] = res;
+        return res;
+    }
+
+
+    //1494. 并行课程 II 子集枚举
+    public int minNumberOfSemesters(int n, int[][] relations, int k) {
+        int[] dp = new int[1 << n];
+        Arrays.fill(dp, Integer.MAX_VALUE);
+        int[] need = new int[1 << n];
+        for (int[] edge : relations) {
+            need[(1 << (edge[1] - 1))] |= 1 << (edge[0] - 1);
+        }
+        dp[0] = 0;
+        for (int i = 1; i < (1 << n); ++i) {
+            need[i] = need[i & (i - 1)] | need[i & (-i)];
+            if ((need[i] | i) != i) { // i 中有任意一门课程的前置课程没有完成学习
+                continue;
+            }
+            int valid = i ^ need[i]; // 当前学期可以进行学习的课程集合
+            if (Integer.bitCount(valid) <= k) { // 如果个数小于 k，则可以全部学习，不再枚举子集
+                dp[i] = Math.min(dp[i], dp[i ^ valid] + 1);
+            } else { // 否则枚举当前学期需要进行学习的课程集合
+                for (int sub = valid; sub > 0; sub = (sub - 1) & valid) {
+                    if (Integer.bitCount(sub) <= k) {
+                        dp[i] = Math.min(dp[i], dp[i ^ sub] + 1);
+                    }
+                }
+            }
+        }
+        return dp[(1 << n) - 1];
+    }
+
     //endregion---------------------------------------------------------------------------------
     //region -----------------------------------------背包DP-------------------------------------------
 //    背包问题的分类https://blog.csdn.net/weixin_45746505/article/details/124543411
@@ -6553,13 +6732,13 @@ public class Solutions2 {
         int u = 1 << m;
         long[] dp = new long[u];//前i个人中选择一些，并集=j，需要的最小人数(用集合表示 101 表示选0，2)
         Arrays.fill(dp, (1L << n) - 1); // 对应所有人，这样在后面取min的时候会取更小的
-        dp[0]= 0;
+        dp[0] = 0;
         for (int i = 0; i < n; i++) {
             int mask = 0;// 把 people[i] 压缩成一个二进制数 mask
             for (String s : people.get(i)) {
                 mask |= 1 << map.get(s);
             }
-            for (int j = u-1; j >0; j--) {
+            for (int j = u - 1; j > 0; j--) {
                 long res1 = dp[j]; //不选当前mask
                 long res2 = dp[j & ~mask] | (1L << i); //选当前mask
                 // 此处选的是人少的集合
@@ -8041,7 +8220,7 @@ public class Solutions2 {
                     cnt.put(word, Math.max(cnt.get(word), cnt.get(prev) + 1));
                 }
             }
-            max = Math.max(cnt.get(word),max);
+            max = Math.max(cnt.get(word), max);
         }
         return max;
     }
@@ -9576,6 +9755,7 @@ public class Solutions2 {
 
     //2719. 统计整数数目
     private int minSum, maxSum;
+
     public int count(String num1, String num2, int minSum, int maxSum) {
         this.minSum = minSum;
         this.maxSum = maxSum;

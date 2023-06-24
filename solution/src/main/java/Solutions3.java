@@ -1644,6 +1644,73 @@ public class Solutions3 {
         return cnt == 0;
     }
 
+    //1375. 二进制字符串前缀一致的次数
+    public int numTimesAllBlue(int[] flips) {
+        int n = flips.length;
+        int[] cnt = new int[n + 1];
+        int ans = 0;
+        int max = 0;
+        for (int f : flips) {
+            max = Math.max(max, f);
+            cnt[f]++;
+            if (check1375(cnt, max)) ans++;
+        }
+        return ans;
+    }
+
+    private boolean check1375(int[] cnt, int end) {
+        for (int i = 1; i <= end; i++) {
+            if (cnt[i] == 0) return false;
+        }
+        return true;
+    }
+
+    public int numTimesAllBlue2(int[] flips) {
+        int n = flips.length;
+        int ans = 0, right = 0;
+        for (int i = 0; i < n; ++i) {
+            right = Math.max(right, flips[i]);
+            if (right == i + 1) {
+                ++ans;
+            }
+        }
+        return ans;
+    }
+
+    //2735. 收集巧克力 枚举
+    public long minCost(int[] nums, int x) {
+        int n = nums.length;
+        long[] sum = new long[n];
+        for (int i = 0; i < n; i++)
+            sum[i] = (long) i * x; // 操作 i 次
+        for (int i = 0; i < n; i++) { // 子数组左端点
+            int mn = nums[i];
+            for (int j = i; j < n + i; j++) { // 子数组右端点（把数组视作环形的）
+                mn = Math.min(mn, nums[j % n]); // 从 nums[i] 到 nums[j%n] 的最小值
+                sum[j - i] += mn; // 累加操作 j-i 次的成本
+            }
+        }
+        long ans = Long.MAX_VALUE;
+        for (long s : sum) ans = Math.min(ans, s);
+        return ans;
+    }
+
+    //2731. 移动机器人
+    public int sumDistance(int[] nums, String s, int d) {
+        final long MOD = (long) 1e9 + 7;
+        int n = nums.length;
+        long[] a = new long[n];
+        for (int i = 0; i < n; i++) // 注意 2e9+1e9 溢出了
+            a[i] = (long) nums[i] + d * ((s.charAt(i) & 2) - 1); // L=-1, R=1
+        long ans = 0, sum = 0;
+        Arrays.sort(a);
+        for (int i = 0; i < n; i++) {
+            ans = (ans + i * a[i] - sum) % MOD;
+            sum += a[i];
+        }
+        return (int) ans;
+    }
+
     // 791 自定义字符串排序
     public String customSortString(String order, String s) {
         int[] cnt = new int[26];
@@ -4647,6 +4714,51 @@ public class Solutions3 {
         return -1;
     }
 
+    //2475. 数组中不等三元组的数目
+    public int unequalTriplets(int[] nums) {
+        int n = nums.length;
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+        }
+        int ans = 0, a = 0;
+        for (int b : map.values()) {
+            int c = n - a - b;
+            ans += a * b * c;
+            a += b;
+        }
+        return ans;
+    }
+
+    //2481. 分割圆的最少切割次数
+    public int numberOfCuts(int n) {
+        if (n == 1) {
+            return 0;
+        }
+        if (n % 2 == 0) {
+            return n / 2;
+        }
+        return n;
+    }
+
+    //2496. 数组中字符串的最大值
+    public int maximumValue(String[] strs) {
+        int max = 0;
+        for(String s:strs){
+            int num = 0;
+            for(char c:s.toCharArray()){
+                if(c>='0' && c<='9'){
+                    num=num*10+c-'0';
+                }else {
+                    num = s.length();
+                    break;
+                }
+            }
+            max = Math.max(max,num);
+        }
+        return max;
+    }
+
     //2413. 最小偶倍数
     public int smallestEvenMultiple(int n) {
         if (n % 2 == 0) return n;
@@ -4726,6 +4838,31 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //2733. 既不是最小值也不是最大值
+    public int findNonMinOrMax(int[] nums) {
+        int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+        for (int num : nums) {
+            max = Math.max(max, num);
+            min = Math.min(min, num);
+        }
+        for (int num : nums) {
+            if (num != max && num != min) return num;
+        }
+        return -1;
+    }
+
+    //2729. 判断一个数是否迷人
+    public boolean isFascinating(int n) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(n).append((long) 2 * n).append((long) 3 * n);
+        int[] cnt = new int[10];
+        for (char c : sb.toString().toCharArray()) {
+            cnt[c - '0']++;
+            if (cnt[0] > 0 || cnt[c - '0'] > 1) return false;
+        }
+        return true;
     }
 
     //2352. 相等行列对
@@ -7929,6 +8066,38 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //1262. 可被三整除的最大和
+    public int maxSumDivThree(int[] nums) {
+        int[] f = {0, Integer.MIN_VALUE, Integer.MIN_VALUE};
+        for (int num : nums) {
+            int[] g = new int[3];
+            System.arraycopy(f, 0, g, 0, 3);
+            for (int i = 0; i < 3; ++i) {
+                g[(i + num % 3) % 3] = Math.max(g[(i + num % 3) % 3], f[i] + num);
+            }
+            f = g;
+        }
+        return f[0];
+    }
+
+    //2734. 执行子串操作后的字典序最小字符串
+    public String smallestString(String s) {
+        int n = s.length();
+        char[] chars = s.toCharArray();
+        int idx = 0;
+        while (idx < n && chars[idx] == 'a') {
+            idx++;
+        }
+        if (idx == n) {
+            chars[n - 1] = 'z';
+            return new String(chars);
+        }
+        while (idx < n && s.charAt(idx) > 'a') {
+            chars[idx++]--;
+        }
+        return new String(chars);
     }
 
     //1605. 给定行和列的和求可行矩阵
