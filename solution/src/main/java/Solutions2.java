@@ -3953,6 +3953,41 @@ public class Solutions2 {
         return false;
     }
 
+    //2746. 字符串连接删减字母
+    public int minimizeConcatenatedLength(String[] words) {
+        int n = words.length;
+        int[][][] dp = new int[n][26][26];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < 26; j++) {
+                for (int k = 0; k < 26; k++) {
+                    dp[i][j][k] = Integer.MAX_VALUE / 2;
+                }
+            }
+        }
+        int len = words[0].length();
+        dp[0][words[0].charAt(0) - 'a'][words[0].charAt(len - 1) - 'a'] = len;
+        for (int i = 1; i < n; i++) {
+            String word = words[i];
+            len = word.length();
+            int x = word.charAt(0) - 'a', y = word.charAt(len - 1) - 'a';
+            for (int j = 0; j < 26; j++) {
+                for (int k = 0; k < 26; k++) {
+                    if (y == j) dp[i][x][k] = Math.min(dp[i][x][k], dp[i - 1][j][k] + len - 1);
+                    else dp[i][x][k] = Math.min(dp[i][x][k], dp[i - 1][j][k] + len);
+                    if (x == k) dp[i][j][y] = Math.min(dp[i][j][y], dp[i - 1][j][k] + len - 1);
+                    else dp[i][j][y] = Math.min(dp[i][j][y], dp[i - 1][j][k] + len);
+                }
+            }
+        }
+        int ans = Integer.MAX_VALUE;
+        for (int j = 0; j < 26; j++) {
+            for (int k = 0; k < 26; k++) {
+                ans = Math.min(ans, dp[n - 1][j][k]);
+            }
+        }
+        return ans;
+    }
+
     // 面试08.14 布尔运算 自顶向下 记忆化DFS
     Integer[][][] countEvalMemo;
 
@@ -5689,6 +5724,35 @@ public class Solutions2 {
         return sell;
     }
 
+    //1186. 删除一次得到子数组最大和
+    public int maximumSum(int[] arr) {
+        int n = arr.length;
+        // 以i结尾，删除0次和1次的最大值
+        int[][] dp = new int[n][2];
+        dp[0][0] = arr[0];//删除0次最大值就是arr[0]
+        dp[0][1] = 0;//删除1次就是0
+        int max = arr[0];
+        for (int i = 1; i < n; i++) {
+            // 以i结尾删除0次：前i-1次删除0次若小于0，则不选前面的i-1,从i开始选
+            dp[i][0] = Math.max(dp[i - 1][0], 0) + arr[i];
+            dp[i][1] = Math.max(dp[i - 1][0], dp[i - 1][1] + arr[i]);
+            max = Math.max(max, Math.max(dp[i][0], dp[i][1]));
+        }
+        return max;
+    }
+
+    public int maximumSum2(int[] arr) {
+        int n = arr.length;
+        int dp0 = arr[0],dp1 = 0;
+        int max = arr[0];
+        for (int i = 1; i < n; i++) {
+            dp1 = Math.max(dp0, dp1 + arr[i]);
+            dp0 = Math.max(dp0, 0) + arr[i];
+            max = Math.max(max, Math.max(dp0, dp1));
+        }
+        return max;
+    }
+
     // 376. 摆动序列
     public int wiggleMaxLength(int[] nums) {
         int n = nums.length;
@@ -6340,6 +6404,53 @@ public class Solutions2 {
         return y > 0 ? gcd(y, x % y) : x;
     }
 
+    //2741. 特别的排列
+    // 状态压缩+dfs
+    private int[][] f2741 = new int[1 << 14][14];
+
+    //表示当前可以选的下标集合为 i，上一个选的数的下标是 j 时，可以构造出多少个特别排列。
+    private int dfs(int i, int j, int[] nums) {
+        if (i == 0) return 1;
+        if (f2741[i][j] != -1) return f2741[i][j];
+        int res = 0;
+        for (int k = 0; k < n; ++k) {
+            if (((i >> k) & 1) == 1 && (nums[j] % nums[k] == 0 || nums[k] % nums[j] == 0)) {
+                res = (res + dfs(i ^ (1 << k), k, nums)) % MOD;
+            }
+        }
+        return f2741[i][j] = res % MOD;
+    }
+
+    public int specialPerm(int[] nums) {
+        n = nums.length;
+        int ans = 0;
+        // new f数组和初始化也可以按n来
+        for (int i = 0; i < 1 << 14; ++i) Arrays.fill(f2741[i], -1);
+        for (int i = 0; i < n; ++i) {
+            ans = (ans + dfs(((1 << n) - 1) ^ (1 << i), i, nums) % MOD) % MOD;
+        }
+        return ans % MOD;
+    }
+
+    // 状态压缩+DP
+    public int specialPerm2(int[] nums) {
+        int n = nums.length;
+        int[][] f = new int[1 << n][n];
+        for (int i = 0; i < n; ++ i) f[0][i] = 1;
+        for (int i = 0; i < 1 << n; ++ i) {
+            for (int j = 0; j < n; ++ j) {
+                for (int k = 0; k < n; ++ k) {
+                    if (((i >> k) & 1) == 1 && (nums[j] % nums[k] == 0 || nums[k] % nums[j] == 0)) {
+                        f[i][j] = (f[i][j] + f[i ^ (1 << k)][k]) % MOD;
+                    }
+                }
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < n; ++ i) ans = (ans + f[((1 << n) - 1) ^ (1 << i)][i]) % MOD;
+        return ans;
+    }
+
     //1659. 最大化网格幸福感
     static final int T = 243, N = 5, M = 6;
     int tot;
@@ -6461,6 +6572,65 @@ public class Solutions2 {
             }
         }
         return dp[(1 << n) - 1];
+    }
+
+    //1681. 最小不兼容性
+    // 二进制、子集枚举
+    public int minimumIncompatibility(int[] nums, int k) {
+        int n = nums.length, group = n / k, inf = Integer.MAX_VALUE;
+        int[] dp = new int[1 << n];
+        Arrays.fill(dp, inf);
+        dp[0] = 0;
+        HashMap<Integer, Integer> values = new HashMap<>();
+
+        for (int mask = 1; mask < (1 << n); mask++) {
+            if (Integer.bitCount(mask) != group) {
+                continue;
+            }
+            int mn = 20, mx = 0;
+            HashSet<Integer> cur = new HashSet<>();
+            for (int i = 0; i < n; i++) {
+                if ((mask & (1 << i)) > 0) {
+                    if (cur.contains(nums[i])) {
+                        break;
+                    }
+                    cur.add(nums[i]);
+                    mn = Math.min(mn, nums[i]);
+                    mx = Math.max(mx, nums[i]);
+                }
+            }
+            if (cur.size() == group) {
+                values.put(mask, mx - mn);
+            }
+        }
+
+        for (int mask = 0; mask < (1 << n); mask++) {
+            if (dp[mask] == inf) {
+                continue;
+            }
+            HashMap<Integer, Integer> seen = new HashMap<>();
+            for (int i = 0; i < n; i++) {
+                if ((mask & (1 << i)) == 0) {
+                    seen.put(nums[i], i);
+                }
+            }
+            if (seen.size() < group) {
+                continue;
+            }
+            int sub = 0;
+            for (int v : seen.values()) {
+                sub |= (1 << v);
+            }
+            int nxt = sub;
+            while (nxt > 0) {
+                if (values.containsKey(nxt)) {
+                    dp[mask | nxt] = Math.min(dp[mask | nxt], dp[mask] + values.get(nxt));
+                }
+                nxt = (nxt - 1) & sub;
+            }
+        }
+
+        return (dp[(1 << n) - 1] < inf) ? dp[(1 << n) - 1] : -1;
     }
 
     //endregion---------------------------------------------------------------------------------
@@ -6753,6 +6923,26 @@ public class Solutions2 {
             }
         }
         return ans;
+    }
+
+    //2742. 给墙壁刷油漆
+    // 01背包
+    // 付费刷墙个数+免费刷墙个数 = n
+    // 付费刷墙时间和>=免费刷墙时间和=免费刷墙个数
+    // 付费刷墙时间和>=n-付费刷墙个数
+    // （付费刷墙时间+1）之和>=n
+    // 从n个物品中选体积和至少为n的物品，价值和最少
+    public int paintWalls(int[] cost, int[] time) {
+        int n = cost.length;
+        int[] f = new int[n + 1];
+        Arrays.fill(f, Integer.MAX_VALUE / 2); // 防止加法溢出
+        f[0] = 0;
+        for (int i = 0; i < n; i++) {
+            int c = cost[i], t = time[i] + 1;  // 注意这里加一了
+            for (int j = n; j > 0; j--)
+                f[j] = Math.min(f[j], f[Math.max(j - t, 0)] + c);
+        }
+        return f[n];
     }
     //endregion------------------------------------------------------------------------------------------
 

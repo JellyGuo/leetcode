@@ -1443,20 +1443,4 @@ public class Solution {
         l4.next = l5;
     }
 
-    public int maximumValue(String[] strs) {
-        int max = 0;
-        for(String s:strs){
-            int num = 0;
-            for(char c:s.toCharArray()){
-                if(c>='0' && c<='9'){
-                    num=num*10+c-'0';
-                }else {
-                    num = s.length();
-                    break;
-                }
-            }
-            max = Math.max(max,num);
-        }
-        return max;
-    }
 }

@@ -1695,6 +1695,11 @@ public class Solutions3 {
         return ans;
     }
 
+    //2745. 构造最长的新字符串
+    public int longestString(int x, int y, int z) {
+        return (Math.min(x, y) * 2 + (x != y ? 1 : 0) + z) * 2;
+    }
+
     //2731. 移动机器人
     public int sumDistance(int[] nums, String s, int d) {
         final long MOD = (long) 1e9 + 7;
@@ -3454,6 +3459,52 @@ public class Solutions3 {
         return area_a + area_b - width * height;
     }
 
+    //1401. 圆和矩形是否有重叠
+    public boolean checkOverlap(int radius, int xCenter, int yCenter, int x1, int y1, int x2, int y2) {
+        /* 圆心在矩形内部 */
+        if (x1 <= xCenter && xCenter <= x2 && y1 <= yCenter && yCenter <= y2) {
+            return true;
+        }
+        /* 圆心在矩形上部 */
+        if (x1 <= xCenter && xCenter <= x2 && y2 <= yCenter && yCenter <= y2 + radius) {
+            return true;
+        }
+        /* 圆心在矩形下部 */
+        if (x1 <= xCenter && xCenter <= x2 && y1 - radius <= yCenter && yCenter <= y1) {
+            return true;
+        }
+        /* 圆心在矩形左部 */
+        if (x1 - radius <= xCenter && xCenter <= x1 && y1 <= yCenter && yCenter <= y2) {
+            return true;
+        }
+        /* 圆心在矩形右部 */
+        if (x2 <= xCenter && xCenter <= x2 + radius && y1 <= yCenter && yCenter <= y2) {
+            return true;
+        }
+        /* 矩形左上角 */
+        if (distance(xCenter, yCenter, x1, y2) <= radius * radius)  {
+            return true;
+        }
+        /* 矩形左下角 */
+        if (distance(xCenter, yCenter, x1, y1) <= radius * radius) {
+            return true;
+        }
+        /* 矩形右上角 */
+        if (distance(xCenter, yCenter, x2, y2) <= radius * radius) {
+            return true;
+        }
+        /* 矩形右下角 */
+        if (distance(xCenter, yCenter, x1, y2) <= radius * radius) {
+            return true;
+        }
+        /* 无交点 */
+        return false;
+    }
+
+    public long distance(int ux, int uy, int vx, int vy) {
+        return (long)Math.pow(ux - vx, 2) + (long)Math.pow(uy - vy, 2);
+    }
+
     //1828. 统计一个圆中点的数目
     public int[] countPoints(int[][] points, int[][] queries) {
         int m = points.length, n = queries.length;
@@ -4865,6 +4916,52 @@ public class Solutions3 {
         return true;
     }
 
+    //2739. 总行驶距离
+    public int distanceTraveled(int mainTank, int additionalTank) {
+        int cost = 0;
+        while (mainTank >= 5) {
+            cost += 5;
+            mainTank -= 5;
+            if (additionalTank > 0) {
+                additionalTank--;
+                mainTank++;
+            }
+        }
+        cost += mainTank;
+        return cost * 10;
+    }
+
+    //2740. 找出分区值
+    public int findValueOfPartition(int[] nums) {
+        int n = nums.length;
+        Arrays.sort(nums);
+        int min = Integer.MAX_VALUE;
+        for (int i = 1; i < n; i++) {
+            min = Math.min(min, nums[i] - nums[i - 1]);
+        }
+        return min;
+    }
+
+    //2744. 最大字符串配对数目
+    public int maximumNumberOfStringPairs(String[] words) {
+        int n = words.length;
+        int cnt = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (check(words[i], words[j])) cnt++;
+            }
+        }
+        return cnt;
+    }
+
+    private boolean check(String w1, String w2) {
+        if (w1.length() != w2.length()) return false;
+        int l = 0, r = w1.length() - 1;
+        while (l < w1.length()) {
+            if (w1.charAt(l++) != w2.charAt(r--)) return false;
+        }
+        return true;
+    }
     //2352. 相等行列对
     public int equalPairs(int[][] grid) {
         int n = grid.length;
@@ -8080,6 +8177,46 @@ public class Solutions3 {
             f = g;
         }
         return f[0];
+    }
+
+    //1253. 重构 2 行二进制矩阵
+    public List<List<Integer>> reconstructMatrix(int upper, int lower, int[] colsum) {
+        int n = colsum.length;
+        int sum = 0, two = 0;
+        for (int i = 0; i < n; ++i) {
+            if (colsum[i] == 2) {
+                ++two;
+            }
+            sum += colsum[i];
+        }
+        if (sum != upper + lower || Math.min(upper, lower) < two) {
+            return new ArrayList<List<Integer>>();
+        }
+        upper -= two;
+        lower -= two;
+        List<List<Integer>> res = new ArrayList<List<Integer>>();
+        for (int i = 0; i < 2; ++i) {
+            res.add(new ArrayList<Integer>());
+        }
+        for (int i = 0; i < n; ++i) {
+            if (colsum[i] == 2) {
+                res.get(0).add(1);
+                res.get(1).add(1);
+            } else if (colsum[i] == 1) {
+                if (upper > 0) {
+                    res.get(0).add(1);
+                    res.get(1).add(0);
+                    --upper;
+                } else {
+                    res.get(0).add(0);
+                    res.get(1).add(1);
+                }
+            } else {
+                res.get(0).add(0);
+                res.get(1).add(0);
+            }
+        }
+        return res;
     }
 
     //2734. 执行子串操作后的字典序最小字符串
@@ -11793,8 +11930,18 @@ public class Solutions3 {
         return n - r;
     }
 
-    // 6245 找出中枢整数
+    // 2485 找出中枢整数
     public int pivotInteger(int n) {
+        int r = (1 + n) * n / 2;
+        int sum = 0;
+        for (int i = 1; i <= n; i++) {
+            sum += i;
+            if (sum == r - sum + i) return i;
+        }
+        return -1;
+    }
+
+    public int pivotInteger2(int n) {
         int[] sum = new int[n + 1];
         for (int i = 1; i <= n; i++) {
             sum[i] = sum[i - 1] + i;
