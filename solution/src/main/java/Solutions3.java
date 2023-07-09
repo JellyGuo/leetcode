@@ -7505,6 +7505,17 @@ public class Solutions3 {
         return s.length() == 0 ? "0" : s.toString();
     }
 
+    //2490. 回环句
+    public boolean isCircularSentence(String sentence) {
+        String[] words = sentence.split(" ");
+        int n = words.length;
+        if(words[n-1].charAt(words[n-1].length()-1) != sentence.charAt(0)) return false;
+        for(int i=1;i<n;i++){
+            if(words[i].charAt(0)!=words[i-1].charAt(words[i-1].length()-1)) return false;
+        }
+        return true;
+    }
+
     //2395. 和相等的子数组
     public boolean findSubarrays(int[] nums) {
         int n = nums.length;
@@ -7517,7 +7528,7 @@ public class Solutions3 {
         return false;
     }
 
-    //6363. 转换二维数组
+    //2610. 转换二维数组
     public List<List<Integer>> findMatrix(int[] nums) {
         Map<Integer, Integer> map = new HashMap<>();
         for (int num : nums) {
@@ -8436,6 +8447,20 @@ public class Solutions3 {
             nums[i] = nums[i - 1] + 1;
         }
         return ans;
+    }
+
+    //2178. 拆分成最多数目的正偶数之和
+    public List<Long> maximumEvenSplit(long finalSum) {
+        List<Long> result = new ArrayList<>();
+        if (finalSum % 2 != 0) {
+            return result;
+        }
+        for (long i = 2; i <= finalSum; i += 2) {
+            result.add(i);
+            finalSum -= i;
+        }
+        result.set(result.size() - 1, result.get(result.size() - 1) + finalSum);
+        return result;
     }
 
     // 857 雇佣K名工人的最低成本
