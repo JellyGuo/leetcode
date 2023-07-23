@@ -5066,6 +5066,26 @@ public class Solutions2 {
         return dp[n];
     }
 
+    //931. 下降路径最小和
+    public int minFallingPathSum(int[][] matrix) {
+        int n = matrix.length;
+        int[][] dp = new int[n][n];
+        System.arraycopy(matrix[0], 0, dp[0], 0, n);
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                int mn = dp[i - 1][j];
+                if (j > 0) {
+                    mn = Math.min(mn, dp[i - 1][j - 1]);
+                }
+                if (j < n - 1) {
+                    mn = Math.min(mn, dp[i - 1][j + 1]);
+                }
+                dp[i][j] = mn + matrix[i][j];
+            }
+        }
+        return Arrays.stream(dp[n - 1]).min().getAsInt();
+    }
+
     //面试题 17.16. 按摩师
     public int massage(int[] nums) {
         int n = nums.length;
@@ -5165,6 +5185,16 @@ public class Solutions2 {
         result[0] = Math.max(left[0], left[1]) + Math.max(right[0], right[1]);
         result[1] = root.val + left[0] + right[0];
         return result;
+    }
+
+    //1911. 最大子序列交替和
+    public long maxAlternatingSum(int[] nums) {
+        long even = nums[0], odd = 0;
+        for (int i = 1; i < nums.length; i++) {
+            even = Math.max(even, odd + nums[i]);
+            odd = Math.max(odd, even - nums[i]);
+        }
+        return even;
     }
 
     //256 粉刷房子
@@ -5456,6 +5486,73 @@ public class Solutions2 {
             res = Math.max(res, dp[i - 1][1] + dp[i][2]);
         }
         return res;
+    }
+
+    //918. 环形子数组的最大和
+    public int maxSubarraySumCircular(int[] nums) {
+        // Math.max(中间连续最大,两边和最大)
+        int n = nums.length;
+        int prefixSum = nums[0];
+        int dp = nums[0];
+        // 每个位置的最大前缀和
+        int[] leftMax = new int[n];
+        leftMax[0] = nums[0];
+        int max = nums[0];
+        for (int i = 1; i < n; i++) {
+            dp = Math.max(dp + nums[i], nums[i]);
+            max = Math.max(dp, max);
+            prefixSum += nums[i];
+            leftMax[i] = Math.max(leftMax[i - 1], prefixSum);
+        }
+        // 从右向左枚举后缀，固定后缀，选择最大前缀
+        int rightSum = 0;
+        for (int i = n - 1; i > 0; i--) {
+            rightSum += nums[i];
+            max = Math.max(max, leftMax[i - 1] + rightSum);
+        }
+        return max;
+    }
+    // 两边反转中间连续
+    public int maxSubarraySumCircular2(int[] nums) {
+        // Math.max(中间连续最大,两边和最大=sum-中间连续最小)
+        int n = nums.length;
+        int[] dpMax = new int[n];
+        dpMax[0] = nums[0];
+        int[] dpMin = new int[n];
+        dpMin[0] = nums[0];
+        int max = nums[0];
+        int min = nums[0];
+        int sum = nums[0];
+        for (int i = 1; i < n; i++) {
+            dpMax[i] = Math.max(dpMax[i - 1] + nums[i], nums[i]);
+            max = Math.max(max, dpMax[i]);
+            dpMin[i] = Math.min(dpMin[i - 1] + nums[i], nums[i]);
+            min = Math.min(min, dpMin[i]);
+            sum += nums[i];
+        }
+        // 如果最大的都是负数，那么数组无正数，最小的肯定是全部元素
+        if (max < 0) return max;
+        return Math.max(max, sum - min);
+    }
+
+    public int maxSubarraySumCircular3(int[] nums) {
+        int n = nums.length;
+        Deque<int[]> deque = new ArrayDeque<>();
+        deque.offer(new int[]{0, nums[0]});
+        int prefixSum = nums[0];
+        int max = nums[0];
+        for (int i = 1; i < 2 * n; i++) {
+            while (!deque.isEmpty() && i - deque.peekFirst()[0] > n) {
+                deque.pollFirst();
+            }
+            prefixSum += nums[i % n];
+            max = Math.max(max, prefixSum - deque.peekFirst()[1]);
+            while (!deque.isEmpty() && deque.peekLast()[1] >= prefixSum) {
+                deque.pollLast();
+            }
+            deque.offerLast(new int[]{i, prefixSum});
+        }
+        return max;
     }
 
     // 764 最大加号标志
@@ -10078,6 +10175,66 @@ public class Solutions2 {
         return curPeople;
     }
 
+    //834. 树中距离之和
+    int[] ans834;
+    int[] sz;
+    int[] dp;
+    List<List<Integer>> graph834;
+
+    public int[] sumOfDistancesInTree(int n, int[][] edges) {
+        ans834 = new int[n];
+        sz = new int[n];
+        dp = new int[n];
+        graph834 = new ArrayList<List<Integer>>();
+        for (int i = 0; i < n; ++i) {
+            graph834.add(new ArrayList<Integer>());
+        }
+        for (int[] edge: edges) {
+            int u = edge[0], v = edge[1];
+            graph834.get(u).add(v);
+            graph834.get(v).add(u);
+        }
+        dfs834(0, -1);
+        dfs2_834(0, -1);
+        return ans834;
+    }
+
+    public void dfs834(int u, int f) {
+        sz[u] = 1;
+        dp[u] = 0;
+        for (int v: graph834.get(u)) {
+            if (v == f) {
+                continue;
+            }
+            dfs(v, u);
+            dp[u] += dp[v] + sz[v];
+            sz[u] += sz[v];
+        }
+    }
+
+    public void dfs2_834(int u, int f) {
+        ans834[u] = dp[u];
+        for (int v: graph834.get(u)) {
+            if (v == f) {
+                continue;
+            }
+            int pu = dp[u], pv = dp[v];
+            int su = sz[u], sv = sz[v];
+
+            dp[u] -= dp[v] + sz[v];
+            sz[u] -= sz[v];
+            dp[v] += dp[u] + sz[u];
+            sz[v] += sz[u];
+
+            dfs2_834(v, u);
+
+            dp[u] = pu;
+            dp[v] = pv;
+            sz[u] = su;
+            sz[v] = sv;
+        }
+    }
+
     //1245. 树的直径
     //2246. 相邻字符不同的最长路径
     List<Integer>[] g2246;
@@ -12083,6 +12240,43 @@ public class Solutions2 {
         return sb.toString();
     }
 
+    //1499. 满足不等式的最大值
+    public int findMaxValueOfEquation(int[][] points, int k) {
+        int res = Integer.MIN_VALUE;
+        PriorityQueue<int[]> heap = new PriorityQueue<int[]>(Comparator.comparingInt(a -> a[0]));
+        for (int[] point : points) {
+            int x = point[0], y = point[1];
+            while (!heap.isEmpty() && x - heap.peek()[1] > k) {
+                heap.poll();
+            }
+            if (!heap.isEmpty()) {
+                res = Math.max(res, x + y - heap.peek()[0]);
+            }
+            heap.offer(new int[]{x - y, x});
+        }
+        return res;
+    }
+
+    //双端队列
+    public int findMaxValueOfEquationDeque(int[][] points, int k) {
+        int res = Integer.MIN_VALUE;
+        Deque<int[]> queue = new ArrayDeque<int[]>();
+        for (int[] point : points) {
+            int x = point[0], y = point[1];
+            while (!queue.isEmpty() && x - queue.peekFirst()[1] > k) {
+                queue.pollFirst();
+            }
+            if (!queue.isEmpty()) {
+                res = Math.max(res, x + y + queue.peekFirst()[0]);
+            }
+            while (!queue.isEmpty() && y - x >= queue.peekLast()[0]) {
+                queue.pollLast();
+            }
+            queue.offer(new int[]{y - x, x});
+        }
+        return res;
+    }
+
     // 1801. 积压订单中的订单总数
     public int getNumberOfBacklogOrders(int[][] orders) {
         int mod = (int) 1e9 + 7;
@@ -12207,6 +12401,33 @@ public class Solutions2 {
             dp[i] = q.peekFirst()[1] + dif;
         }
         return dp[n];
+    }
+
+    //1851. 包含每个查询的最小区间
+    public int[] minInterval(int[][] intervals, int[] queries) {
+        Integer[] qindex = new Integer[queries.length];
+        for (int i = 0; i < queries.length; i++) {
+            qindex[i] = i;
+        }
+        Arrays.sort(qindex, Comparator.comparingInt(i -> queries[i]));
+        Arrays.sort(intervals, Comparator.comparingInt(i -> i[0]));
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        int[] res = new int[queries.length];
+        Arrays.fill(res, -1);
+        int i = 0;
+        for (int qi : qindex) {
+            while (i < intervals.length && intervals[i][0] <= queries[qi]) {
+                pq.offer(new int[]{intervals[i][1] - intervals[i][0] + 1, intervals[i][0], intervals[i][1]});
+                i++;
+            }
+            while (!pq.isEmpty() && pq.peek()[2] < queries[qi]) {
+                pq.poll();
+            }
+            if (!pq.isEmpty()) {
+                res[qi] = pq.peek()[0];
+            }
+        }
+        return res;
     }
 
     //2558 从数量最多的堆取走礼物

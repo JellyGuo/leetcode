@@ -3482,7 +3482,7 @@ public class Solutions3 {
             return true;
         }
         /* 矩形左上角 */
-        if (distance(xCenter, yCenter, x1, y2) <= radius * radius)  {
+        if (distance(xCenter, yCenter, x1, y2) <= radius * radius) {
             return true;
         }
         /* 矩形左下角 */
@@ -3502,7 +3502,7 @@ public class Solutions3 {
     }
 
     public long distance(int ux, int uy, int vx, int vy) {
-        return (long)Math.pow(ux - vx, 2) + (long)Math.pow(uy - vy, 2);
+        return (long) Math.pow(ux - vx, 2) + (long) Math.pow(uy - vy, 2);
     }
 
     //1828. 统计一个圆中点的数目
@@ -4288,6 +4288,38 @@ public class Solutions3 {
         return res.toArray(new int[R * C][2]);
     }
 
+    //874. 模拟行走机器人
+    public int robotSim(int[] commands, int[][] obstacles) {
+        int x = 0;
+        int y = 0;
+        int[][] directions = new int[][]{{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        Set<String> obstacleSets = new HashSet<>();
+        for (int[] cell : obstacles) {
+            obstacleSets.add(cell[0] + "," + cell[1]);
+        }
+        int directionIdx = 0;
+        int max = 0;
+        for (int command : commands) {
+            if (command == -1) {
+                directionIdx = (directionIdx + 1) % 4;
+            } else if (command == -2) {
+                directionIdx = (directionIdx - 1 + 4) % 4;
+            } else {
+                for (int i = 0; i < command; i++) {
+                    int newX = x + directions[directionIdx][0];
+                    int newY = y + directions[directionIdx][1];
+                    if (obstacleSets.contains(newX + "," + newY)) {
+                        break;
+                    }
+                    x = newX;
+                    y = newY;
+                }
+                max = Math.max(max, x * x + y * y);
+            }
+        }
+        return max;
+    }
+
     //1041. 困于环中的机器人
     public boolean isRobotBounded(String instructions) {
         int[][] direction = new int[][]{{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
@@ -4795,17 +4827,17 @@ public class Solutions3 {
     //2496. 数组中字符串的最大值
     public int maximumValue(String[] strs) {
         int max = 0;
-        for(String s:strs){
+        for (String s : strs) {
             int num = 0;
-            for(char c:s.toCharArray()){
-                if(c>='0' && c<='9'){
-                    num=num*10+c-'0';
-                }else {
+            for (char c : s.toCharArray()) {
+                if (c >= '0' && c <= '9') {
+                    num = num * 10 + c - '0';
+                } else {
                     num = s.length();
                     break;
                 }
             }
-            max = Math.max(max,num);
+            max = Math.max(max, num);
         }
         return max;
     }
@@ -4962,6 +4994,7 @@ public class Solutions3 {
         }
         return true;
     }
+
     //2352. 相等行列对
     public int equalPairs(int[][] grid) {
         int n = grid.length;
@@ -4971,7 +5004,7 @@ public class Solutions3 {
             for (int num : row) {
                 sb.append(num).append(",");
             }
-            sb.deleteCharAt(sb.length()-1);
+            sb.deleteCharAt(sb.length() - 1);
             String key = sb.toString();
             map.put(key, map.getOrDefault(key, 0) + 1);
         }
@@ -4981,7 +5014,7 @@ public class Solutions3 {
             for (int i = 0; i < n; i++) {
                 sb.append(grid[i][j]).append(",");
             }
-            sb.deleteCharAt(sb.length()-1);
+            sb.deleteCharAt(sb.length() - 1);
             String key = sb.toString();
             if (map.containsKey(key)) {
                 ans += map.get(key);
@@ -7509,9 +7542,9 @@ public class Solutions3 {
     public boolean isCircularSentence(String sentence) {
         String[] words = sentence.split(" ");
         int n = words.length;
-        if(words[n-1].charAt(words[n-1].length()-1) != sentence.charAt(0)) return false;
-        for(int i=1;i<n;i++){
-            if(words[i].charAt(0)!=words[i-1].charAt(words[i-1].length()-1)) return false;
+        if (words[n - 1].charAt(words[n - 1].length() - 1) != sentence.charAt(0)) return false;
+        for (int i = 1; i < n; i++) {
+            if (words[i].charAt(0) != words[i - 1].charAt(words[i - 1].length() - 1)) return false;
         }
         return true;
     }
@@ -8150,6 +8183,31 @@ public class Solutions3 {
             }
         }
         return Integer.parseInt(String.valueOf(chars));
+    }
+
+    public boolean lemonadeChange(int[] bills) {
+        int[] have = new int[3];
+        for (int bill : bills) {
+            if (bill == 5) {
+                have[0]++;
+            } else if (bill == 10) {
+                if (have[0] < 1) return false;
+                have[0]--;
+                have[1]++;
+            } else if (bill == 20) {
+                if (have[1] >= 1 && have[0] >= 1) {
+                    have[1]--;
+                    have[0]--;
+                    have[2]++;
+                } else if (have[0] >= 3) {
+                    have[0]-=3;
+                    have[2]++;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     //942. 增减字符串匹配

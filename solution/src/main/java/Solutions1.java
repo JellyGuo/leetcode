@@ -2185,6 +2185,32 @@ public class Solutions1 {
         return val;
     }
 
+    //979. 在二叉树中分配硬币
+    int move = 0;
+
+    public int distributeCoins(TreeNode root) {
+        dfs979(root);
+        return move;
+    }
+
+    private int dfs979(TreeNode root) {
+        if (root == null) {
+            return 0;
+        }
+        int moveRight = 0;
+        int moveLeft = 0;
+        if (root.left != null) {
+            moveLeft = dfs979(root.left);
+        }
+        if (root.right != null) {
+            moveRight = dfs979(root.right);
+        }
+        // moveLeft/right为正，从子往父移动，为负，从父往子移动
+        move += Math.abs(moveLeft) + Math.abs(moveRight);
+        // 移动之后本节点还剩的硬币数量
+        return moveLeft + moveRight + root.val - 1;
+    }
+
     //1373. 二叉搜索子树的最大键值和
     private int ans1373; // 二叉搜索树可以为空
 
