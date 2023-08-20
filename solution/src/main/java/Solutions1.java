@@ -10758,6 +10758,39 @@ public class Solutions1 {
         return ans;
     }
 
+    //2050. 并行课程 III
+    public int minimumTime(int n, int[][] relations, int[] time) {
+        List<Integer>[] g = new List[n];
+        Arrays.setAll(g, k -> new ArrayList<>());
+        int[] indeg = new int[n];
+        for (int[] e : relations) {
+            int a = e[0] - 1, b = e[1] - 1;
+            g[a].add(b);
+            ++indeg[b];
+        }
+        Deque<Integer> q = new ArrayDeque<>();
+        int[] f = new int[n];
+        int ans = 0;
+        for (int i = 0; i < n; ++i) {
+            int v = indeg[i], t = time[i];
+            if (v == 0) {
+                q.offer(i);
+                f[i] = t;
+                ans = Math.max(ans, t);
+            }
+        }
+        while (!q.isEmpty()) {
+            int i = q.pollFirst();
+            for (int j : g[i]) {
+                f[j] = Math.max(f[j], f[i] + time[j]);
+                ans = Math.max(ans, f[j]);
+                if (--indeg[j] == 0) {
+                    q.offer(j);
+                }
+            }
+        }
+        return ans;
+    }
     // 269 外星词典
     // offer 114 外星文字典
     public String alienOrder(String[] words) {
@@ -11239,6 +11272,60 @@ public class Solutions1 {
                 if (cur.isEnd) return word.substring(0, i + 1);
             }
             return word;
+        }
+    }
+
+    //1268. 搜索推荐系统
+    public List<List<String>> suggestedProducts(String[] products, String searchWord) {
+        Trie1268 trie = new Trie1268();
+        for (String product : products) {
+            trie.insert(product);
+        }
+        return trie.search(searchWord);
+    }
+
+    class Trie1268 {
+        private Trie1268[] children;
+        private PriorityQueue<String> words;
+
+        public Trie1268() {
+            children = new Trie1268[26];
+            words = new PriorityQueue<>(Comparator.reverseOrder());
+        }
+
+        public void insert(String word) {
+            Trie1268 node = this;
+            for (char c : word.toCharArray()) {
+                if (node.children[c - 'a'] == null) {
+                    node.children[c - 'a'] = new Trie1268();
+                }
+                node = node.children[c - 'a'];
+                node.words.offer(word);
+                if (node.words.size() > 3) {
+                    node.words.poll();
+                }
+            }
+
+        }
+
+        public List<List<String>> search(String word) {
+            Trie1268 node = this;
+            List<List<String>> res = new ArrayList<>();
+            boolean flag = false;
+            for (char c : word.toCharArray()) {
+                if (flag || node.children[c - 'a'] == null) {
+                    res.add(new ArrayList<>());
+                    flag = true;
+                } else {
+                    node = node.children[c - 'a'];
+                    List<String> ls = new ArrayList<>();
+                    while (!node.words.isEmpty()) {
+                        ls.add(0, node.words.poll());
+                    }
+                    res.add(ls);
+                }
+            }
+            return res;
         }
     }
 

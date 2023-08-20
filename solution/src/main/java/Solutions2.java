@@ -3569,6 +3569,36 @@ public class Solutions2 {
         return f[d - 1][n - 1];
     }
 
+    //2050. 并行课程 III
+    public int minimumTime(int n, int[][] relations, int[] time) {
+        int mx = 0;
+        List<Integer>[] prev = new List[n + 1];
+        for (int i = 0; i <= n; i++) {
+            prev[i] = new ArrayList<Integer>();
+        }
+        for (int[] relation : relations) {
+            int x = relation[0], y = relation[1];
+            prev[y].add(x);
+        }
+        Map<Integer, Integer> memo = new HashMap<Integer, Integer>();
+        for (int i = 1; i <= n; i++) {
+            mx = Math.max(mx, dp2050(i, time, prev, memo));
+        }
+        return mx;
+    }
+
+    public int dp2050(int i, int[] time, List<Integer>[] prev, Map<Integer, Integer> memo) {
+        if (!memo.containsKey(i)) {
+            int cur = 0;
+            for (int p : prev[i]) {
+                cur = Math.max(cur, dp2050(p, time, prev, memo));
+            }
+            cur += time[i - 1];
+            memo.put(i, cur);
+        }
+        return memo.get(i);
+    }
+
     //1376. 通知所有员工所需的时间
     int headID;  // 公司总负责人 ID
     int[] manager;  // manager[i] 表示第 i 名员工的直属负责人
@@ -5086,6 +5116,58 @@ public class Solutions2 {
         return Arrays.stream(dp[n - 1]).min().getAsInt();
     }
 
+    //1289. 下降路径最小和 II
+    public int minFallingPathSum2(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[][] dp = new int[m][n];
+        for (int j = 0; j < n; j++) {
+            dp[0][j] = grid[0][j];
+        }
+        for (int i = 1; i < m; i++) {
+            Arrays.fill(dp[i], Integer.MAX_VALUE);
+        }
+        for (int i = 1; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    if (k == j) continue;
+                    dp[i][j] = Math.min(dp[i][j], dp[i - 1][k] + grid[i][j]);
+                }
+            }
+        }
+        int min = Integer.MAX_VALUE;
+        for (int j = 0; j < n; j++) {
+            min = Math.min(min, dp[m - 1][j]);
+        }
+        return min;
+    }
+    public int minFallingPathSum22(int[][] grid) {
+        int n = grid.length;
+        int first_min_sum = 0;
+        int second_min_sum = 0;
+        int first_min_index = -1;
+
+        for (int i = 0; i < n; i++) {
+            int cur_first_min_sum = Integer.MAX_VALUE;
+            int cur_second_min_sum = Integer.MAX_VALUE;
+            int cur_first_min_index = -1;
+
+            for (int j = 0; j < n; j++) {
+                int cur_sum = (j != first_min_index ? first_min_sum : second_min_sum) + grid[i][j];
+                if (cur_sum < cur_first_min_sum) {
+                    cur_second_min_sum = cur_first_min_sum;
+                    cur_first_min_sum = cur_sum;
+                    cur_first_min_index = j;
+                } else if (cur_sum < cur_second_min_sum) {
+                    cur_second_min_sum = cur_sum;
+                }
+            }
+            first_min_sum = cur_first_min_sum;
+            second_min_sum = cur_second_min_sum;
+            first_min_index = cur_first_min_index;
+        }
+        return first_min_sum;
+    }
+
     //面试题 17.16. 按摩师
     public int massage(int[] nums) {
         int n = nums.length;
@@ -5185,6 +5267,107 @@ public class Solutions2 {
         result[0] = Math.max(left[0], left[1]) + Math.max(right[0], right[1]);
         result[1] = root.val + left[0] + right[0];
         return result;
+    }
+
+    //1444. 切披萨的方案数
+    public int ways1(String[] pizza, int k) {
+        MatrixSum ms = new MatrixSum(pizza);
+        int m = pizza.length, n = pizza[0].length();
+        int[][][] memo = new int[k][m][n];
+        for (int i = 0; i < k; i++)
+            for (int j = 0; j < m; j++)
+                Arrays.fill(memo[i][j], -1); // -1 表示没有计算过
+        return dfs(k - 1, 0, 0, memo, ms, m, n);
+    }
+
+    private int dfs(int c, int i, int j, int[][][] memo, MatrixSum ms, int m, int n) {
+        if (c == 0) // 递归边界：无法再切了
+            return ms.query(i, j, m, n) > 0 ? 1 : 0;
+        if (memo[c][i][j] != -1) // 之前计算过
+            return memo[c][i][j];
+        int res = 0;
+        for (int j2 = j + 1; j2 < n; j2++) // 垂直切
+            if (ms.query(i, j, m, j2) > 0) // 有苹果
+                res = (res + dfs(c - 1, i, j2, memo, ms, m, n)) % MOD;
+        for (int i2 = i + 1; i2 < m; i2++) // 水平切
+            if (ms.query(i, j, i2, n) > 0) // 有苹果
+                res = (res + dfs(c - 1, i2, j, memo, ms, m, n)) % MOD;
+        return memo[c][i][j] = res; // 记忆化
+    }
+
+    public int ways2(String[] pizza, int k) {
+        final int MOD = (int) 1e9 + 7;
+        MatrixSum ms = new MatrixSum(pizza);
+        int m = pizza.length, n = pizza[0].length();
+        int[][][] f = new int[k][m][n];
+        for (int c = 0; c < k; c++) {
+            for (int i = 0; i < m; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (c == 0) {
+                        f[c][i][j] = ms.query(i, j, m, n) > 0 ? 1 : 0;
+                        continue;
+                    }
+                    int res = 0;
+                    for (int j2 = j; j2 < n; j2++) // 垂直切
+                        if (ms.query(i, j, m, j2) > 0) // 有苹果
+                            res = (res + f[c - 1][i][j2]) % MOD;
+                    for (int i2 = i; i2 < m; i2++) // 水平切
+                        if (ms.query(i, j, i2, n) > 0) // 有苹果
+                            res = (res + f[c - 1][i2][j]) % MOD;
+                    f[c][i][j] = res;
+                }
+            }
+        }
+        return f[k - 1][0][0];
+    }
+
+// 二维前缀和模板（'A' 的 ASCII 码最低位为 1，'.' 的 ASCII 码最低位为 0）
+    static class MatrixSum {
+        private final int[][] sum;
+
+        public MatrixSum(String[] matrix) {
+            int m = matrix.length, n = matrix[0].length();
+            sum = new int[m + 1][n + 1];
+            for (int i = 0; i < m; i++) {
+                for (int j = 0; j < n; j++) {
+                    sum[i + 1][j + 1] = sum[i + 1][j] + sum[i][j + 1] - sum[i][j] + (matrix[i].charAt(j) & 1);
+                }
+            }
+        }
+
+        // 返回左上角在 (r1,c1) 右下角在 (r2-1,c2-1) 的子矩阵元素和（类似前缀和的左闭右开）
+        public int query(int r1, int c1, int r2, int c2) {
+            return sum[r2][c2] - sum[r2][c1] - sum[r1][c2] + sum[r1][c1];
+        }
+    }
+    //1388. 3n 块披萨 环形问题
+    public int maxSizeSlices(int[] slices) {
+        int[] v1 = new int[slices.length - 1];
+        int[] v2 = new int[slices.length - 1];
+        System.arraycopy(slices, 1, v1, 0, slices.length - 1);
+        System.arraycopy(slices, 0, v2, 0, slices.length - 1);
+        int ans1 = calculate(v1);
+        int ans2 = calculate(v2);
+        return Math.max(ans1, ans2);
+    }
+
+    public int calculate(int[] slices) {
+        int N = slices.length, n = (N + 1) / 3;
+        int[][] dp = new int[N][n + 1];
+        for (int i = 0; i < N; i++) {
+            Arrays.fill(dp[i], Integer.MIN_VALUE);
+        }
+        dp[0][0] = 0;
+        dp[0][1] = slices[0];
+        dp[1][0] = 0;
+        dp[1][1] = Math.max(slices[0], slices[1]);
+        for (int i = 2; i < N; i++) {
+            dp[i][0] = 0;
+            for (int j = 1; j <= n; j++) {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i - 2][j - 1] + slices[i]);
+            }
+        }
+        return dp[N - 1][n];
     }
 
     //1911. 最大子序列交替和
@@ -5366,6 +5549,32 @@ public class Solutions2 {
         int mid = (left + right) / 2;
         //连续子数组最大和 从左边，从右边，从中间到两边
         return Math.max(maxMidArraySum(nums, left, right, mid), Math.max(maxSubArraySum(nums, left, mid), maxSubArraySum(nums, mid + 1, right)));
+    }
+
+    //1749. 任意子数组和的绝对值的最大值
+    public static int maxAbsoluteSum(int[] nums) {
+        int n = nums.length;
+        int max = Math.abs(nums[0]);
+        int minSum = nums[0];
+        int maxSum = nums[0];
+        for (int i = 1; i < n; i++) {
+            maxSum = Math.max(nums[i], maxSum + nums[i]);//=Math.max(maxSum,0)+nums[i]
+            minSum = Math.min(nums[i], minSum + nums[i]);
+            max = Math.max(Math.max(Math.abs(minSum), Math.abs(maxSum)), max);
+        }
+        return max;
+    }
+    //由于子数组和等于两个前缀和的差，那么取前缀和中的最大值与最小值，它俩的差就是答案。
+    //如果最大值在最小值右边，那么算的是最大子数组和。
+    //如果最大值在最小值左边，那么算的是最小子数组和的绝对值（相反数）
+    public int maxAbsoluteSum2(int[] nums) {
+        int s = 0, mx = 0, mn = 0;
+        for (int x : nums) {
+            s += x;
+            mx = Math.max(mx, s);
+            mn = Math.min(mn, s);
+        }
+        return mx - mn;
     }
 
     //2606. 找到最大开销的子字符串
@@ -9296,6 +9505,78 @@ public class Solutions2 {
         return dp[m - 1][n - 1];
     }
 
+    //980. 不同路径 III
+    public int uniquePathsIII(int[][] grid) {
+        int r = grid.length, c = grid[0].length;
+        int si = 0, sj = 0, n = 0;
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                if (grid[i][j] == 0) {
+                    n++;
+                } else if (grid[i][j] == 1) {
+                    n++;
+                    si = i;
+                    sj = j;
+                }
+            }
+        }
+        return dfs980(grid, si, sj, n);
+    }
+
+    public int dfs980(int[][] grid, int i, int j, int n) {
+        if (grid[i][j] == 2) {
+            return n == 0 ? 1 : 0;
+        }
+        int r = grid.length, c = grid[0].length;
+        int t = grid[i][j];
+        grid[i][j] = -1;
+        int res = 0;
+        for (int[] dir : dirs) {
+            int ni = i + dir[0], nj = j + dir[1];
+            if (ni >= 0 && ni < r && nj >= 0 && nj < c && (grid[ni][nj] == 0 || grid[ni][nj] == 2)) {
+                res += dfs980(grid, ni, nj, n - 1);
+            }
+        }
+        grid[i][j] = t;
+        return res;
+    }
+
+    //记忆化+状态压缩
+    Map<Integer, Integer> memo980 = new HashMap<>();
+    public int uniquePathsIII2(int[][] grid) {
+        int r = grid.length, c = grid[0].length;
+        int si = 0, sj = 0, st = 0;
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                if (grid[i][j] == 0 || grid[i][j] == 2) {
+                    st |= 1 << (i * c + j);
+                } else if (grid[i][j] == 1) {
+                    si = i;
+                    sj = j;
+                }
+            }
+        }
+        return dp980(grid, si, sj, st);
+    }
+
+    public int dp980(int[][] grid, int i, int j, int st) {
+        if (grid[i][j] == 2) {
+            return st == 0 ? 1 : 0;
+        }
+        int r = grid.length, c = grid[0].length;
+        int key = ((i * c + j) << (r * c)) + st;
+        if (!memo980.containsKey(key)) {
+            int res = 0;
+            for (int[] dir : dirs) {
+                int ni = i + dir[0], nj = j + dir[1];
+                if (ni >= 0 && ni < r && nj >= 0 && nj < c && (st & (1 << (ni * c + nj))) > 0) {
+                    res += dp980(grid, ni, nj, st ^ (1 << (ni * c + nj)));
+                }
+            }
+            memo980.put(key, res);
+        }
+        return memo980.get(key);
+    }
     // 64 最小路径和
     public int minPathSum(int[][] grid) {
         int m = grid.length;
@@ -12430,6 +12711,26 @@ public class Solutions2 {
         return res;
     }
 
+    //2208. 将数组和减半的最少操作次数
+    public int halveArray(int[] nums) {
+        PriorityQueue<Double> pq = new PriorityQueue<Double>((a, b) -> b.compareTo(a));
+        for (int num : nums) {
+            pq.offer((double) num);
+        }
+        int res = 0;
+        double sum = 0;
+        for (int num : nums) {
+            sum += num;
+        }
+        double sum2 = 0.0;
+        while (sum2 < sum / 2) {
+            double x = pq.poll();
+            sum2 += x / 2;
+            pq.offer(x / 2);
+            res++;
+        }
+        return res;
+    }
     //2558 从数量最多的堆取走礼物
     public long pickGifts(int[] gifts, int k) {
         PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);

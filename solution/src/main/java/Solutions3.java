@@ -4338,6 +4338,29 @@ public class Solutions3 {
         return (x == 0 && y == 0) || directionIdx != 0;
     }
 
+    //2500. 删除每行中的最大值
+    public int deleteGreatestValue(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        boolean[][] visited = new boolean[m][n];
+        int cnt = n, ans = 0;
+        while (cnt-- > 0) {
+            int max = 0;
+            for (int i = 0; i < m; i++) {
+                int colMax = 0, col = -1;
+                for (int j = 0; j < n; j++) {
+                    if (!visited[i][j] && grid[i][j] > colMax) {
+                        colMax = grid[i][j];
+                        col = j;
+                    }
+                }
+                visited[i][col] = true;
+                max = Math.max(max, colMax);
+            }
+            ans += max;
+        }
+        return ans;
+    }
+
     // 73 矩阵置0
     public void setZeroes(int[][] mat) {
         int m = mat.length, n = mat[0].length;
@@ -4603,6 +4626,37 @@ public class Solutions3 {
         return false;
     }
 
+    //722. 删除注释
+    public List<String> removeComments(String[] source) {
+        List<String> res = new ArrayList<String>();
+        StringBuilder newLine = new StringBuilder();
+        boolean inBlock = false;
+        for (String line : source) {
+            for (int i = 0; i < line.length(); i++) {
+                if (inBlock) {
+                    if (i + 1 < line.length() && line.charAt(i) == '*' && line.charAt(i + 1) == '/') {
+                        inBlock = false;
+                        i++;
+                    }
+                } else {
+                    if (i + 1 < line.length() && line.charAt(i) == '/' && line.charAt(i + 1) == '*') {
+                        inBlock = true;
+                        i++;
+                    } else if (i + 1 < line.length() && line.charAt(i) == '/' && line.charAt(i + 1) == '/') {
+                        break;
+                    } else {
+                        newLine.append(line.charAt(i));
+                    }
+                }
+            }
+            if (!inBlock && newLine.length() > 0) {
+                res.add(newLine.toString());
+                newLine.setLength(0);
+            }
+        }
+        return res;
+    }
+
     //1604. 警告一小时内使用相同员工卡大于等于三次的人
     public List<String> alertNames(String[] keyName, String[] keyTime) {
         Map<String, List<Integer>> map = new HashMap<>();
@@ -4638,6 +4692,53 @@ public class Solutions3 {
             if (income <= brackets[i][0]) break;
         }
         return tax;
+    }
+    //771. 宝石与石头
+    public int numJewelsInStones(String jewels, String stones) {
+        int jewelsCount = 0;
+        Set<Character> jewelsSet = new HashSet<Character>();
+        int jewelsLength = jewels.length(), stonesLength = stones.length();
+        for (int i = 0; i < jewelsLength; i++) {
+            char jewel = jewels.charAt(i);
+            jewelsSet.add(jewel);
+        }
+        for (int i = 0; i < stonesLength; i++) {
+            char stone = stones.charAt(i);
+            if (jewelsSet.contains(stone)) {
+                jewelsCount++;
+            }
+        }
+        return jewelsCount;
+    }
+
+    //1281. 整数的各位积和之差
+    public int subtractProductAndSum(int n) {
+        int product = 1;
+        int sum = 0;
+        while (n > 0) {
+            int r = n % 10;
+            product *= r;
+            sum += r;
+            n /= 10;
+        }
+        return product - sum;
+    }
+    //1572. 矩阵对角线元素的和
+    public int diagonalSum(int[][] mat) {
+        int m = mat.length, n = mat[0].length;
+        int sum = 0;
+        int l = 0, r = n - 1;
+        for (int i = 0; i < m; i++) {
+            if (l != r) {
+                sum += mat[i][l];
+                sum += mat[i][r];
+            } else {
+                sum += mat[i][l];
+            }
+            l++;
+            r--;
+        }
+        return sum;
     }
 
     //2325. 解密消息
@@ -5445,6 +5546,23 @@ public class Solutions3 {
             ans[ii++] = j;
         }
         return ans;
+    }
+    public int[] circularGameLosers2(int n, int k) {
+        Set<Integer> set = new HashSet<>();
+        int idx = 1;
+        int round = 1;
+        while (!set.contains(idx)) {
+            set.add(idx);
+            idx = (idx - 1 + round * k) % n + 1;
+            round++;
+        }
+        int[] res = new int[n - set.size()];
+        int ii = 0;
+        for (int i = 1; i <= n; i++) {
+            if (set.contains(i)) continue;
+            res[ii++] = i;
+        }
+        return res;
     }
 
     //2544. 交替数字和
@@ -8185,6 +8303,7 @@ public class Solutions3 {
         return Integer.parseInt(String.valueOf(chars));
     }
 
+    //860. 柠檬水找零
     public boolean lemonadeChange(int[] bills) {
         int[] have = new int[3];
         for (int bill : bills) {
@@ -8565,6 +8684,28 @@ public class Solutions3 {
             if (q.size() == k) ans = Math.min(ans, tot * ds[i][0]);
         }
         return ans;
+    }
+
+    //822. 翻转卡片游戏
+    public int flipgame(int[] fronts, int[] backs) {
+        Set<Integer> same = new HashSet();
+        for (int i = 0; i < fronts.length; ++i) {
+            if (fronts[i] == backs[i]) {
+                same.add(fronts[i]);
+            }
+        }
+        int res = 3000;
+        for (int x : fronts) {
+            if (x < res && !same.contains(x)){
+                res = x;
+            }
+        }
+        for (int x : backs) {
+            if (x < res && !same.contains(x)) {
+                res = x;
+            }
+        }
+        return res % 3000;
     }
 
     //1090. 受标签影响的最大值
@@ -10338,6 +10479,36 @@ public class Solutions3 {
         return ans;
     }
 
+
+    //833. 字符串中的查找与替换
+    public String findReplaceString(String s, int[] indices, String[] sources, String[] targets) {
+        List<String> ls = new ArrayList<>();
+        List<Integer> indicesList = new ArrayList<>();
+        for (int i = 0; i < indices.length; i++) {
+            indicesList.add(i);
+        }
+        indicesList.sort(Comparator.comparingInt(o -> indices[o]));
+        int last = 0;
+        for (int i = 0; i < indicesList.size(); i++) {
+            int pos =indicesList.get(i);
+            int idx = indices[pos];
+            if (last < idx) {
+                ls.add(s.substring(last, idx));
+                last = idx;
+            }
+            String source = sources[pos];
+            String target = targets[pos];
+            if (idx + source.length() > s.length()) continue;
+            if (s.substring(idx, idx + source.length()).equals(source)) {
+                ls.add(target);
+                last = idx + source.length();
+            }
+        }
+        if (last < s.length()) {
+            ls.add(s.substring(last));
+        }
+        return String.join("", ls);
+    }
 
     // 581 最短无序连续子数组  双指针
     //Order Check -> 检查数组中的数是否有序，返回错误排序的元素个数，ex 【1,1，3,4,1】return 3 因为3,4,1排序不对
@@ -12894,4 +13065,126 @@ public class Solutions3 {
     }
 
     //endregion-------------------------------------------------------------------------------------------
+    //region--------------------------------------线段树---------------------------------------------
+    //2569. 更新数组后处理求和查询
+    public long[] handleQuery(int[] nums1, int[] nums2, int[][] queries) {
+        int n = nums1.length;
+        int m = queries.length;
+        SegTree tree = new SegTree(nums1);
+
+        long sum = 0;
+        for (int num : nums2) {
+            sum += num;
+        }
+        List<Long> list = new ArrayList<>();
+        for (int i = 0; i < m; i++) {
+            if (queries[i][0] == 1) {
+                int l = queries[i][1];
+                int r = queries[i][2];
+                tree.reverseRange(l, r);
+            } else if (queries[i][0] == 2) {
+                sum += (long) tree.sumRange(0, n - 1) * queries[i][1];
+            } else if (queries[i][0] == 3) {
+                list.add(sum);
+            }
+        }
+        long[] ans = new long[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            ans[i] = list.get(i);
+        }
+        return ans;
+    }
+    class SegTree {
+        private SegNode[] arr;
+
+        public SegTree(int[] nums) {
+            int n = nums.length;
+            arr = new SegNode[n * 4 + 1];
+            build(1, 0, n - 1, nums);
+        }
+
+        public int sumRange(int left, int right) {
+            return query(1, left, right);
+        }
+
+        public void reverseRange(int left, int right) {
+            modify(1, left, right);
+        }
+
+        public void build(int id, int l, int r, int[] nums) {
+            arr[id] = new SegNode();
+            arr[id].l = l;
+            arr[id].r = r;
+            arr[id].lazytag = false;
+            if(l == r) {
+                arr[id].sum = nums[l];
+                return;
+            }
+            int mid = (l + r) >> 1;
+            build(2 * id, l, mid, nums);
+            build(2 * id + 1, mid + 1, r, nums);
+            arr[id].sum = arr[2 * id].sum + arr[2 * id + 1].sum;
+        }
+
+        /* pushdown函数：下传懒标记，即将当前区间的修改情况下传到其左右孩子结点 */
+        public void pushdown(int x) {
+            if(arr[x].lazytag) {
+                arr[2 * x].lazytag = !arr[2 * x].lazytag;
+                arr[2 * x].sum = arr[2 * x].r - arr[2 * x].l + 1 - arr[2 * x].sum;
+                arr[2 * x + 1].lazytag = !arr[2 * x + 1].lazytag;
+                arr[2 * x + 1].sum = arr[2 * x + 1].r - arr[2 * x + 1].l + 1 - arr[2 * x + 1].sum;
+                arr[x].lazytag = false;
+            }
+        }
+
+        /* 区间修改 */
+        public void modify(int id, int l, int r) {
+            if (arr[id].l >= l && arr[id].r <= r) {
+                arr[id].sum = (arr[id].r - arr[id].l + 1) - arr[id].sum;
+                arr[id].lazytag = !arr[id].lazytag;
+                return;
+            }
+            pushdown(id);
+            int mid = (arr[id].l + arr[id].r) >> 1;
+            if (arr[2 * id].r >= l) {
+                modify(2 * id, l, r);
+            }
+            if(arr[2 * id + 1].l <= r) {
+                modify(2 * id + 1, l, r);
+            }
+            arr[id].sum = arr[2 * id].sum + arr[2 * id + 1].sum;
+        }
+
+        /* 区间查询 */
+        public int query(int id, int l, int r) {
+            if (arr[id].l >= l && arr[id].r <= r) {
+                return arr[id].sum;
+            }
+            if (arr[id].r < l || arr[id].l > r) {
+                return 0;
+            }
+            pushdown(id);
+            int res = 0;
+            if (arr[2 * id].r >= l) {
+                res += query(2 * id, l, r);
+            }
+            if (arr[2 * id + 1].l <= r) {
+                res += query(2 * id + 1, l, r);
+            }
+            return res;
+        }
+    }
+
+    class SegNode {
+        public int l, r, sum;
+        public boolean lazytag;
+
+        public SegNode() {
+            this.l = 0;
+            this.r = 0;
+            this.sum = 0;
+            this.lazytag = false;
+        }
+    }
+    //endregion
 }
