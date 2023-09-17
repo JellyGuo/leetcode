@@ -4398,6 +4398,29 @@ public class Solutions3 {
         if (c0) Arrays.fill(mat[0], 0);
     }
 
+    //1267. 统计参与通信的服务器
+    public int countServers(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[] rows = new int[m];
+        int[] cols = new int[n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1) {
+                    rows[i]++;
+                    cols[j]++;
+                }
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1 && (rows[i] > 1 || cols[j] > 1)) {
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
 
     //393. UTF-8 编码验证
     public boolean validUtf8(int[] data) {
@@ -4683,6 +4706,17 @@ public class Solutions3 {
         return names;
     }
 
+    //1844. 将所有数字用字符替换
+    public String replaceDigits(String s) {
+        char[] chars = s.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if ((i & 1) == 1) {
+                chars[i] = (char) (chars[i - 1] + (chars[i] - '0'));
+            }
+        }
+        return new String(chars);
+    }
+
     //2303. 计算应缴税款总额
     public double calculateTax(int[][] brackets, int income) {
         double tax = 0;
@@ -4740,6 +4774,20 @@ public class Solutions3 {
         }
         return sum;
     }
+
+    //2240. 买钢笔和铅笔的方案数
+    public long waysToBuyPensPencils(int total, int cost1, int cost2) {
+        if (cost1 < cost2) {
+            return waysToBuyPensPencils(total, cost2, cost1);
+        }
+        long res = 0, cnt = 0;
+        while (cnt * cost1 <= total) {
+            res += (total - cnt * cost1) / cost2 + 1;
+            cnt++;
+        }
+        return res;
+    }
+
 
     //2325. 解密消息
     public String decodeMessage(String key, String message) {
@@ -5146,6 +5194,20 @@ public class Solutions3 {
         return nums;
     }
 
+    //2511 最多可以摧毁的敌人城堡数目
+    public int captureForts(int[] forts) {
+        int n = forts.length;
+        int ans = 0, pre = -1;
+        for (int i = 0; i < n; i++) {
+            if (forts[i] == 1 || forts[i] == -1) {
+                if (pre >= 0 && forts[i] != forts[pre]) {
+                    ans = Math.max(ans, i - pre - 1);
+                }
+                pre = i;
+            }
+        }
+        return ans;
+    }
 
     //2706. 购买两块巧克力
     public int buyChoco(int[] prices, int money) {
@@ -5214,6 +5276,21 @@ public class Solutions3 {
         }
         int left = l, right = n - 1 - r;
         return l > r ? left + right - 1 : left + right;
+    }
+
+    //LCP 50. 宝石补给
+    public int giveGem(int[] gem, int[][] operations) {
+        for(int[] op:operations){
+            int diff = gem[op[0]]/2;
+            gem[op[1]]+=diff;
+            gem[op[0]]-=diff;
+        }
+        int max=0,min=Integer.MAX_VALUE;
+        for(int i=0;i<gem.length;i++){
+            max = Math.max(max,gem[i]);
+            min = Math.min(min,gem[i]);
+        }
+        return max-min;
     }
 
     //2409. 统计共同度过的日子数
@@ -8423,6 +8500,22 @@ public class Solutions3 {
             chars[idx++]--;
         }
         return new String(chars);
+    }
+
+    //1921. 消灭怪物的最大数量
+    public int eliminateMaximum(int[] dist, int[] speed) {
+        int n = dist.length;
+        int[] arrivalTimes = new int[n];
+        for (int i = 0; i < n; i++) {
+            arrivalTimes[i] = (dist[i] - 1) / speed[i] + 1;
+        }
+        Arrays.sort(arrivalTimes);
+        for (int i = 0; i < n; i++) {
+            if (arrivalTimes[i] <= i) {
+                return i;
+            }
+        }
+        return n;
     }
 
     //1605. 给定行和列的和求可行矩阵
@@ -12087,6 +12180,81 @@ public class Solutions3 {
             }
         }
         return true;
+    }
+
+    //2594. 修车的最少时间
+    public long repairCars(int[] ranks, int cars) {
+        long l = 1, r = Long.MAX_VALUE;
+        while (l < r) {
+            long mid = l + r >> 1;
+            if (check(ranks, cars, mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    private boolean check(int[] ranks, int cars, long min) {
+        long capacity = 0;
+        for (int r : ranks) {
+            capacity += Math.sqrt((double) min / r);
+            if (capacity >= cars) return true;
+        }
+        return false;
+    }
+
+    //1782. 统计点对的数目
+    public int[] countPairs(int n, int[][] edges, int[] queries) {
+        int[] degree = new int[n];
+        Map<Integer, Integer> cnt = new HashMap<Integer, Integer>();
+        for (int[] edge : edges) {
+            int x = edge[0] - 1, y = edge[1] - 1;
+            if (x > y) {
+                int temp = x;
+                x = y;
+                y = temp;
+            }
+            degree[x]++;
+            degree[y]++;
+            cnt.put(x * n + y, cnt.getOrDefault(x * n + y, 0) + 1);
+        }
+
+        int[] arr = Arrays.copyOf(degree, n);
+        int[] ans = new int[queries.length];
+        Arrays.sort(arr);
+        for (int k = 0; k < queries.length; k++) {
+            int bound = queries[k], total = 0;
+            for (int i = 0; i < n; i++) {
+                int j = binarySearch(arr, i + 1, n - 1, bound - arr[i]);
+                total += n - j;
+            }
+            for (Map.Entry<Integer, Integer> entry : cnt.entrySet()) {
+                int val = entry.getKey(), freq = entry.getValue();
+                int x = val / n, y = val % n;
+                if (degree[x] + degree[y] > bound && degree[x] + degree[y] - freq <= bound) {
+                    total--;
+                }
+            }
+            ans[k] = total;
+        }
+
+        return ans;
+    }
+
+    public int binarySearch(int[] arr, int left, int right, int target) {
+        int ans = right + 1;
+        while (left <= right) {
+            int mid = (left + right) >> 1;
+            if (arr[mid] <= target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+                ans = mid;
+            }
+        }
+        return ans;
     }
 
     // 410 分割数组的最大值

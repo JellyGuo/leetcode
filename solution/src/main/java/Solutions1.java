@@ -1942,6 +1942,23 @@ public class Solutions1 {
         return Math.max(height(root.right), height(root.left)) + 1;
     }
 
+    //1448. 统计二叉树中好节点的数目
+    int ans1448 = 0;
+
+    public int goodNodes(TreeNode root) {
+        dfs1448(root,root.val);
+        return ans1448;
+    }
+
+    private void dfs1448(TreeNode node, int last) {
+        if (node == null) return;
+        if (last <= node.val) {
+            ans1448++;
+        }
+        dfs1448(node.left, Math.max(node.val,last));
+        dfs1448(node.right, Math.max(node.val,last));
+    }
+
     //1080. 根到叶路径上的不足节点
     public TreeNode sufficientSubset(TreeNode root, int limit) {
         limit -= root.val;
@@ -3257,6 +3274,81 @@ public class Solutions1 {
         diff = Math.max(diff, maxAncestorDiffDfs(root.left, min, max));
         diff = Math.max(diff, maxAncestorDiffDfs(root.right, min, max));
         return diff;
+    }
+
+    //1123. 最深叶节点的最近公共祖先
+    List<TreeNode> maxList = new ArrayList<>();
+    public TreeNode lcaDeepestLeaves1(TreeNode root) {
+        int depth = 0;
+        getDepth(root, depth + 1);
+        if (maxList.size() == 1) return maxList.get(0);
+        TreeNode p = maxList.get(0);
+        TreeNode q = maxList.get(maxList.size()-1);
+        return parent(root, p, q);
+    }
+
+    private void getDepth(TreeNode node, int depth) {
+        if (node == null) return;
+        if (depth > max) {
+            maxList.clear();
+            maxList.add(node);
+            max = depth;
+        } else if (depth == max) {
+            maxList.add(node);
+        }
+        getDepth(node.left, depth + 1);
+        getDepth(node.right, depth + 1);
+    }
+
+    private TreeNode parent(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) return root;
+        TreeNode left = parent(root.left, p, q);
+        TreeNode right = parent(root.right, p, q);
+        if (left != null && right != null) return root;
+        return left == null ? right : left;
+    }
+
+    private TreeNode ans1123;
+    private int maxDepth1123 = -1; // 全局最大深度
+
+    public TreeNode lcaDeepestLeaves2(TreeNode root) {
+        dfs1123(root, 0);
+        return ans1123;
+    }
+
+    private int dfs1123(TreeNode node, int depth) {
+        if (node == null) {
+            maxDepth = Math.max(maxDepth, depth); // 维护全局最大深度
+            return depth;
+        }
+        int leftMaxDepth = dfs1123(node.left, depth + 1); // 获取左子树最深叶节点的深度
+        int rightMaxDepth = dfs1123(node.right, depth + 1); // 获取右子树最深叶节点的深度
+        if (leftMaxDepth == rightMaxDepth && leftMaxDepth == maxDepth)
+            ans1123 = node;
+        return Math.max(leftMaxDepth, rightMaxDepth); // 当前子树最深叶节点的深度
+    }
+
+    //865. 具有所有最深节点的最小子树
+    public TreeNode subtreeWithAllDeepest(TreeNode root) {
+        return f(root).getKey();
+
+    }
+
+    private Pair<TreeNode, Integer> f(TreeNode root) {
+        if (root == null) {
+            return new Pair<>(root, 0);
+        }
+
+        Pair<TreeNode, Integer> left = f(root.left);
+        Pair<TreeNode, Integer> right = f(root.right);
+
+        if (left.getValue() > right.getValue()) {
+            return new Pair<>(left.getKey(), left.getValue() + 1);
+        }
+        if (left.getValue() < right.getValue()) {
+            return new Pair<>(right.getKey(), right.getValue() + 1);
+        }
+        return new Pair<>(root, left.getValue() + 1);
     }
 
     //563 二叉树坡度
@@ -7139,6 +7231,40 @@ public class Solutions1 {
         }
     }
 
+    //1654. 到家的最少跳跃次数
+    public int minimumJumps(int[] forbidden, int a, int b, int x) {
+        Queue<int[]> queue = new ArrayDeque<int[]>();
+        Set<Integer> visited = new HashSet<Integer>();
+        queue.offer(new int[]{0, 1, 0});
+        visited.add(0);
+        int lower = 0, upper = Math.max(Arrays.stream(forbidden).max().getAsInt() + a, x) + b;
+        Set<Integer> forbiddenSet = new HashSet<Integer>();
+        for (int position : forbidden) {
+            forbiddenSet.add(position);
+        }
+        while (!queue.isEmpty()) {
+            int[] arr = queue.poll();
+            int position = arr[0], direction = arr[1], step = arr[2];
+            if (position == x) {
+                return step;
+            }
+            int nextPosition = position + a;
+            int nextDirection = 1;
+            if (lower <= nextPosition && nextPosition <= upper && !visited.contains(nextPosition * nextDirection) && !forbiddenSet.contains(nextPosition)) {
+                visited.add(nextPosition * nextDirection);
+                queue.offer(new int[]{nextPosition, nextDirection, step + 1});
+            }
+            if (direction == 1) {
+                nextPosition = position - b;
+                nextDirection = -1;
+                if (lower <= nextPosition && nextPosition <= upper && !visited.contains(nextPosition * nextDirection) && !forbiddenSet.contains(nextPosition)) {
+                    visited.add(nextPosition * nextDirection);
+                    queue.offer(new int[]{nextPosition, nextDirection, step + 1});
+                }
+            }
+        }
+        return -1;
+    }
 
     // 847 访问所有节点的最短距离
     // 状态压缩+BFS
@@ -8292,6 +8418,38 @@ public class Solutions1 {
                 rows[row] = 0;
             }
         }
+    }
+
+    //1222. 可以攻击国王的皇后
+    public List<List<Integer>> queensAttacktheKing(int[][] queens, int[] king) {
+        Set<Integer> queenPos = new HashSet<Integer>();
+        for (int[] queen : queens) {
+            int x = queen[0], y = queen[1];
+            queenPos.add(x * 8 + y);
+        }
+
+        List<List<Integer>> ans = new ArrayList<List<Integer>>();
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                if (dx == 0 && dy == 0) {
+                    continue;
+                }
+                int kx = king[0] + dx, ky = king[1] + dy;
+                while (kx >= 0 && kx < 8 && ky >= 0 && ky < 8) {
+                    int pos = kx * 8 + ky;
+                    if (queenPos.contains(pos)) {
+                        List<Integer> posList = new ArrayList<Integer>();
+                        posList.add(kx);
+                        posList.add(ky);
+                        ans.add(posList);
+                        break;
+                    }
+                    kx += dx;
+                    ky += dy;
+                }
+            }
+        }
+        return ans;
     }
 
     // 417. 太平洋大西洋水流问题
@@ -10432,6 +10590,20 @@ public class Solutions1 {
         return true;
     }
 
+    //630. 课程表 III
+    public int scheduleCourse(int[][] courses) {
+        Arrays.sort(courses, (a, b) -> a[1] - b[1]);
+        PriorityQueue<Integer> q = new PriorityQueue<>((a, b) -> b - a);
+        int sum = 0;
+        for (int[] c : courses) {
+            int d = c[0], e = c[1];
+            sum += d;
+            q.add(d);
+            if (sum > e) sum -= q.poll();
+        }
+        return q.size();
+    }
+
     // 1462 课程表4 dfs
     public List<Boolean> checkIfPrerequisite(int numCourses, int[][] prerequisites, int[][] queries) {
         List<List<Integer>> edges = new ArrayList<>();
@@ -10893,6 +11065,50 @@ public class Solutions1 {
             }
         }
         return true;
+    }
+
+    //1761. 一个图中连通三元组的最小度数 枚举
+    public int minTrioDegree(int n, int[][] edges) {
+        // 原图
+        Set<Integer>[] g = new Set[n];
+        for (int i = 0; i < n; ++i) {
+            g[i] = new HashSet<Integer>();
+        }
+        // 定向后的图
+        List<Integer>[] h = new List[n];
+        for (int i = 0; i < n; ++i) {
+            h[i] = new ArrayList<Integer>();
+        }
+        int[] degree = new int[n];
+
+        for (int[] edge : edges) {
+            int x = edge[0] - 1, y = edge[1] - 1;
+            g[x].add(y);
+            g[y].add(x);
+            ++degree[x];
+            ++degree[y];
+        }
+        for (int[] edge : edges) {
+            int x = edge[0] - 1, y = edge[1] - 1;
+            if (degree[x] < degree[y] || (degree[x] == degree[y] && x < y)) {
+                h[x].add(y);
+            } else {
+                h[y].add(x);
+            }
+        }
+
+        int ans = Integer.MAX_VALUE;
+        for (int i = 0; i < n; ++i) {
+            for (int j : h[i]) {
+                for (int k : h[j]) {
+                    if (g[i].contains(k)) {
+                        ans = Math.min(ans, degree[i] + degree[j] + degree[k] - 6);
+                    }
+                }
+            }
+        }
+
+        return ans == Integer.MAX_VALUE ? -1 : ans;
     }
 
     //1632. 矩阵转换后的秩 并查集+拓扑排序

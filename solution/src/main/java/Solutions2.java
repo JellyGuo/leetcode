@@ -1055,6 +1055,50 @@ public class Solutions2 {
         }
         return ans;
     }
+    //844. 比较含退格的字符串 栈模拟
+    // 双指针O(n)
+    public boolean backspaceCompare(String S, String T) {
+        int i = S.length() - 1, j = T.length() - 1;
+        int skipS = 0, skipT = 0;
+
+        while (i >= 0 || j >= 0) {
+            while (i >= 0) {
+                if (S.charAt(i) == '#') {
+                    skipS++;
+                    i--;
+                } else if (skipS > 0) {
+                    skipS--;
+                    i--;
+                } else {
+                    break;
+                }
+            }
+            while (j >= 0) {
+                if (T.charAt(j) == '#') {
+                    skipT++;
+                    j--;
+                } else if (skipT > 0) {
+                    skipT--;
+                    j--;
+                } else {
+                    break;
+                }
+            }
+            if (i >= 0 && j >= 0) {
+                if (S.charAt(i) != T.charAt(j)) {
+                    return false;
+                }
+            } else {
+                if (i >= 0 || j >= 0) {
+                    return false;
+                }
+            }
+            i--;
+            j--;
+        }
+        return true;
+    }
+
 
     //1616. 分割两个字符串得到回文串
     public boolean checkPalindromeFormation(String a, String b) {
@@ -1080,6 +1124,66 @@ public class Solutions2 {
             right--;
         }
         return left >= right;
+    }
+
+    //849. 到最近的人的最大距离
+    public int maxDistToClosest(int[] seats) {
+        int n = seats.length;
+        int l = -1, r = 0;
+        int max = 0;
+        for (int i = 0; i < seats.length; i++) {
+            if (seats[i] == 0) {
+                r = i;
+                while (r<n && seats[r] != 1) {
+                    r++;
+                }
+                int min = Integer.MAX_VALUE;
+                if (l >= 0 && l < i) min = Math.min(min, i - l);
+                if (r > i && r < n) min = Math.min(min, r - i);
+                max = Math.max(max, min);
+            } else {
+                l = i;
+            }
+        }
+        return max;
+    }
+
+    //2337. 移动片段得到字符串
+    public boolean canChange(String start, String target) {
+        char[] startChars = start.toCharArray();
+        char[] targetChars = target.toCharArray();
+        if (cnt(startChars, 'L') != cnt(targetChars, 'L')) return false;
+        if (cnt(startChars, 'R') != cnt(targetChars, 'R')) return false;
+        int cntL = cnt(startChars, 'L');
+        int cntR = cnt(startChars, 'R');
+        int idx1 = 0, idx2 = 0;
+        while (idx1 < startChars.length && idx2 < targetChars.length) {
+            while (idx1 < startChars.length && startChars[idx1] == '_') {
+                idx1++;
+            }
+            while (idx2 < targetChars.length && targetChars[idx2] == '_') {
+                idx2++;
+            }
+            if (idx1 < startChars.length && idx2 < targetChars.length) {
+                if (startChars[idx1] != targetChars[idx2]) return false;
+                if (startChars[idx1] == 'R' && idx1 > idx2) return false;
+                if (startChars[idx1] == 'L' && idx1 < idx2) return false;
+                if (startChars[idx1] == 'R') cntR--;
+                else cntL--;
+                idx1++;
+                idx2++;
+
+            }
+        }
+        return cntL == 0 && cntR == 0;
+    }
+
+    private int cnt(char[] chars, char c) {
+        int cnt = 0;
+        for (char cc : chars) {
+            if (cc == c) cnt++;
+        }
+        return cnt;
     }
 
     // 2486 追加字符以获得子序列
@@ -3832,6 +3936,59 @@ public class Solutions2 {
 //            }
 //        }
         return dp[0][n + 1];
+    }
+
+    //823. 带因子的二叉树
+    public int numFactoredBinaryTrees(int[] arr) {
+        int mod = (int) 1e9 + 7;
+        Set<Integer> set = new HashSet<>();
+        Map<Integer, Long> memo = new HashMap<>();
+        for (int num : arr) {
+            set.add(num);
+        }
+        long ans = 0;
+        for (int x : arr) {
+            ans += dfs(x, set, arr, memo);
+        }
+        return (int) (ans%mod);
+    }
+
+    private long dfs(int x, Set<Integer> set, int[] array, Map<Integer, Long> memo) {
+        if (memo.containsKey(x)) {
+            return memo.get(x);
+        }
+        long res = 1;
+        for (int num : array) {
+            if (x % num == 0 && set.contains(x / num)) {
+                res += dfs(num, set, array, memo) * dfs(x / num, set, array, memo);
+            }
+        }
+        memo.put(x, res);
+        return memo.get(x);
+    }
+
+    public int numFactoredBinaryTreesDP(int[] arr) {
+        final long MOD = (long) 1e9 + 7;
+        Arrays.sort(arr);
+        int n = arr.length;
+        Map<Integer, Integer> idx = new HashMap<>(n);
+        for (int i = 0; i < n; i++) {
+            idx.put(arr[i], i);
+        }
+        long ans = 0;
+        long[] f = new long[n];
+        for (int i = 0; i < n; i++) {
+            int val = arr[i];
+            f[i] = 1;
+            for (int j = 0; j < i; ++j) { // val 的因子一定比 val 小
+                int x = arr[j];
+                if (val % x == 0 && idx.containsKey(val / x)) { // 另一个因子 val/x 必须在 arr 中
+                    f[i] += f[j] * f[idx.get(val / x)];
+                }
+            }
+            ans += f[i];
+        }
+        return (int) (ans % MOD);
     }
 
     // 329 矩阵中最长的递增路径 Hard
