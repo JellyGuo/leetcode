@@ -15,12 +15,20 @@ public class Node {
     Node topRight;
     Node bottomLeft;
     Node bottomRight;
+    int freq;
+    int key;
 
     public Node() {
     }
 
     public Node(int val) {
         this.val = val;
+    }
+
+    public Node(int key, int val, int freq) {
+        this.key = key;
+        this.val = val;
+        this.freq = freq;
     }
 
     public Node(int _val, List<Node> _children) {

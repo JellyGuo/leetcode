@@ -1946,7 +1946,7 @@ public class Solutions1 {
     int ans1448 = 0;
 
     public int goodNodes(TreeNode root) {
-        dfs1448(root,root.val);
+        dfs1448(root, root.val);
         return ans1448;
     }
 
@@ -1955,8 +1955,8 @@ public class Solutions1 {
         if (last <= node.val) {
             ans1448++;
         }
-        dfs1448(node.left, Math.max(node.val,last));
-        dfs1448(node.right, Math.max(node.val,last));
+        dfs1448(node.left, Math.max(node.val, last));
+        dfs1448(node.right, Math.max(node.val, last));
     }
 
     //1080. 根到叶路径上的不足节点
@@ -3278,12 +3278,13 @@ public class Solutions1 {
 
     //1123. 最深叶节点的最近公共祖先
     List<TreeNode> maxList = new ArrayList<>();
+
     public TreeNode lcaDeepestLeaves1(TreeNode root) {
         int depth = 0;
         getDepth(root, depth + 1);
         if (maxList.size() == 1) return maxList.get(0);
         TreeNode p = maxList.get(0);
-        TreeNode q = maxList.get(maxList.size()-1);
+        TreeNode q = maxList.get(maxList.size() - 1);
         return parent(root, p, q);
     }
 
@@ -9035,6 +9036,60 @@ public class Solutions1 {
         return cnt == 1;
     }
 
+    //2316. 统计无向图中无法互相到达点对数
+    public long countPairs(int n, int[][] edges) {
+        UnionFind2316 uf = new UnionFind2316(n);
+        for (int[] edge : edges) {
+            int x = edge[0], y = edge[1];
+            uf.union(x, y);
+        }
+        long res = 0;
+        for (int i = 0; i < n; i++) {
+            res += n - uf.getSize(uf.find(i));
+        }
+        return res / 2;
+    }
+
+    class UnionFind2316 {
+        int[] parents;
+        int[] sizes;
+
+        public UnionFind2316(int n) {
+            parents = new int[n];
+            for (int i = 0; i < n; i++) {
+                parents[i] = i;
+            }
+            sizes = new int[n];
+            Arrays.fill(sizes, 1);
+        }
+
+        public int find(int x) {
+            if (parents[x] == x) {
+                return x;
+            } else {
+                parents[x] = find(parents[x]);
+                return parents[x];
+            }
+        }
+
+        public void union(int x, int y) {
+            int rx = find(x), ry = find(y);
+            if (rx != ry) {
+                if (sizes[rx] > sizes[ry]) {
+                    parents[ry] = rx;
+                    sizes[rx] += sizes[ry];
+                } else {
+                    parents[rx] = ry;
+                    sizes[ry] += sizes[rx];
+                }
+            }
+        }
+
+        public int getSize(int x) {
+            return sizes[x];
+        }
+    }
+
     // 839 相似字符串
     int[] parents;
 
@@ -11109,6 +11164,62 @@ public class Solutions1 {
         }
 
         return ans == Integer.MAX_VALUE ? -1 : ans;
+    }
+
+    //2603. 收集树中金币
+    public int collectTheCoins(int[] coins, int[][] edges) {
+        int n = coins.length;
+        List<Integer>[] g = new List[n];
+        for (int i = 0; i < n; ++i) {
+            g[i] = new ArrayList<Integer>();
+        }
+        int[] degree = new int[n];
+        for (int[] edge : edges) {
+            int x = edge[0], y = edge[1];
+            g[x].add(y);
+            g[y].add(x);
+            ++degree[x];
+            ++degree[y];
+        }
+
+        int rest = n;
+        /* 删除树中所有无金币的叶子节点，直到树中所有的叶子节点都是含有金币的 */
+        Queue<Integer> queue = new ArrayDeque<Integer>();
+        for (int i = 0; i < n; ++i) {
+            if (degree[i] == 1 && coins[i] == 0) {
+                queue.offer(i);
+            }
+        }
+        while (!queue.isEmpty()) {
+            int u = queue.poll();
+            --degree[u];
+            --rest;
+            for (int v : g[u]) {
+                --degree[v];
+                if (degree[v] == 1 && coins[v] == 0) {
+                    queue.offer(v);
+                }
+            }
+        }
+        /* 删除树中所有的叶子节点, 连续删除2次 */
+        for (int x = 0; x < 2; ++x) {
+            queue = new ArrayDeque<Integer>();
+            for (int i = 0; i < n; ++i) {
+                if (degree[i] == 1) {
+                    queue.offer(i);
+                }
+            }
+            while (!queue.isEmpty()) {
+                int u = queue.poll();
+                --degree[u];
+                --rest;
+                for (int v : g[u]) {
+                    --degree[v];
+                }
+            }
+        }
+
+        return rest == 0 ? 0 : (rest - 1) * 2;
     }
 
     //1632. 矩阵转换后的秩 并查集+拓扑排序

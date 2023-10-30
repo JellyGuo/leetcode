@@ -3533,6 +3533,32 @@ public class Solutions3 {
         return divisor == 1;
     }
 
+    //LCP 06. 拿硬币
+    public int minCount(int[] coins) {
+        int ans = 0;
+        for (int coin : coins) {
+            ans += (coin + 1) / 2;
+        }
+        return ans;
+    }
+
+    //1726. 同积元组
+    public int tupleSameProduct(int[] nums) {
+        int n = nums.length;
+        Map<Integer, Integer> cnt = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            for(int j = i + 1; j < n; j++) {
+                int key = nums[i] * nums[j];
+                cnt.put(key, cnt.getOrDefault(key, 0) + 1);
+            }
+        }
+        int ans = 0;
+        for (Integer v : cnt.values()) {
+            ans += v * (v - 1) * 4;
+        }
+        return ans;
+    }
+
     // 593 有效的正方形
     public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
         if (Arrays.equals(p1, p2)) return false;
@@ -4995,6 +5021,61 @@ public class Solutions3 {
     public int smallestEvenMultiple(int n) {
         if (n % 2 == 0) return n;
         return 2 * n / gcd(n, 2);
+    }
+
+    //2520. 统计能整除数字的位数
+    public int countDigits(int num) {
+        int c = num;
+        int cnt = 0;
+        while (c > 0) {
+            int d = c % 10;
+            if (num % d == 0) cnt++;
+            c /= 10;
+        }
+        return cnt;
+    }
+
+    public int countDigits2(int num) {
+        char[] chars = String.valueOf(num).toCharArray();
+        int res = 0;
+        for(char c:chars){
+            if(num%(c-'0')==0) res++;
+        }
+        return res;
+    }
+
+    //2525. 根据规则将箱子分类
+    public String categorizeBox(int length, int width, int height, int mass) {
+        long maxd = Math.max(length, Math.max(width, height)), vol = 1L * length * width * height;
+        boolean isBulky = maxd >= 10000 || vol >= 1000000000, isHeavy = mass >= 100;
+        if (isBulky && isHeavy) {
+            return "Both";
+        } else if (isBulky) {
+            return "Bulky";
+        } else if (isHeavy) {
+            return "Heavy";
+        } else {
+            return "Neither";
+        }
+    }
+
+    //2562. 找出数组的串联值
+    public long findTheArrayConcVal(int[] nums) {
+        long sum = 0;
+        int l = 0, r = nums.length - 1;
+        while (l <= r) {
+            if (l < r) {
+                sum += getSum2562(nums[l++], nums[r--]);
+            } else {
+                sum += nums[l++];
+            }
+        }
+        return sum;
+    }
+
+    private long getSum2562(int l, int r) {
+        int digit = String.valueOf(r).length();
+        return (long) Math.pow(10, digit) * l + r;
     }
 
     //2639查询网格图中每一列的宽度
@@ -8358,6 +8439,22 @@ public class Solutions3 {
         }
         return cnt >= n;
     }
+    //2136. 全部开花的最早一天 贪心+排序
+    public int earliestFullBloom(int[] plantTime, int[] growTime) {
+        int n = plantTime.length;
+        Integer[] id = new Integer[n];
+        for (int i = 0; i < n; i++) {
+            id[i] = i;
+        }
+        Arrays.sort(id, (i, j) -> growTime[j] - growTime[i]);
+        int ans = 0, days = 0;
+        for (int i : id) {
+            days += plantTime[i]; // 累加播种天数
+            ans = Math.max(ans, days + growTime[i]); // 再加上生长天数，就是这个种子的开花时间
+        }
+        return ans;
+    }
+
 
     // 738 单调递增的数字
     public int monotoneIncreasingDigits(int n) {
@@ -8428,6 +8525,86 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //1465. 切割后面积最大的蛋糕 横向和纵向最大区域相乘
+    public int maxArea(int h, int w, int[] horizontalCuts, int[] verticalCuts) {
+        int mod = (int) 1e9+7;
+        int m = horizontalCuts.length,n = verticalCuts.length;
+        Arrays.sort(horizontalCuts);
+        Arrays.sort(verticalCuts);
+        int maxH = Math.max(horizontalCuts[0],h-horizontalCuts[m-1]);
+        int maxV = Math.max(verticalCuts[0],w-verticalCuts[n-1]);
+        for(int i=1;i<m;i++){
+            maxH = Math.max(maxH,horizontalCuts[i]-horizontalCuts[i-1]);
+        }
+        for(int i=1;i<n;i++){
+            maxV = Math.max(maxV,verticalCuts[i]-verticalCuts[i-1]);
+
+        }
+        return (int)((1L*maxH*maxV)%mod);
+
+    }
+
+    //1488. 避免洪水泛滥
+    public int[] avoidFlood(int[] rains) {
+        int n = rains.length;
+        int[] ans = new int[n];
+        Arrays.fill(ans,1);
+        List<Integer> workDays = new ArrayList<>();
+        Map<Integer, Integer> rainMoreThanOnce = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            if (rains[i] > 0) {
+                if (rainMoreThanOnce.containsKey(rains[i])) {
+                    int lastIdx = rainMoreThanOnce.get(rains[i]);
+                    int nextWorkDay = binarySearch1488(workDays, lastIdx);
+                    if (nextWorkDay == -1) return new int[0];
+                    ans[nextWorkDay] = rains[i];
+                }
+                ans[i] = -1;
+                rainMoreThanOnce.put(rains[i], i);
+            } else {
+                workDays.add(i);
+            }
+        }
+        return ans;
+    }
+
+    //找到 idx后第一个大于
+    private int binarySearch1488(List<Integer> ls, int idx) {
+        if (ls.size() == 0) {
+            return -1;
+        }
+        int l = 0, r = ls.size() - 1;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (ls.get(mid) > idx) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        int next = ls.get(l);
+        if (next > idx) {
+            ls.remove(l);
+            return next;
+        }
+        return -1;
+    }
+
+    //2578. 最小和分割
+    public int splitNum(int num) {
+        char[] stnum = Integer.toString(num).toCharArray();
+        Arrays.sort(stnum);
+        int num1 = 0, num2 = 0;
+        for (int i = 0; i < stnum.length; ++i) {
+            if (i % 2 == 0) {
+                num1 = num1 * 10 + (stnum[i] - '0');
+            } else {
+                num2 = num2 * 10 + (stnum[i] - '0');
+            }
+        }
+        return num1 + num2;
     }
 
     //1262. 可被三整除的最大和
@@ -10991,6 +11168,56 @@ public class Solutions3 {
             }
         }
         return ans;
+    }
+
+    //2512. 奖励最顶尖的 K 名学生
+    public List<Integer> topStudents(String[] positive_feedback, String[] negative_feedback, String[] report, int[] student_id, int k) {
+        Map<String, Integer> words = new HashMap<>();
+        for (String word : positive_feedback) {
+            words.put(word, 3);
+        }
+        for (String word : negative_feedback) {
+            words.put(word, -1);
+        }
+        int n = report.length;
+        int[] scores = new int[n];
+        int[][] A = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            int score = 0;
+            for (String word : report[i].split(" ")) {
+                score += words.getOrDefault(word, 0);
+            }
+            A[i] = new int[]{-score, student_id[i]};
+        }
+        Arrays.sort(A, (a, b) -> a[0] == b[0] ? a[1] - b[1] : a[0] - b[0]);
+        List<Integer> topK = new ArrayList<>();
+        for (int i = 0; i < k; i++) {
+            topK.add(A[i][1]);
+        }
+        return topK;
+    }
+
+    //1333. 餐厅过滤器
+    public List<Integer> filterRestaurants(int[][] restaurants, int veganFriendly, int maxPrice, int maxDistance) {
+        int n = restaurants.length;
+        List<int[]> filtered = new ArrayList<int[]>();
+        for (int i = 0; i < n; i++) {
+            if (restaurants[i][3] <= maxPrice && restaurants[i][4] <= maxDistance && !(veganFriendly == 1 && restaurants[i][2] == 0)) {
+                filtered.add(restaurants[i]);
+            }
+        }
+        Collections.sort(filtered, (a, b) -> {
+            if (a[1] != b[1]) {
+                return b[1] - a[1];
+            } else {
+                return b[0] - a[0];
+            }
+        });
+        List<Integer> res = new ArrayList<Integer>();
+        for (int[] v : filtered) {
+            res.add(v[0]);
+        }
+        return res;
     }
 
     //2037. 使每位学生都有座位的最少移动次数
