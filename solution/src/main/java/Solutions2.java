@@ -6408,6 +6408,24 @@ public class Solutions2 {
         return ans;
     }
 
+    //1402. 做菜顺序 贪心做法见maxSatisfactionGreedy
+    public int maxSatisfactionDP(int[] satisfaction) {
+        int n = satisfaction.length;
+        int[][] dp = new int[n + 1][n + 1];
+        Arrays.sort(satisfaction);
+        int res = 0;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= i; j++) {
+                dp[i][j] = dp[i - 1][j - 1] + satisfaction[i - 1] * j;
+                if (j < i) {
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j]);
+                }
+                res = Math.max(res, dp[i][j]);
+            }
+        }
+        return res;
+    }
+
     //2369. 检查数组是否存在有效划分
     public boolean validPartition(int[] nums) {
         int n = nums.length;

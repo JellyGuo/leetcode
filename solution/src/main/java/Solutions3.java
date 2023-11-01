@@ -8607,6 +8607,26 @@ public class Solutions3 {
         return num1 + num2;
     }
 
+    //1402. 做菜顺序
+    public int maxSatisfactionGreedy(int[] satisfaction) {
+        Arrays.sort(satisfaction);
+        for (int i = 0, j = satisfaction.length - 1; i < j; i++, j--) {
+            int temp = satisfaction[i];
+            satisfaction[i] = satisfaction[j];
+            satisfaction[j] = temp;
+        }
+        int presum = 0, ans = 0;
+        for (int si : satisfaction) {
+            if (presum + si > 0) {
+                presum += si;
+                ans += presum;
+            } else {
+                break;
+            }
+        }
+        return ans;
+    }
+
     //1262. 可被三整除的最大和
     public int maxSumDivThree(int[] nums) {
         int[] f = {0, Integer.MIN_VALUE, Integer.MIN_VALUE};

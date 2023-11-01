@@ -6479,6 +6479,52 @@ public class Solutions1 {
         }
     }
 
+    //2003. 每棵子树内缺失的最小基因值
+    public int[] smallestMissingValueSubtree(int[] parents, int[] nums) {
+        int n = parents.length;
+        int[] ans = new int[n];
+        Arrays.fill(ans, 1);
+        int node = -1;
+        for (int i = 0; i < n; i++) {
+            if (nums[i] == 1) {
+                node = i; // 出发点
+                break;
+            }
+        }
+        if (node < 0) { // 不存在基因值为 1 的点
+            return ans;
+        }
+
+        // 建树
+        List<Integer>[] g = new ArrayList[n];
+        Arrays.setAll(g, e -> new ArrayList<>());
+        for (int i = 1; i < n; ++i) {
+            g[parents[i]].add(i);
+        }
+
+        Set<Integer> vis = new HashSet<>();
+        int mex = 2; // 缺失的最小基因值
+        while (node >= 0) {
+            dfs(node, g, vis, nums);
+            while (vis.contains(mex)) { // node 子树包含这个基因值
+                mex++;
+            }
+            ans[node] = mex; // 缺失的最小基因值
+            node = parents[node]; // 往上走
+        }
+        return ans;
+    }
+
+    // 遍历 x 子树
+    private void dfs(int x, List<Integer>[] g, Set<Integer> vis, int[] nums) {
+        vis.add(nums[x]); // 标记基因值
+        for (int son : g[x]) {
+            if (!vis.contains(nums[son])) {
+                dfs(son, g, vis, nums);
+            }
+        }
+    }
+
     //2059. 转化数字的最小运算数
     public int minimumOperations(int[] nums, int start, int goal) {
         if (start == goal) return 0;
@@ -11164,6 +11210,51 @@ public class Solutions1 {
         }
 
         return ans == Integer.MAX_VALUE ? -1 : ans;
+    }
+
+    //2127. 参加会议的最多员工数
+    public int maximumInvitations(int[] favorite) {
+        int n = favorite.length;
+        int[] deg = new int[n];
+        for (int f : favorite) {
+            deg[f]++; // 统计基环树每个节点的入度
+        }
+
+        int[] maxDepth = new int[n];
+        Deque<Integer> q = new ArrayDeque<>();
+        for (int i = 0; i < n; i++) {
+            if (deg[i] == 0) {
+                q.add(i);
+            }
+        }
+        while (!q.isEmpty()) { // 拓扑排序，剪掉图上所有树枝
+            int x = q.poll();
+            int y = favorite[x]; // x 只有一条出边
+            maxDepth[y] = maxDepth[x] + 1;
+            if (--deg[y] == 0) {
+                q.add(y);
+            }
+        }
+
+        int maxRingSize = 0, sumChainSize = 0;
+        for (int i = 0; i < n; i++) {
+            if (deg[i] == 0) continue;
+
+            // 遍历基环上的点
+            deg[i] = 0; // 将基环上的点的入度标记为 0，避免重复访问
+            int ringSize = 1; // 基环长度
+            for (int x = favorite[i]; x != i; x = favorite[x]) {
+                deg[x] = 0; // 将基环上的点的入度标记为 0，避免重复访问
+                ringSize++;
+            }
+
+            if (ringSize == 2) { // 基环长度为 2
+                sumChainSize += maxDepth[i] + maxDepth[favorite[i]] + 2; // 累加两条最长链的长度
+            } else {
+                maxRingSize = Math.max(maxRingSize, ringSize); // 取所有基环长度的最大值
+            }
+        }
+        return Math.max(maxRingSize, sumChainSize);
     }
 
     //2603. 收集树中金币
