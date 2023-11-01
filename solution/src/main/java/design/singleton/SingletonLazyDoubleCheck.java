@@ -1,4 +1,4 @@
-package singleton;
+package design.singleton;
 
 public class SingletonLazyDoubleCheck {
     private SingletonLazyDoubleCheck() {

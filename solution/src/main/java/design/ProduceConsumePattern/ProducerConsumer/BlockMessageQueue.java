@@ -1,4 +1,4 @@
-package ProduceConsumePattern.ProducerConsumer;
+package design.ProduceConsumePattern.ProducerConsumer;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

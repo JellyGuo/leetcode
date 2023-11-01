@@ -1,4 +1,4 @@
-package Generic;
+package design.Generic;
 
 import java.util.Set;
 

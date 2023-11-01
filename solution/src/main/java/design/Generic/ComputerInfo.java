@@ -1,4 +1,4 @@
-package Generic;
+package design.Generic;
 
 public class ComputerInfo extends ESportInfo<ComputerInfo.ComputerEntity>{
     //{"computerInfo":{"ram":1,"cpu":2}}

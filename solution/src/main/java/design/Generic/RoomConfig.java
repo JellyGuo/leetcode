@@ -1,4 +1,4 @@
-package Generic;
+package design.Generic;
 
 public abstract class RoomConfig {
     private Integer roomId;

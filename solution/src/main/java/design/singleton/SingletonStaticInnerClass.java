@@ -1,4 +1,4 @@
-package singleton;
+package design.singleton;
 
 public class SingletonStaticInnerClass {
     private SingletonStaticInnerClass(){}

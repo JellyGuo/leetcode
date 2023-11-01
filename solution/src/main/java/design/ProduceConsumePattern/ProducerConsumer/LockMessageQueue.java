@@ -1,4 +1,4 @@
-package ProduceConsumePattern.ProducerConsumer;
+package design.ProduceConsumePattern.ProducerConsumer;
 
 import java.util.LinkedList;
 import java.util.Queue;

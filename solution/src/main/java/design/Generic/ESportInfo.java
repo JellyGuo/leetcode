@@ -1,4 +1,4 @@
-package Generic;
+package design.Generic;
 
 public class ESportInfo<K> extends RoomConfigInfo<ESportInfo.ESport<K>>{
     // {"roomId":1,"eSportInfo":K}

@@ -1,4 +1,4 @@
-package ProduceConsumePattern.PublisherSubscriber;
+package design.ProduceConsumePattern.PublisherSubscriber;
 
 import java.util.ArrayList;
 import java.util.HashMap;

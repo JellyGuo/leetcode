@@ -1,4 +1,4 @@
-package ProduceConsumePattern.ObserverSubject;
+package design.ProduceConsumePattern.ObserverSubject;
 
 import java.util.ArrayList;
 import java.util.List;

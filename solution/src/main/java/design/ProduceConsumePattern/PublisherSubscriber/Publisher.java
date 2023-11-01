@@ -1,4 +1,4 @@
-package ProduceConsumePattern.PublisherSubscriber;
+package design.ProduceConsumePattern.PublisherSubscriber;
 
 public interface Publisher {
     void subscribe(String topic, Subscriber subscriber);

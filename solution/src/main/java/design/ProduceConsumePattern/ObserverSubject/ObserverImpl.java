@@ -1,4 +1,4 @@
-package ProduceConsumePattern.ObserverSubject;
+package design.ProduceConsumePattern.ObserverSubject;
 
 public class ObserverImpl implements Observer {
     private String name;

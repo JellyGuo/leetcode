@@ -1,4 +1,4 @@
-package ProduceConsumePattern.ObserverSubject;
+package design.ProduceConsumePattern.ObserverSubject;
 
 public interface Subject {
     void attach(Observer observer);
