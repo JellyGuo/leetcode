@@ -1,0 +1,89 @@
+kafka组成
+producer-broker-consumer
+broker：kafka 服务器
+topic：队列，生产者、消费者面向 topic
+partition：分区 大 topic 拆分成多个分区，分区内有序，无法做到全局有序
+replica：副本 同一个分区的不同副本，分布在不同 broker 上
+leader：同一分区 1个 leader，多个 follower
+follower:leader 的数据备份
+
+文件存储：
+1.组成：
+    1个 topic 分成多个 partition
+    1个 partition 分成多个 segment
+    1个 segment 由.index .log两个文件组成
+    生产者的消息->broker 上某个分区的 leader->多个 segment[.index .log]
+    .index文件名: 00000000.index,00000006.index
+    .index文件内容<offset,真实起始偏移量>：<3,752>
+    .log 存真实数据
+2.查某个 offset 的具体数据的步骤：
+    step1：在某分区上，根据 offset 二分查.index文件名，定位到具体的 segment(即具体的.index文件)，
+    在.index文件内通过 seek 找到 offset 对应的真实起始偏移量
+    step2：起始偏移量+当前文件大小=总偏移量，拿总偏移量直接定位到.log获取当前消息
+
+生产者:
+    1.生产的消息分区存储：
+        分区原因：提升扩展、提高并发（大 topic 拆分多个分区，每个分区可以在不同机器）
+        分区原则：指定 partition、未指明 partition 根据 value 的 key 做 hash、都没有时随机数随后自增（即轮询）
+    2.producer 和 broker 的 ack 机制
+        1.参数 0：producer 不等 broker 的 ack，优点：最低延迟，缺点：broker 有故障丢失数据
+        2.参数 1：只 leader 落盘，broker 的 partition leader 落盘即发 ack，优点 ：数据不丢失 缺点：ack 完但是follower 未同步完成，此时 leader 故障，数据丢失
+        3.参数-1：等所有 ISR的 follower 全部同步完成后才发 ack，优点：数据不丢失 缺点：follower 同步完成后，broker 发送 ack 前leader 故障，此时 ack 未发送，producer 重发消息给 new leader，造成数据重复
+    3.leader和 follower 的数据一致性问题：只能保证数据副本间的数据一致性，不保证数据不丢失或不重复
+        0.a) ISR:leader 在等待 follower 时，如果长时间没有通信，leader 会一直等：ISR只保留与 leader保持同步的 follower，超过参数设定的时间没同步的 follower 踢出 ISR
+          b) OSR：从 ISR踢出的 follower
+          c) AR: 所有分区的 follower
+        1.LEO：每个副本最后一个 offset，HW:所有副本最小的 offset
+        2.follower 故障：被踢出 ISR，恢复后读磁盘上存的上次的 HW，舍弃高于自身 HW的部分，从 HW开始向 leader 同步，当前 LEO高于等于当前 partition 的 HW时停止，重新加入 ISR
+        3.leader故障：从 ISR选举新的 leader，其余 follower 舍弃高于 HW的数据，同步 new leader 的新数据
+    4.Exactly once:流式系统的可靠度语义：单条记录在系统中被处理的次数保证。一个流式系统可能提供保证必定时以下 3 中之一（不管系统是否出现故障）：
+        1.参数 0：至多一次 at most once：每条记录要么被处理一次，要么就没有处理
+        2.参数-1：至少一次 at least once：每条记录至少被处理过一次（一次或多次）。这种保证能确保没有数据丢失，但是可能出现数据重复
+        3.幂等性 结合 At least once语义：精确一次 Exactly once:每条记录都精确地只被处理一次，也就是说既没有数据丢失也没有数据重复
+        幂等参数 true，broker 根据<pid,partition,seqnumber>为主键做缓存，每一个主键只持久化一次；缺陷：pid 在重启后会变，无法保证跨分区跨会话
+    5.事务：一般是 producer 事务，consumer 事务保证较弱
+        producer 事务：引入 Transaction Coordinator 和全局 Transaction id，producer id与之绑定，重启后通过 tid 获取之前的 pid
+        Coordinator 会把事务保存在内部的 topic 中，事务状态保存重启后即可恢复
+    6.生产者 api：异步发消息
+        1.两个线程 main 线程把消息发给 recordAccumulater，sender 线程从recordAccumulater中拉消息发给 kafka broker
+          异步回调函数 exception 不为 null 则失败，需手动重试
+        2.interceptor 拦截器：消息发送前或者回调前做一些定制化 拦截器=》序列化器=》分区器（消息发到哪一分区）
+消费者：一个分区消息只能被一个消费者组中的一个消费者消费
+1.分区分配：
+    1.round-robin：对分区和消费者按分区字典序排序，分区内循环轮询消费者
+    2.range：遍历每个 topic，然后将这些 topic 按照其订阅的 consumer 数进行平均分配，多出来的则按照consumer的字典挨个分配
+2.存储 offset：故障后知道从哪里恢复
+    生产者发送数据的 offset 是从 0 开始的，消费者消费的数据的 offset 是从 1 开始的，故最新消息的 offset +1
+    之前存在 zookeeper，现在存在内置 topic 中
+    消费者默认自动提交 offset，支持手动提交 offset，offset 可以被重置earliest，默认 latest
+    新 consumer 加入或旧的退出触发分区的重新分配 rebalance，定位分区，从分区的 HW开始继续消费，（即自己记录下需要提交的 offset，利用 rebalance分区监听器监听 reblance 事件）
+    一旦发生 rebalance,先将 offset 提交，分区之后则找最新的 offset 位置继续消费即可
+
+高效读写：
+    1.高效写：顺序写磁盘
+    2.高效读：读文件->发送网络链接
+    零拷贝：零拷贝技术只用将磁盘文件的数据复制到页面缓存中一次，然后将数据从页面缓存直接发送到网络中
+    用户态（user space）：application cache
+    内核态（kernel space）：page cache        socket cache
+    file system：         file               NIC网卡 （linux 文件网络 IO都是文件操作）
+zookeeper 的作用：
+    kafka 中一个 broker 会被选举为 controller，负责集群 broker 的上下线、topic 的分区副本和 leader 选举，controller 依赖 zookeeper
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

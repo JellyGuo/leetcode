@@ -1,0 +1,15 @@
+列式存储
+数据按列聚合存储
+eg：传统行数据库： ID|Name|Age|Gender
+    block1      1   aa   32
+    block2      2   bb         male
+
+    列数据库：
+    block1      1｜2
+    block2      aa|bb
+    block3      32|
+    block4        |male
+
+查询更快，但是更新、插入很麻烦。更新只能追加再合并
+
+表引擎：replaceMergeTree 等

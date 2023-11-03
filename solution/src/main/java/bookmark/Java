@@ -1,6 +1,79 @@
 Spring
 IoC 控制反转，容器、java 反射、xml 解析器=>思想：工厂模式获取 bean，而不是主动 new
 AOP：切面，不侵入业务代码，原理：动态代理
+
+SpringBoot
+SpringBoot启动项目后执行方法的几种方式：
+    1.继承 CommandLineRunner或 ApplicationRunner接口，实现 run 方法，可以通过@Order 注解决定执行顺序
+    2.JDK提供的@PostConstruct注解 静态代码块，spring 在扫描 component 时会初始化类
+    3.ApplicationContextAware/ApplicationListener/InitializingBean接口
+启动方式：4种，其中 3 种借助内置 tomcat 容器，1种借助外部 tomcat 容器
+    1.App.java 通过SpringBootApplication注解
+    @SpringBootApplication
+    class App{
+        main(String[] args){
+            SpringApplication.run(App.class,args)
+        }
+    }
+    2.@SpringBootApplication=@SpringBootConfiguration+@EnableAutoConfiguration 和 @ComponentScan(basePackages="com")
+    3.注解放到 controller 中启动
+@SpringBootConfiguration：表示一个类提供 SpringBoot应用程序@Configuration被标注的类等于在Spring的XML配置文件中（applicationContext.xml）,装配所有bean事务，提供了一个Spring的上下文环境
+@EnableAutoConfiguration 自动装配核心：原理  在类路径的META-INF/spring.factories文件中找到所有的对应配置类，然后将这些自动配置类加载到spring容器中。
+    @AutoConfigurationPackage：该注解上有一个@Import({Registrar.class})注解，
+        其中Registrar类的作用是将启动类所在的包下的所有子包组件扫描注入到spring容器中。（因此这就是为什么将controller、service等包放在启动类的同级目录下的原因）
+    @Import({AutoConfigurationImportSelector.class})：
+        其中AutoConfigurationImportSelector类中有一个getCandidateConfigurations()方法，
+        这个方法通过SpringFactoriesLoader.loadFactoryNames()查找位于META-INF/spring.factories文件中的所有自动配置类并加载这些类。
+@ComponentScan
+    组件扫描，自动扫描和装配Bean，扫描SpringApplication的run方法中的App.class所在的包路径下的文件，因此将启动类（main）放在跟包路径下。它去寻找带有@Component注解的类，并为其创建bean。
+启动流程：是IOC容器的启动过程，本质是创建和初始化bean工厂(BeanFactory)（BeanFactory是Spring IOC的核心，Spring使用beanFactory来实例化，配置和管理bean）
+        对于web程序，IOC容器启动过程即是建立上下文的过程，web容器会提供一个全局的servletContext上下文环境。
+    https://www.jianshu.com/p/bbb2cbe2c49a
+    https://blog.csdn.net/u014252478/article/details/88789852
+    https://blog.csdn.net/weixin_46047193/article/details/123557570
+    1.首先从main找到run()方法，在执行run()方法之前new一个SpringApplication对象
+    2.进入run()方法，创建应用监听器SpringApplicationRunListeners开始监听
+    3.然后加载SpringBoot配置环境(ConfigurableEnvironment)，然后把配置环境(Environment)加入监听对象中
+    4.然后加载应用上下文(ConfigurableApplicationContext)，当做run方法的返回对象
+    5.最后创建Spring容器，refreshContext(context)，实现starter自动化配置和bean的实例化等工作。
+    https://www.cnblogs.com/Narule/p/14253754.html
+    1.初始化配置：通过类加载器，（loadFactories）读取classpath下所有的spring.factories配置文件，
+                创建一些初始配置对象；通知监听者应用程序启动开始，
+                创建环境对象environment，用于读取环境配置 如 application.yml
+    2.创建应用程序上下文-createApplicationContext，创建 bean工厂对象
+    3.刷新上下文（启动核心）
+        3.1 配置工厂对象，包括上下文类加载器，对象发布处理器，beanFactoryPostProcessor
+        3.2 注册并实例化bean工厂发布处理器，并且调用这些处理器，对包扫描解析(主要是class文件)
+        3.3 注册并实例化bean发布处理器 beanPostProcessor
+        3.4 初始化一些与上下文有特别关系的bean对象（创建tomcat服务器）
+        3.5 实例化所有bean工厂缓存的bean对象（剩下的）
+        3.6 发布通知-通知上下文刷新完成（启动tomcat服务器）
+    4.通知监听者-启动程序完成
+
+启动中，大部分对象都是BeanFactory对象通过反射创建
+
+Spring bean的生命周期
+new->属性注入->Init生命周期初始化方法->初始化回调方法->代理AOP->放入单例池 singletonObject
+
+Spring Security+JWT 安全校验
+Ali Druid  数据库连接池+jdbc
+SpringDataJPA(spring-boot-starter-data-jpa)
+    JpaRepository、@Query
+SpringDataRedis(spring-boot-starter-data-redis)
+    redisTemplate
+(spring-boot-start-cache)https://juejin.cn/post/7220292698854752313
+    @EnableCaching @Cacheable @CachePut 或@CacheEvict
+
+MapStruct 用于自动生成 entity-dto 的转换代码
+swagger 用于自动生成 api 文档
+
+Java Log框架
+                                    log4j
+Facade(门面) -slf4j -（真正的实现）-   logback
+                                    log4j2
+
+
+
 https://blog.csdn.net/wangyuan9826/article/details/123326270
 https://blog.csdn.net/langfeiyes/article/details/125171275
 https://blog.csdn.net/u013128651/article/details/80194496
@@ -67,11 +140,6 @@ https://blog.csdn.net/u013128651/article/details/80194496
 
           双亲委派：AppClassLoader交给 parent，parent 再交给 parent，没有 parent 时往下交给 AppClassLoader
           3 次破坏（SPI(JDBC),Tomcat）
-
-SpringBoot启动项目后执行方法的几种方式：
-    1.继承 CommandLineRunner或 ApplicationRunner接口，实现 run 方法，可以通过@Order 注解决定执行顺序
-    2.JDK提供的@PostConstruct注解 静态代码块，spring 在扫描 component 时会初始化类
-    3.ApplicationContextAware/ApplicationListener/InitializingBean接口
 
 JVM和 GC https://blog.csdn.net/m0_37635053/article/details/115400580
     垃圾回收方式：

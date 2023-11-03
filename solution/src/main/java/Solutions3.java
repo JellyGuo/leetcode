@@ -4706,6 +4706,24 @@ public class Solutions3 {
         return res;
     }
 
+    //2103. 环和杆
+    public int countPoints(String rings) {
+        int n = rings.length() / 2;
+        int cnt = 0;
+        Map<Integer, Set<Character>> map = new HashMap<Integer, Set<Character>>();
+        for (int i = 0; i < rings.length(); i += 2) {
+            char color = rings.charAt(i);
+            int num = rings.charAt(i + 1) - '0';
+            Set<Character> set = map.getOrDefault(num, new HashSet<>());
+            set.add(color);
+            map.put(num, set);
+        }
+        for(Map.Entry<Integer,Set<Character>> entry :map.entrySet()){
+            if(entry.getValue().size()==3) cnt++;
+        }
+        return cnt;
+    }
+
     //1604. 警告一小时内使用相同员工卡大于等于三次的人
     public List<String> alertNames(String[] keyName, String[] keyTime) {
         Map<String, List<Integer>> map = new HashMap<>();
