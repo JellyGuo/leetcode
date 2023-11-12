@@ -4236,6 +4236,7 @@ public class Solutions1 {
         return root;
     }
 
+    //117. 填充每个节点的下一个右侧节点指针 II
     public Node connectNormal2(Node root) {
         if (root == null) {
             return null;
@@ -10428,6 +10429,78 @@ public class Solutions1 {
 
     private int getIndexRowCol(int i, int j) {
         return i * col + j;
+    }
+
+    //2258. 逃离火灾
+    boolean ok;
+
+    public int maximumMinutes(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[][] fireGrid = new int[m][n];
+        int[][] personGrid = new int[m][n];
+        if (!check(0, grid, fireGrid, personGrid)) return -1;
+        int l = 0, r = m * n;
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            if (check(mid, grid, fireGrid, personGrid)) l = mid;
+            else r = mid - 1;
+        }
+        return r == m * n ? (int) 1e9 : r;
+    }
+
+    boolean check(int t, int[][] grid, int[][] fireGrid, int[][] personGrid) {
+        ok = false;
+        int m = grid.length, n = grid[0].length;
+        Deque<int[]> fire = new ArrayDeque<>();
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                fireGrid[i][j] = personGrid[i][j] = 0;
+                if (grid[i][j] == 1) {
+                    fireGrid[i][j] = 1;
+                    fire.offerLast(new int[]{i, j});
+                }
+            }
+        }
+        while (t-- > 0) {
+            update(fire, true, 0, grid, fireGrid, personGrid);  // 先执行 t 秒的火势蔓延
+        }
+        if (fireGrid[0][0] != 0) return false;
+        Deque<int[]> people = new ArrayDeque<>();
+        personGrid[0][0] = 1;
+        people.addLast(new int[]{0, 0});
+        while (!people.isEmpty()) {
+            // 先火后人, 同步进行
+            update(fire, true, 1, grid, fireGrid, personGrid);
+            update(people, false, 1, grid, fireGrid, personGrid);
+            if (ok) return true;
+        }
+        return false;
+    }
+
+    void update(Deque<int[]> deque, boolean isFire, int offset, int[][] grid, int[][] fireGrid, int[][] personGrid) {
+        int[][] directions = new int[][]{{0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+        int m = grid.length, n = grid[0].length;
+        int sz = deque.size();
+        while (sz-- > 0) {
+            int[] info = deque.pollFirst();
+            int x = info[0], y = info[1];
+            for (int[] dir : directions) {
+                int nx = x + dir[0], ny = y + dir[1];
+                if (nx < 0 || nx >= m || ny < 0 || ny >= n) continue;
+                if (grid[nx][ny] == 2) continue;
+                if (isFire) {
+                    if (fireGrid[nx][ny] != 0) continue;
+                    fireGrid[nx][ny] = fireGrid[x][y] + offset;
+                } else {
+                    if (nx == m - 1 && ny == n - 1 &&
+                            (fireGrid[nx][ny] == 0 || fireGrid[nx][ny] == personGrid[x][y] + offset))
+                        ok = true;  // 火尚未到达 或 同时到达
+                    if (fireGrid[nx][ny] != 0 || personGrid[nx][ny] != 0) continue;
+                    personGrid[nx][ny] = personGrid[x][y] + offset;
+                }
+                deque.addLast(new int[]{nx, ny});
+            }
+        }
     }
 
     // 2577. 在网格图中访问一个格子的最少时间

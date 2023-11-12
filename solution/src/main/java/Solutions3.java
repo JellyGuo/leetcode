@@ -5772,7 +5772,7 @@ public class Solutions3 {
         return ans;
     }
 
-    //6315. 统计范围内的元音字符串数
+    //2586. 统计范围内的元音字符串数
     public int vowelStrings(String[] words, int left, int right) {
         Set<Character> set = new HashSet<>();
         set.add('a');
@@ -12126,6 +12126,34 @@ public class Solutions3 {
             time += (pile + speed - 1) / speed;
         }
         return time;
+    }
+
+    //2300. 咒语和药水的成功对数
+    public int[] successfulPairs(int[] spells, int[] potions, long success) {
+        int n = spells.length, m = potions.length;
+        int[] ans = new int[n];
+        Arrays.sort(potions);
+        for (int i = 0; i < n; i++) {
+            long target = (success + spells[i] - 1) / spells[i];
+            int idx = binarySearch((int) target, potions);
+            if (potions[idx] >= target) {
+                ans[i] = m - idx;
+            }
+        }
+        return ans;
+    }
+
+    private int binarySearch(int target, int[] array) {
+        int l = 0, r = array.length-1;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (array[mid] >= target) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
     }
 
     //2560. 打家劫舍 IV

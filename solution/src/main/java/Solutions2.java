@@ -1202,7 +1202,7 @@ public class Solutions2 {
         return n - idx2;
     }
 
-    //6362. 最长平衡子字符串
+    //2609. 最长平衡子字符串
     public int findTheLongestBalancedSubstring(String s) {
         int n = s.length();
         int max = 0;
