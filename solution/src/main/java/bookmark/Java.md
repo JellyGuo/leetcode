@@ -285,3 +285,147 @@ synchronized
         }
     }
 
+
+### ThreadLocal
+
+![c8f363a8e4dff2849d6263701c55e188.jpeg](evernotecid://7C421C31-405D-49A0-9EBC-98E479245B63/appyinxiangcom/50728397/ENResource/p4)
+
+
+**其他线程用同一个threadLocal实例的赋值不会影响之前线程保存的值**
+
+![d2d0f5c920d407f801f17ddaf48266cb.png](evernotecid://7C421C31-405D-49A0-9EBC-98E479245B63/appyinxiangcom/50728397/ENResource/p3)
+
+
+
+### InheritableThreadLocal
+**特点**
+子线程可以继承父线程的inheritableThreadLocal设置的值
+子线程修改值后父线程不影响
+**原理**
+在Thread中有两个ThreadLocalMap，一个给ThreadLocal操作，一个给InheritableThreadLocal操作；
+线程创建的时候调用init()方法，在这里复制父线程的ThreadLocalMap
+**但是在线程复用的线程池中是没有办法使用的**
+
+
+
+![947cd6ea3def354da989de38f25db23b.png](evernotecid://7C421C31-405D-49A0-9EBC-98E479245B63/appyinxiangcom/50728397/ENResource/p2)
+
+### TransmittableThreadLocal 
+
+https://zhuanlan.zhihu.com/p/146124826
+https://github.com/alibaba/transmittable-thread-local
+
+对于使用线程池 池化线程复用的情况，用于提交线程的上下文传递到执行线程的threadlocal中
+基本思路：
+1. 包装runnable，把主线程上下文传给执行任务
+2. 获取主线程context，暂存执行线程context，把主线程set进去
+3. 执行完毕后把暂存的context重新放回
+
+
+## 基于GuavaCache构建本地缓存
+
+1. 注解配置mode、time、size
+2. concurrentHashMap缓存单例
+
+
+
+## 规则表达式调研
+
+#### 1.1 工具类方案
+
+hutool封装了统一的工具类ExpressionUtil，内部采用单例、工厂类、Facade门面设计模式，提供不同实现引擎，每个引擎引用外部jar包：
+
+| jar                | 效率                         |
+| ------------------ | ---------------------------- |
+| googlecode.aviator | 初始化时间较久，执行效率最高 |
+| commons-jexl3      | 初始化次之，执行效率次之     |
+| mvel2              | 初始化最快，执行效率最慢     |
+
+**总结：使用aviator单例预加载**
+
+#### 1.2 根据规则配置动态生成java代码
+
+<https://www.cnblogs.com/barrywxx/p/13233373.html>
+
+1. JDK
+2. Groovy：  groovy脚本加载到db，在db中修改同步至本地缓存
+
+```java
+GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
+Class<?> clazz = groovyClassLoader.parseClass(javaString);
+Object obj = clazz.newInstance();
+Method method = clazz.getDeclaredMethod("sayHello");
+method.invoke(obj);
+Object val = method.getDefaultValue();
+```
+
+### 跨域
+>https://blog.csdn.net/qq_38128179/article/details/84956552
+
+1. 含义：当一个请求url的协议、域名、端口三者之间任意一个与当前页面url不同即为跨域（www.test.com和blog.test.com主域相同子域不同）
+2. 非同源限制：
+    - 不能访问非同源的cookie、localStorage、indexeddb
+    - 不能接触非同源网页的dom
+    - 无法向非同源地址发送ajax请求
+3. 解决方案：
+    1. 子域共享cookie：两个页面都设置document.domain
+    2. 跨文档通信api：window.postMessage()
+    调用postMessage方法实现父窗口http://test1.com向子窗口http://test2.com发消息（子窗口同样可以通过该方法发送消息给父窗口），它可用于解决以下方面的问题：
+        - 页面和其打开的新窗口的数据传递
+        - 多窗口之间消息传递
+        - 页面与嵌套的iframe消息传递
+        - 上面三个场景的跨域数据传递
+    3. JSONP:客户端和服务端跨源通信的常用方法，但只支持get不支持post
+    4. CORS:跨域资源分享，属于跨源ajax请求的根本解决方法
+        1. 普通跨域请求：只需服务器端设置Access-Control-Allow-Origin
+        2. 带cookie跨域请求：前后端都需要进行设置
+     ```java
+    /*
+     * 导入包：import javax.servlet.http.HttpServletResponse;
+     * 接口参数中定义：HttpServletResponse response
+     */
+
+    // 允许跨域访问的域名：若有端口需写全（协议+域名+端口），若没有端口末尾不用加'/'
+    response.setHeader("Access-Control-Allow-Origin", "http://www.domain1.com"); 
+
+    // 允许前端带认证cookie：启用此项后，上面的域名不能为'*'，必须指定具体的域名，否则浏览器会提示
+    response.setHeader("Access-Control-Allow-Credentials", "true"); 
+
+    // 提示OPTIONS预检时，后端需要设置的两个常用自定义头
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type,X-Requested-With");
+      ```
+      5. webpack本地代理：vue3+vite 在vite.config.ts中配置代理
+      ``http://localhost:8080/api/getUser.php`` 的请求就是后端的接口 ``http://192.168.25.20:8088/getUser.php``
+      6. websocket: Websocket 是 HTML5 的一个持久化的协议，它实现了浏览器与服务器的全双工通信，同时也是跨域的一种解决方案。WebSocket 和 HTTP 都是应用层协议，都基于 TCP 协议。但是 WebSocket 是一种双向通信协议，在建立连接之后，WebSocket 的 服务器与 客户端都能主动向对方发送或接收数据。同时，WebSocket 在建立连接时需要借助 HTTP 协议，连接建立好了之后 client 与 server 之间的双向通信就与 HTTP 无关了。
+      7. nginx反向代理：
+          - Nginx 实现原理类似于 Node 中间件代理，需要你搭建一个中转 nginx 服务器，用于转发请求。
+          - 使用 nginx 反向代理实现跨域，是最简单的跨域方式。只需要修改 nginx 的配置即可解决跨域问题，支持所有浏览器，支持 session，不需要修改任何代码，并且不会影响服务器性能。
+          - 我们只需要配置nginx，在一个服务器上配置多个前缀来转发http/https请求到多个真实的服务器即可。这样，这个服务器上所有url都是相同的域 名、协议和端口。因此，对于浏览器来说，这些url都是同源的，没有跨域限制。而实际上，这些url实际上由物理服务器提供服务。这些服务器内的 javascript可以跨域调用所有这些服务器上的url。
+         -  配置nginx.conf
+      ```yml
+        server {
+            #nginx监听所有localhost:8080端口收到的请求
+            listen       8080;
+            server_name  localhost;
+            # Load configuration files for the default server block.
+            include /etc/nginx/default.d/*.conf;
+            #localhost:8080 会被转发到这里
+            #同时, 后端程序会接收到 "192.168.25.20:8088"这样的请求url
+            location / {
+                proxy_pass http://192.168.25.20:8088;
+            }
+            #localhost:8080/api/ 会被转发到这里
+            #同时, 后端程序会接收到 "192.168.25.20:9000/api/"这样的请求url
+            location /api/ {
+                proxy_pass http://192.168.25.20:9000;
+            }
+            error_page 404 /404.html;
+                location = /40x.html {
+            }
+            error_page 500 502 503 504 /50x.html;
+                location = /50x.html {
+            }
+        }                                                                               
+    
+      ```
+
