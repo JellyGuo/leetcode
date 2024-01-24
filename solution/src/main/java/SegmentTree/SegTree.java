@@ -1,3 +1,5 @@
+package SegmentTree;
+
 public class SegTree {
     int l, r, plus;
     // 树存法 子节点

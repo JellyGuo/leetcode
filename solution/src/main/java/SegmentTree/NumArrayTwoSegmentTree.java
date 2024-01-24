@@ -1,3 +1,6 @@
+package SegmentTree;
+
+
 public class NumArrayTwoSegmentTree {
     // 线段树 1.数组存法(只维护数组中的位置，区间作为方法入参传递)
     int[] segmentTree;
