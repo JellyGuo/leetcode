@@ -79,7 +79,7 @@ public class Solution {
         return n - idx2;
     }
 
-    //6247. 从链表中移除节点 单调队列
+    //2487. 从链表中移除节点 单调队列
     public ListNode removeNodes(ListNode head) {
         Deque<ListNode> deque = new ArrayDeque<>();
         ListNode cur = head;
