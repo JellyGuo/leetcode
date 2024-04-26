@@ -264,6 +264,180 @@ public class SolutionGraphBfsDfs {
         }
     }
 
+    //1766. 互质树
+    List<Integer>[] gcds;
+    List<Integer>[] tmp;
+    List<Integer>[] g;
+    int[] dep;
+    int[] ans;
+
+    public int[] getCoprimes(int[] nums, int[][] edges) {
+        int n = nums.length;
+
+        // 初始化
+        gcds = new List[51];
+        tmp = new List[51];
+        for (int i = 0; i <= 50; i++) {
+            gcds[i] = new ArrayList<Integer>();
+            tmp[i] = new ArrayList<Integer>();
+        }
+        ans = new int[n];
+        dep = new int[n];
+        Arrays.fill(ans, -1);
+        Arrays.fill(dep, -1);
+        g = new List[n];
+        for (int i = 0; i < n; i++) {
+            g[i] = new ArrayList<Integer>();
+        }
+
+        for (int i = 1; i <= 50; i++) {
+            for (int j = 1; j <= 50; j++) {
+                if (gcd(i, j) == 1) {
+                    gcds[i].add(j);
+                }
+            }
+        }
+
+        for (int[] val : edges) {
+            g[val[0]].add(val[1]);
+            g[val[1]].add(val[0]);
+        }
+
+        dfs1766(nums, 0, 1);
+
+        return ans;
+    }
+
+    public int gcd(int x, int y) {
+        while (y != 0) {
+            int temp = x;
+            x = y;
+            y = temp % y;
+        }
+        return x;
+    }
+
+    public void dfs1766(int[] nums, int x, int depth) {
+        dep[x] = depth;
+        for (int val : gcds[nums[x]]) {
+            if (tmp[val].isEmpty()) {
+                continue;
+            }
+
+            int las = tmp[val].get(tmp[val].size() - 1);
+            if (ans[x] == -1 || dep[las] > dep[ans[x]]) {
+                ans[x] = las;
+            }
+        }
+        tmp[nums[x]].add(x);
+
+        for (int val : g[x]) {
+            if (dep[val] == -1) { // 被访问过的点dep不为-1
+                dfs1766(nums, val, depth + 1);
+            }
+        }
+
+        tmp[nums[x]].remove(tmp[nums[x]].size() - 1);
+    }
+
+    //924. 尽量减少恶意软件的传播
+    public int minMalwareSpread(int[][] graph, int[] initial) {
+        // 1. Color each component.
+        // colors[node] = the color of this node.
+
+        int N = graph.length;
+        int[] colors = new int[N];
+        Arrays.fill(colors, -1);
+        int C = 0;
+
+        for (int node = 0; node < N; ++node)
+            if (colors[node] == -1)
+                dfs924(graph, colors, node, C++);
+
+        // 2. Size of each color.
+        int[] size = new int[C];
+        for (int color: colors)
+            size[color]++;
+
+        // 3. Find unique colors.
+        int[] colorCount = new int[C];
+        for (int node: initial)
+            colorCount[colors[node]]++;
+
+        // 4. Answer
+        int ans = Integer.MAX_VALUE;
+        for (int node: initial) {
+            int c = colors[node];
+            if (colorCount[c] == 1) {
+                if (ans == Integer.MAX_VALUE)
+                    ans = node;
+                else if (size[c] > size[colors[ans]])
+                    ans = node;
+                else if (size[c] == size[colors[ans]] && node < ans)
+                    ans = node;
+            }
+        }
+
+        if (ans == Integer.MAX_VALUE)
+            for (int node: initial)
+                ans = Math.min(ans, node);
+
+        return ans;
+    }
+
+    public void dfs924(int[][] graph, int[] colors, int node, int color) {
+        colors[node] = color;
+        for (int nei = 0; nei < graph.length; ++nei)
+            if (graph[node][nei] == 1 && colors[nei] == -1)
+                dfs924(graph, colors, nei, color);
+    }
+
+    //928. 尽量减少恶意软件的传播 II
+    public int minMalwareSpread2(int[][] graph, int[] initial) {
+        int n = graph.length;
+        boolean[] initialSet = new boolean[n];
+        for (int v : initial) {
+            initialSet[v] = true;
+        }
+        List<Integer>[] infectedBy = new List[n];
+        for (int i = 0; i < n; i++) {
+            infectedBy[i] = new ArrayList<Integer>();
+        }
+        for (int v : initial) {
+            boolean[] infectedSet = new boolean[n];
+            dfs928(graph, initialSet, infectedSet, v);
+            for (int u = 0; u < n; u++) {
+                if (infectedSet[u]) {
+                    infectedBy[u].add(v);
+                }
+            }
+        }
+        int[] count = new int[n];
+        for (int u = 0; u < n; u++) {
+            if (infectedBy[u].size() == 1) {
+                count[infectedBy[u].get(0)]++;
+            }
+        }
+        int res = initial[0];
+        for (int v : initial) {
+            if (count[v] > count[res] || count[v] == count[res] && v < res) {
+                res = v;
+            }
+        }
+        return res;
+    }
+
+    public void dfs928(int[][] graph, boolean[] initialSet, boolean[] infectedSet, int v) {
+        int n = graph.length;
+        for (int u = 0; u < n; u++) {
+            if (graph[v][u] == 0 || initialSet[u] || infectedSet[u]) {
+                continue;
+            }
+            infectedSet[u] = true;
+            dfs928(graph, initialSet, infectedSet, u);
+        }
+    }
+
     //2003. 每棵子树内缺失的最小基因值
     public int[] smallestMissingValueSubtree(int[] parents, int[] nums) {
         int n = parents.length;
@@ -309,6 +483,79 @@ public class SolutionGraphBfsDfs {
             }
         }
     }
+
+
+    //2846. 边权重均等查询
+    static final int W = 26;
+
+    public int[] minOperationsQueries(int n, int[][] edges, int[][] queries) {
+        int m = queries.length;
+        Map<Integer, Integer>[] neighbors = new Map[n];
+        for (int i = 0; i < n; i++) {
+            neighbors[i] = new HashMap<Integer, Integer>();
+        }
+        for (int[] edge : edges) {
+            neighbors[edge[0]].put(edge[1], edge[2]);
+            neighbors[edge[1]].put(edge[0], edge[2]);
+        }
+        List<int[]>[] queryArr = new List[n];
+        for (int i = 0; i < n; i++) {
+            queryArr[i] = new ArrayList<int[]>();
+        }
+        for (int i = 0; i < m; i++) {
+            queryArr[queries[i][0]].add(new int[]{queries[i][1], i});
+            queryArr[queries[i][1]].add(new int[]{queries[i][0], i});
+        }
+
+        int[][] count = new int[n][W + 1];
+        boolean[] visited = new boolean[n];
+        int[] uf = new int[n];
+        int[] lca = new int[m];
+        tarjan(0, -1, neighbors, queryArr, count, visited, uf, lca);
+        int[] res = new int[m];
+        for (int i = 0; i < m; i++) {
+            int totalCount = 0, maxCount = 0;
+            for (int j = 1; j <= W; j++) {
+                int t = count[queries[i][0]][j] + count[queries[i][1]][j] - 2 * count[lca[i]][j];
+                maxCount = Math.max(maxCount, t);
+                totalCount += t;
+            }
+            res[i] = totalCount - maxCount;
+        }
+        return res;
+    }
+
+    public void tarjan(int node, int parent, Map<Integer, Integer>[] neighbors, List<int[]>[] queryArr, int[][] count, boolean[] visited, int[] uf, int[] lca) {
+        if (parent != -1) {
+            System.arraycopy(count[parent], 0, count[node], 0, W + 1);
+            count[node][neighbors[node].get(parent)]++;
+        }
+        uf[node] = node;
+        for (int child : neighbors[node].keySet()) {
+            if (child == parent) {
+                continue;
+            }
+            tarjan(child, node, neighbors, queryArr, count, visited, uf, lca);
+            uf[child] = node;
+        }
+        for (int[] pair : queryArr[node]) {
+            int node1 = pair[0], index = pair[1];
+            if (node != node1 && !visited[node1]) {
+                continue;
+            }
+            lca[index] = find(uf, node1);
+        }
+        visited[node] = true;
+    }
+
+    public int find(int[] uf, int i) {
+        if (uf[i] == i) {
+            return i;
+        }
+        uf[i] = find(uf, uf[i]);
+        return uf[i];
+    }
+
 
     //2059. 转化数字的最小运算数
     public int minimumOperations(int[] nums, int start, int goal) {

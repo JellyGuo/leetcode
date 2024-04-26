@@ -1589,6 +1589,25 @@ public class SolutionStackQueue {
         return sb.toString().equals("") ? "/" : sb.toString();
     }
 
+    //2580. 统计将重叠区间合并成组的方案数
+    static final int MOD = 1000000007;
+    public int countWays(int[][] ranges) {
+        Arrays.sort(ranges, (a, b) -> a[0] - b[0]);
+        int n = ranges.length;
+        int res = 1;
+        for (int i = 0; i < n; ) {
+            int r = ranges[i][1];
+            int j = i + 1;
+            while (j < n && ranges[j][0] <= r) {
+                r = Math.max(r, ranges[j][1]);
+                j++;
+            }
+            res = res * 2 % MOD;
+            i = j;
+        }
+        return res;
+    }
+
     // 871 最低加油次数
     public int minRefuelStops(int target, int startFuel, int[][] stations) {
         int ans = 0, loc = 0, remain = startFuel, idx = 0;
@@ -1945,6 +1964,82 @@ public class SolutionStackQueue {
         }
         return res;
     }
+
+    //2617. 网格图中最少访问的格子数
+    public int minimumVisitedCells(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+        int f = 0;
+        PriorityQueue<int[]>[] colHeaps = new PriorityQueue[n]; // 每一列的最小堆
+        Arrays.setAll(colHeaps, i -> new PriorityQueue<int[]>((a, b) -> a[0] - b[0]));
+        PriorityQueue<int[]> rowH = new PriorityQueue<>((a, b) -> a[0] - b[0]); // 行最小堆
+        for (int i = 0; i < m; i++) {
+            rowH.clear();
+            for (int j = 0; j < n; j++) {
+                while (!rowH.isEmpty() && rowH.peek()[1] < j) { // 无法到达第 j 列
+                    rowH.poll(); // 弹出无用数据
+                }
+                PriorityQueue<int[]> colH = colHeaps[j];
+                while (!colH.isEmpty() && colH.peek()[1] < i) { // 无法到达第 i 行
+                    colH.poll(); // 弹出无用数据
+                }
+
+                f = i > 0 || j > 0 ? Integer.MAX_VALUE : 1; // 起点算 1 个格子
+                if (!rowH.isEmpty()) {
+                    f = rowH.peek()[0] + 1; // 从左边跳过来
+                }
+                if (!colH.isEmpty()) {
+                    f = Math.min(f, colH.peek()[0] + 1); // 从上边跳过来
+                }
+
+                int g = grid[i][j];
+                if (g > 0 && f < Integer.MAX_VALUE) {
+                    rowH.offer(new int[]{f, g + j}); // 经过的格子数，向右最远能到达的列号
+                    colH.offer(new int[]{f, g + i}); // 经过的格子数，向下最远能到达的行号
+                }
+            }
+        }
+        return f < Integer.MAX_VALUE ? f : -1; // 此时的 f 是在 (m-1, n-1) 处算出来的
+    }
+
+    //LCP 24. 数字游戏
+    public int[] numsGame(int[] nums) {
+        int n = nums.length;
+        int[] res = new int[n];
+        PriorityQueue<Integer> lower = new PriorityQueue<Integer>((a, b) -> b - a);
+        PriorityQueue<Integer> upper = new PriorityQueue<Integer>((a, b) -> a - b);
+        final int MOD = 1000000007;
+        long lowerSum = 0, upperSum = 0;
+        for (int i = 0; i < n; i++) {
+            int x = nums[i] - i;
+            if (lower.isEmpty() || lower.peek() >= x) {
+                lowerSum += x;
+                lower.offer(x);
+                if (lower.size() > upper.size() + 1) {
+                    upperSum += lower.peek();
+                    upper.offer(lower.peek());
+                    lowerSum -= lower.peek();
+                    lower.poll();
+                }
+            } else {
+                upperSum += x;
+                upper.offer(x);
+                if (lower.size() < upper.size()) {
+                    lowerSum += upper.peek();
+                    lower.offer(upper.peek());
+                    upperSum -= upper.peek();
+                    upper.poll();
+                }
+            }
+            if ((i + 1) % 2 == 0) {
+                res[i] = (int) ((upperSum - lowerSum) % MOD);
+            } else {
+                res[i] = (int) ((upperSum - lowerSum + lower.peek()) % MOD);
+            }
+        }
+        return res;
+    }
+
     //2558 从数量最多的堆取走礼物
     public long pickGifts(int[] gifts, int k) {
         PriorityQueue<Integer> pq = new PriorityQueue<>((o1, o2) -> o2 - o1);

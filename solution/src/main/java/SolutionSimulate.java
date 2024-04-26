@@ -4435,6 +4435,144 @@ public class SolutionSimulate {
         return res;
     }
 
+    //2923. 找到冠军 I
+    public int findChampion(int[][] grid) {
+        int ans = 0;
+        for (int i = 1; i < grid.length; i++) {
+            if (grid[i][ans] == 1) {
+                ans = i;
+            }
+        }
+        return ans;
+    }
+
+    //2908. 元素和最小的山形三元组 I
+    public int minimumSum(int[] nums) {
+        int n = nums.length, res = 1000;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                for (int k = j + 1; k < n; k++) {
+                    if (nums[i] < nums[j] && nums[k] < nums[j]) {
+                        res = Math.min(res, nums[i] + nums[j] + nums[k]);
+                    }
+                }
+            }
+        }
+        return res < 1000 ? res : -1;
+    }
+
+    //2810. 故障键盘
+    public String finalString(String s) {
+        StringBuilder sb = new StringBuilder();
+        boolean left = true;
+        for (char c : s.toCharArray()) {
+            if (c == 'i') {
+                left = !left;
+            } else {
+                if (left) {
+                    sb.append(c);
+                } else {
+                    sb.insert(0, c);
+                }
+            }
+        }
+        return left ? sb.toString() : sb.reverse().toString();
+    }
+
+    //2864. 最大二进制奇数
+    public String maximumOddBinaryNumber(String s) {
+        int cnt = 0;
+        for (int i = 0; i < s.length(); i++) {
+            cnt += s.charAt(i) - '0';
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < cnt - 1; i++) {
+            sb.append('1');
+        }
+        for (int i = 0; i < s.length() - cnt; i++) {
+            sb.append('0');
+        }
+        sb.append('1');
+        return sb.toString();
+    }
+
+    //2129. 将标题首字母大写
+    public String capitalizeTitle(String title) {
+        String[] array = title.split(" ");
+        StringBuilder sb = new StringBuilder();
+        for (String t : array) {
+            if (t.length() == 1 || t.length() == 2) {
+                sb.append(t.toLowerCase());
+            } else {
+                sb.append(t.substring(0, 1).toUpperCase()).append(t.substring(1).toLowerCase());
+            }
+            sb.append(" ");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
+    }
+
+    //2917. 找出数组中的 K-or 值
+    public int findKOr(int[] nums, int k) {
+        int[] cnt = new int[32];
+        for (int num : nums) {
+            cntDigit(cnt, num);
+        }
+        int ans = 0;
+        for (int i = 0; i < 32; i++) {
+            if (cnt[i] >= k) {
+                ans |= (1 << i);
+            }
+        }
+        return ans;
+    }
+
+    private void cntDigit(int[] cnt, int num) {
+        int idx = 0;
+        while (num != 0) {
+            if ((num & 1) == 1) {
+                cnt[idx]++;
+            }
+            num >>= 1;
+            idx++;
+        }
+    }
+
+    //2859. 计算 K 置位下标对应元素的和
+    public int sumIndicesWithKSetBits(List<Integer> nums, int k) {
+        int sum = 0;
+        int n = nums.size();
+        for (int i = 0; i < n; i++) {
+            if (bitCount(i) == k) sum += nums.get(i);
+        }
+        return sum;
+    }
+
+    private int bitCount(int num) {
+        int cnt = 0;
+        while (num != 0) {
+            cnt += (num & 1);
+            num >>= 1;
+        }
+        return cnt;
+    }
+
+    //2808. 使循环数组所有元素相等的最少秒数
+    public int minimumSeconds(List<Integer> nums) {
+        HashMap<Integer, List<Integer>> mp = new HashMap<>();
+        int n = nums.size(), res = n;
+        for (int i = 0; i < n; ++i) {
+            mp.computeIfAbsent(nums.get(i), k -> new ArrayList<>()).add(i);
+        }
+        for (List<Integer> positions : mp.values()) {
+            int mx = positions.get(0) + n - positions.get(positions.size() - 1);
+            for (int i = 1; i < positions.size(); ++i) {
+                mx = Math.max(mx, positions.get(i) - positions.get(i - 1));
+            }
+            res = Math.min(res, mx / 2);
+        }
+        return res;
+    }
 
     //1224. 最大相等频率
     public int maxEqualFreq(int[] nums) {

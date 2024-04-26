@@ -1376,6 +1376,114 @@ public class SolutionGreedy {
         return (n - cnt) % 2 != 0 ? cnt + 1 : cnt;
     }
 
+    //1702. 修改后的最大二进制字符串
+    public String maximumBinaryString(String binary) {
+        int k = binary.indexOf('0');
+        if (k == -1) {
+            return binary;
+        }
+        int n = binary.length();
+        for (int i = k + 1; i < n; ++i) {
+            if (binary.charAt(i) == '0') {
+                ++k;
+            }
+        }
+        char[] ans = binary.toCharArray();
+        Arrays.fill(ans, '1');
+        ans[k] = '0';
+        return String.valueOf(ans);
+    }
+
+    //1969. 数组元素的最小非零乘积
+    public int minNonZeroProduct(int p) {
+        if (p == 1) {
+            return 1;
+        }
+        long mod = 1000000007;
+        long x = fastPow(2, p, mod) - 1;
+        long y = (long) 1 << (p - 1);
+        return (int) (fastPow(x - 1, y - 1, mod) * x % mod);
+    }
+
+    public long fastPow(long x, long n, long mod) {
+        long res = 1;
+        for (; n != 0; n >>= 1) {
+            if ((n & 1) != 0) {
+                res = res * x % mod;
+            }
+            x = x * x % mod;
+        }
+        return res;
+    }
+
+    //2789. 合并后数组中的最大元素
+    public long maxArrayValue(int[] nums) {
+        long sum = nums[nums.length - 1];
+        for (int i = nums.length - 2; i >= 0; i--) {
+            sum = nums[i] <= sum ? nums[i] + sum : nums[i];
+        }
+        return sum;
+    }
+
+    //2834. 找出美丽数组的最小和
+    public int minimumPossibleSum(int n, int target) {
+        final int MOD = (int) 1e9 + 7;
+        int m = target / 2;
+        if (n <= m) {
+            return (int) ((long) (1 + n) * n / 2 % MOD);
+        }
+        return (int) (((long) (1 + m) * m / 2 +
+                ((long) target + target + (n - m) - 1) * (n - m) / 2) % MOD);
+    }
+    //LCP 30. 魔塔游戏
+    public int magicTower(int[] nums) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>();
+        long sum = 1;
+        long delay = 0;
+        int ans = 0;
+        for (int num : nums) {
+            sum += num;
+            if (num < 0) {
+                pq.offer(num);
+            }
+            if (sum <= 0) {
+                ans++;
+                int min = pq.poll();
+                sum -= min;
+                delay += min;
+            }
+        }
+        sum += delay;
+        return sum <= 0 ? -1 : ans;
+    }
+
+    //1686. 石子游戏 VI
+    public int stoneGameVI(int[] aliceValues, int[] bobValues) {
+        int n = aliceValues.length;
+        int[][] values = new int[n][3];
+        for (int i = 0; i < n; i++) {
+            values[i][0] = aliceValues[i] + bobValues[i];
+            values[i][1] = aliceValues[i];
+            values[i][2] = bobValues[i];
+        }
+        Arrays.sort(values, (a, b) -> b[0] - a[0]);
+        int aliceSum = 0, bobSum = 0;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                aliceSum += values[i][1];
+            } else {
+                bobSum += values[i][2];
+            }
+        }
+        if (aliceSum > bobSum) {
+            return 1;
+        } else if (aliceSum == bobSum) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+
     //330. 按要求补齐数组
     public int minPatches(int[] nums, int n) {
         //累加的总和

@@ -394,6 +394,21 @@ public class SolutionTreeBfsDfs {
         return Math.max(height(root.right), height(root.left)) + 1;
     }
 
+    //1379. 找出克隆二叉树中的相同节点
+    public final TreeNode getTargetCopy(final TreeNode original, final TreeNode cloned, final TreeNode target) {
+        if (original == null) {
+            return null;
+        }
+        if (original == target) {
+            return cloned;
+        }
+        TreeNode left = getTargetCopy(original.left, cloned.left, target);
+        if (left != null) {
+            return left;
+        }
+        return getTargetCopy(original.right, cloned.right, target);
+    }
+
     //2415. 反转二叉树的奇数层
     public TreeNode reverseOddLevels(TreeNode root) {
         dfs2415(root.left, root.right, true);
@@ -1399,6 +1414,29 @@ public class SolutionTreeBfsDfs {
         return root;
     }
 
+    //889. 根据前序和后序遍历构造二叉树
+    public TreeNode constructFromPrePost(int[] preorder, int[] postorder) {
+        int n = preorder.length;
+        Map<Integer, Integer> postMap = new HashMap<Integer, Integer>();
+        for (int i = 0; i < n; i++) {
+            postMap.put(postorder[i], i);
+        }
+        return dfs889(preorder, postorder, postMap, 0, n - 1, 0, n - 1);
+    }
+
+    public TreeNode dfs889(int[] preorder, int[] postorder, Map<Integer, Integer> postMap, int preLeft, int preRight, int postLeft, int postRight) {
+        if (preLeft > preRight) {
+            return null;
+        }
+        int leftCount = 0;
+        if (preLeft < preRight) {
+            leftCount = postMap.get(preorder[preLeft + 1]) - postLeft + 1;
+        }
+        TreeNode treeNode = new TreeNode(preorder[preLeft]);
+        treeNode.left = dfs889(preorder, postorder, postMap, preLeft + 1, preLeft + leftCount, postLeft, postLeft + leftCount - 1);
+        treeNode.right = dfs889(preorder, postorder, postMap, preLeft + leftCount + 1, preRight, postLeft + leftCount, postRight - 1);
+        return treeNode;
+    }
     // 106
     public TreeNode buildTreeIP(int[] inorder, int[] postorder) {
         Map<Integer, Integer> indexMap = new HashMap<>();
@@ -1877,6 +1915,55 @@ public class SolutionTreeBfsDfs {
         if (leftMaxDepth == rightMaxDepth && leftMaxDepth == maxDepth)
             ans1123 = node;
         return Math.max(leftMaxDepth, rightMaxDepth); // 当前子树最深叶节点的深度
+    }
+
+    //2192. 有向无环图中一个节点的所有祖先
+    public List<List<Integer>> getAncestors(int n, int[][] edges) {
+        Set<Integer>[] anc = new Set[n];   // 存储每个节点祖先的辅助数组
+        for (int i = 0; i < n; ++i) {
+            anc[i] = new HashSet<Integer>();
+        }
+        List<Integer>[] e = new List[n];   // 邻接表
+        for (int i = 0; i < n; ++i) {
+            e[i] = new ArrayList<Integer>();
+        }
+        int[] indeg = new int[n];   // 入度表
+        // 预处理
+        for (int[] edge : edges) {
+            e[edge[0]].add(edge[1]);
+            ++indeg[edge[1]];
+        }
+        // 广度优先搜索求解拓扑排序
+        Queue<Integer> q = new ArrayDeque<Integer>();
+        for (int i = 0; i < n; ++i) {
+            if (indeg[i] == 0) {
+                q.offer(i);
+            }
+        }
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            for (int v : e[u]) {
+                // 更新子节点的祖先哈希表
+                anc[v].add(u);
+                for (int i : anc[u]) {
+                    anc[v].add(i);
+                }
+                --indeg[v];
+                if (indeg[v] == 0) {
+                    q.offer(v);
+                }
+            }
+        }
+        // 转化为答案数组
+        List<List<Integer>> res = new ArrayList<List<Integer>>();
+        for (int i = 0; i < n; ++i) {
+            res.add(new ArrayList<Integer>());
+            for (int j : anc[i]) {
+                res.get(i).add(j);
+            }
+            Collections.sort(res.get(i));
+        }
+        return res;
     }
 
     //865. 具有所有最深节点的最小子树
@@ -3736,6 +3823,67 @@ public class SolutionTreeBfsDfs {
             this.value = value;
             this.size = 1;
             this.ans = 0;
+        }
+    }
+
+    //2867. 统计树中的合法路径数目
+    private final static int MX = (int) 1e5;
+    private final static boolean[] np = new boolean[MX + 1]; // 质数=false 非质数=true
+
+    static {
+        np[1] = true;
+        for (int i = 2; i * i <= MX; i++) {
+            if (!np[i]) {
+                for (int j = i * i; j <= MX; j += i) {
+                    np[j] = true;
+                }
+            }
+        }
+    }
+
+    public long countPaths(int n, int[][] edges) {
+        List<Integer>[] g = new ArrayList[n + 1];
+        Arrays.setAll(g, e -> new ArrayList<>());
+        for (int[] e : edges) {
+            int x = e[0], y = e[1];
+            g[x].add(y);
+            g[y].add(x);
+        }
+
+        long ans = 0;
+        int[] size = new int[n + 1];
+        List<Integer> nodes = new ArrayList<Integer>();
+        for (int x = 1; x <= n; x++) {
+            if (np[x]) { // 跳过非质数
+                continue;
+            }
+            int sum = 0;
+            for (int y : g[x]) { // 质数 x 把这棵树分成了若干个连通块
+                if (!np[y]) {
+                    continue;
+                }
+                if (size[y] == 0) { // 尚未计算过
+                    nodes.clear();
+                    dfs(y, -1, g, nodes); // 遍历 y 所在连通块，在不经过质数的前提下，统计有多少个非质数
+                    for (int z : nodes) {
+                        size[z] = nodes.size();
+                    }
+                }
+                // 这 size[y] 个非质数与之前遍历到的 sum 个非质数，两两之间的路径只包含质数 x
+                ans += (long) size[y] * sum;
+                sum += size[y];
+            }
+            ans += sum; // 从 x 出发的路径
+        }
+        return ans;
+    }
+
+    private void dfs(int x, int fa, List<Integer>[] g, List<Integer> nodes) {
+        nodes.add(x);
+        for (int y : g[x]) {
+            if (y != fa && np[y]) {
+                dfs(y, x, g, nodes);
+            }
         }
     }
 

@@ -2293,6 +2293,115 @@ public class SolutionBinarySearch {
         return primes[l];
     }
 
+    //2476. 二叉搜索树最近节点查询
+    public List<List<Integer>> closestNodes(TreeNode root, List<Integer> queries) {
+        List<Integer> list = new ArrayList<>();
+        dfs(root, list);
+        List<List<Integer>> result= new ArrayList<>();
+        for (int q : queries) {
+            result.add(Arrays.asList(binarySearch(list,q),binarySearch2(list,q)));
+        }
+        return result;
+    }
+
+    private int binarySearch(List<Integer> list, int x) {
+        int l = 0, r = list.size() - 1;
+        while (l < r) {
+            int mid = l + r + 1 >> 1;
+            if (list.get(mid) <= x) {
+                l = mid;
+            } else {
+                r = mid - 1;
+            }
+        }
+        return list.get(l) <= x ? list.get(l) : -1;
+    }
+
+    private int binarySearch2(List<Integer> list, int x) {
+        int l = 0, r = list.size() - 1;
+        while (l < r) {
+            int mid = l + r >> 1;
+            if (list.get(mid) >= x) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return list.get(l) >= x ?list.get(l) : -1;
+    }
+
+    private void dfs(TreeNode root, List<Integer> list) {
+        if (root == null) return;
+        dfs(root.left, list);
+        list.add(root.val);
+        dfs(root.right, list);
+    }
+
+    //2861. 最大合金数
+    public int maxNumberOfAlloys(int n, int k, int budget, List<List<Integer>> composition, List<Integer> stock, List<Integer> cost) {
+        int left = 1, right = 200000000, ans = 0;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            boolean valid = false;
+            for (int i = 0; i < k; ++i) {
+                long spend = 0;
+                for (int j = 0; j < n; ++j) {
+                    spend += Math.max((long) composition.get(i).get(j) * mid - stock.get(j), 0) * cost.get(j);
+                }
+                if (spend <= budget) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (valid) {
+                ans = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return ans;
+    }
+
+    //2386. 找出数组的第 K 大和
+    int cnt2386;
+    public long kSum(int[] nums, int k) {
+        int n = nums.length;
+        long total = 0, total2 = 0;
+        for (int i = 0; i < n; i++) {
+            if (nums[i] >= 0) {
+                total += nums[i];
+            } else {
+                nums[i] = -nums[i];
+            }
+            total2 += Math.abs(nums[i]);
+        }
+        Arrays.sort(nums);
+
+        long left = 0, right = total2;
+        while (left <= right) {
+            long mid = (left + right) / 2;
+            cnt2386 = 0;
+            dfs2386(nums, k, n, 0, 0, mid);
+            if (cnt2386 >= k - 1) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        return total - left;
+    }
+
+    public void dfs2386(int[] nums, int k, int n, int i, long t, long limit) {
+        if (i == n || cnt2386 >= k - 1 || t + nums[i] > limit) {
+            return;
+        }
+        cnt2386++;
+        dfs2386(nums, k, n, i + 1, t + nums[i], limit);
+        dfs2386(nums, k, n, i + 1, t, limit);
+    }
+
     //2258. 逃离火灾
     boolean ok;
 

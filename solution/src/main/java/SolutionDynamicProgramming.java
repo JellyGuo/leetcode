@@ -701,6 +701,45 @@ public class SolutionDynamicProgramming {
         return memo[r][c];
     }
 
+    //2312. 卖木头块
+    public long sellingWood(int m, int n, int[][] prices) {
+        Map<Long, Integer> value = new HashMap<>();
+        for (int[] price : prices) {
+            value.put(pairHash(price[0], price[1]), price[2]);
+        }
+
+        long[][] memo = new long[m + 1][n + 1];
+        for (long[] row : memo) {
+            Arrays.fill(row, -1);
+        }
+        return dfs2312(m, n, value, memo);
+    }
+
+    public long dfs2312(int x, int y, Map<Long, Integer> value, long[][] memo) {
+        if (memo[x][y] != -1) {
+            return memo[x][y];
+        }
+
+        long key = pairHash(x, y);
+        long ret = value.containsKey(key) ? value.get(key) : 0;
+        if (x > 1) {
+            for (int i = 1; i < x; i++) {
+                ret = Math.max(ret, dfs2312(i, y, value, memo) + dfs2312(x - i, y, value, memo));
+            }
+        }
+        if (y > 1) {
+            for (int j = 1; j < y; j++) {
+                ret = Math.max(ret, dfs2312(x, j, value, memo) + dfs2312(x, y - j, value, memo));
+            }
+        }
+        memo[x][y] = ret;
+        return ret;
+    }
+
+    public long pairHash(int x, int y) {
+        return (long) x << 16 ^ y;
+    }
+
     //6196. 将字符串分割成值不超过 K 的子字符串  贪心算法搜minimumPartitionGreedy
     // TLE
     int ans6196 = Integer.MAX_VALUE;
@@ -2605,6 +2644,124 @@ public class SolutionDynamicProgramming {
         return max;
     }
 
+    //514. 自由之路
+    public int findRotateSteps(String ring, String key) {
+        int n = ring.length(), m = key.length();
+        List<Integer>[] pos = new List[26];
+        for (int i = 0; i < 26; ++i) {
+            pos[i] = new ArrayList<Integer>();
+        }
+        for (int i = 0; i < n; ++i) {
+            pos[ring.charAt(i) - 'a'].add(i);
+        }
+        int[][] dp = new int[m][n];
+        for (int i = 0; i < m; ++i) {
+            Arrays.fill(dp[i], 0x3f3f3f);
+        }
+        for (int i : pos[key.charAt(0) - 'a']) {
+            dp[0][i] = Math.min(i, n - i) + 1;
+        }
+        for (int i = 1; i < m; ++i) {
+            for (int j : pos[key.charAt(i) - 'a']) {
+                for (int k : pos[key.charAt(i - 1) - 'a']) {
+                    dp[i][j] = Math.min(dp[i][j], dp[i - 1][k] + Math.min(Math.abs(j - k), n - Math.abs(j - k)) + 1);
+                }
+            }
+        }
+        return Arrays.stream(dp[m - 1]).min().getAsInt();
+    }
+
+    //1696. 跳跃游戏 VI
+    public int maxResult(int[] nums, int k) {
+        int n = nums.length;
+        int[] dp = new int[n];
+        dp[0] = nums[0];
+        Deque<Integer> queue = new ArrayDeque<>();
+        queue.offerLast(0);
+        for (int i = 1; i < n; i++) {
+            while (queue.peekFirst() < i - k) {
+                queue.pollFirst();
+            }
+            dp[i] = dp[queue.peekFirst()] + nums[i];
+            while (!queue.isEmpty() && dp[queue.peekLast()] <= dp[i]) {
+                queue.pollLast();
+            }
+            queue.offerLast(i);
+        }
+        return dp[n - 1];
+    }
+
+    //1690. 石子游戏 VII
+    //https://leetcode.cn/problems/stone-game-vii/solutions/2629582/jiao-ni-yi-bu-bu-si-kao-dong-tai-gui-hua-zktx/
+    // 每一步都是最大化先手得分-后手得分 => A先手时 子问题最大化B'-A'=> A=ptA+A',B = B' => A-B=ptA+A'-B'=ptA-(B'-A')
+    //dp[i][j] 从i到j选哪个可以最大化得分
+    public int stoneGameVII(int[] stones) {
+        int n = stones.length;
+        int[] sum = new int[n + 1];
+        int[][] dp = new int[n][n];
+
+        for (int i = 0; i < n; i++) {
+            sum[i + 1] = sum[i] + stones[i];
+        }
+        for (int i = n - 2; i >= 0; i--) {
+            for (int j = i + 1; j < n; j++) {
+                dp[i][j] = Math.max(sum[j + 1] - sum[i + 1] - dp[i + 1][j], sum[j] - sum[i] - dp[i][j - 1]);
+            }
+        }
+
+        return dp[0][n - 1];
+    }
+
+    //887. 鸡蛋掉落
+    public int superEggDrop(int k, int n) {
+        int remainTestCount = 1;
+        // 当扔f次覆盖的楼层数覆盖到n时跳出
+        while (getConfirmFloor(remainTestCount, k) < n) {
+            remainTestCount++;
+        }
+        return remainTestCount;
+    }
+
+    //扔remainTestCount次、eggCount个鸡蛋可以确定的楼层数
+    private int getConfirmFloor(int remainTestCount, int eggCount) {
+        if (remainTestCount == 1 || eggCount == 1) {
+            //如果remainTestCount == 1你只能移动一次，则你只能确定第一楼是否，也就是说鸡蛋只能放在第一楼，如果碎了，则F == 0，如果鸡蛋没碎，则F == 1
+            //如果eggsCount == 1鸡蛋数为1，它碎了你就没有鸡蛋了，为了保险，你只能从第一楼开始逐渐往上测试，如果第一楼碎了（同上），第一楼没碎继续测第i楼，蛋式你不可能无限制的测试，因为你只能测试remainTestCount次
+            return remainTestCount;
+        }
+        return 1 + getConfirmFloor(remainTestCount - 1, eggCount - 1) + getConfirmFloor(remainTestCount - 1, eggCount);
+    }
+
+    public int superEggDrop2(int k, int n) {
+        Map<Integer, Integer> memo = new HashMap<>();
+        return dp(k, n, memo);
+    }
+
+    public int dp(int k, int n, Map<Integer, Integer> memo) {
+        if (memo.containsKey(n * 100 + k)) return memo.get(n * 100 + k);
+        // 0层楼只能是0
+        if (n == 0) return 0;
+        // 只能扔1次，从1楼扔，只能确定1和0
+        if (k == 1) return n;
+        int l = 1, r = n;
+        int ans = Integer.MAX_VALUE;
+        while (l <= r) {
+            int mid = l + r >> 1;
+            int broken = dp(k - 1, mid - 1, memo);
+            int not_broken = dp(k, n - mid, memo);
+            ans = Math.min(Math.max(broken, not_broken) + 1, ans);
+            if (broken <= not_broken) {
+                l = mid + 1;
+                ans = Math.min(ans, not_broken + 1);
+            } else {
+                r = mid - 1;
+                ans = Math.min(ans, broken + 1);
+            }
+        }
+        memo.put(n * 100 + k, ans);
+        return ans;
+    }
+
     // 764 最大加号标志
     public int orderOfLargestPlusSign(int n, int[][] mines) {
         int[][] dp = new int[n][n];
@@ -3338,6 +3495,18 @@ public class SolutionDynamicProgramming {
         return ans;
     }
 
+    //1997. 访问完所有房间的第一天
+    public int firstDayBeenInAllRooms(int[] nextVisit) {
+        final long MOD = 1_000_000_007;
+        int n = nextVisit.length;
+        long[] s = new long[n];
+        for (int i = 0; i < n - 1; i++) {
+            int j = nextVisit[i];
+            s[i + 1] = (s[i] * 2 - s[j] + 2 + MOD) % MOD; // + MOD 避免算出负数
+        }
+        return (int) s[n - 1];
+    }
+
     //1824. 最少侧跳次数
     public int minSideJumps(int[] obstacles) {
         int n = obstacles.length - 1;
@@ -3362,6 +3531,37 @@ public class SolutionDynamicProgramming {
             }
         }
         return Math.min(dp[n][0], Math.min(dp[n][1], dp[n][2]));
+    }
+
+    //1883. 准时抵达会议现场的最小跳过休息次数
+    // 可忽略误差
+    static final double EPS = 1e-7;
+    // 极大值
+    static final double INFTY = 1e20;
+
+    public int minSkips(int[] dist, int speed, int hoursBefore) {
+        int n = dist.length;
+        double[][] f = new double[n + 1][n + 1];
+        for (int i = 0; i <= n; ++i) {
+            Arrays.fill(f[i], INFTY);
+        }
+        f[0][0] = 0;
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 0; j <= i; ++j) {
+                if (j != i) {
+                    f[i][j] = Math.min(f[i][j], Math.ceil(f[i - 1][j] + (double) dist[i - 1] / speed - EPS));
+                }
+                if (j != 0) {
+                    f[i][j] = Math.min(f[i][j], f[i - 1][j - 1] + (double) dist[i - 1] / speed);
+                }
+            }
+        }
+        for (int j = 0; j <= n; ++j) {
+            if (f[n][j] < hoursBefore + EPS) {
+                return j;
+            }
+        }
+        return -1;
     }
 
 
@@ -3631,6 +3831,28 @@ public class SolutionDynamicProgramming {
         int ans = 0;
         for (int i = 0; i < n; ++ i) ans = (ans + f[((1 << n) - 1) ^ (1 << i)][i]) % MOD;
         return ans;
+    }
+
+    //2305. 公平分发饼干
+    public int distributeCookies(int[] cs, int k) {
+        int n = cs.length, mask = 1 << n, INF = 0x3f3f3f3f;
+        int[] g = new int[mask];
+        for (int s = 0; s < mask; s++) {
+            int t = 0;
+            for (int i = 0; i < n; i++) t += ((s >> i) & 1) == 1 ? cs[i] : 0;
+            g[s] = t;
+        }
+        int[][] f = new int[k + 10][mask];
+        for (int i = 0; i <= k; i++) Arrays.fill(f[i], INF);
+        f[0][0] = 0;
+        for (int i = 1; i <= k; i++) {
+            for (int s = 0; s < mask; s++) {
+                for (int p = s; p != 0; p = (p - 1) & s) {
+                    f[i][s] = Math.min(f[i][s], Math.max(f[i - 1][s - p], g[p]));
+                }
+            }
+        }
+        return f[k][mask - 1];
     }
 
     //1659. 最大化网格幸福感
@@ -7689,6 +7911,58 @@ public class SolutionDynamicProgramming {
             ret++;
         }
         return ret;
+    }
+    //2581. 统计可能的树根数目
+    int cnt = 0, res2581 = 0;
+    int k;
+    List<Integer>[] g2581;
+    Set<Long> set;
+
+    public int rootCount(int[][] edges, int[][] guesses, int k) {
+        this.k = k;
+        int n = edges.length + 1;
+        g2581 = new List[n];
+        for (int i = 0; i < n; i++) {
+            g2581[i] = new ArrayList<Integer>();
+        }
+        set = new HashSet<Long>();
+        for (int[] v : edges) {
+            g2581[v[0]].add(v[1]);
+            g2581[v[1]].add(v[0]);
+        }
+        for (int[] v : guesses) {
+            set.add(h(v[0], v[1]));
+        }
+
+        dfs(0, -1);
+        redfs(0, -1, cnt);
+        return res2581;
+    }
+
+    public long h(int x, int y) {
+        return (long) x << 20 | y;
+    }
+
+    public void dfs2581(int x, int fat) {
+        for (int y : g2581[x]) {
+            if (y == fat) {
+                continue;
+            }
+            cnt += set.contains(h(x, y)) ? 1 : 0;
+            dfs2581(y, x);
+        }
+    }
+
+    public void redfs(int x, int fat, int cnt) {
+        if (cnt >= k) {
+            res2581++;
+        }
+        for (int y : g2581[x]) {
+            if (y == fat) {
+                continue;
+            }
+            redfs(y, x, cnt - (set.contains(h(x, y)) ? 1 : 0) + (set.contains(h(y, x)) ? 1 : 0));
+        }
     }
 
     //2538. 最大价值和与最小价值和的差值

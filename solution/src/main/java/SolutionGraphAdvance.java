@@ -48,6 +48,39 @@ public class SolutionGraphAdvance {
         return ans;
     }
 
+    //2368. 受限条件下可到达节点的数目
+    public int reachableNodes(int n, int[][] edges, int[] restricted) {
+        Map<Integer,List<Integer>> map = new HashMap<>();
+        for(int[] edge:edges){
+            List<Integer> list = map.getOrDefault(edge[0],new ArrayList<>());
+            list.add(edge[1]);
+            map.put(edge[0],list);
+
+            List<Integer> list2 = map.getOrDefault(edge[1],new ArrayList<>());
+            list2.add(edge[0]);
+            map.put(edge[1],list2);
+        }
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.offer(0);
+        boolean[] visited = new boolean[n];
+        visited[0] = true;
+        for(int r:restricted){
+            visited[r] = true;
+        }
+        int cnt=1;
+        while(!queue.isEmpty()){
+            int cur = queue.poll();
+            for(int next:map.getOrDefault(cur,new ArrayList<>())){
+                if(!visited[next]){
+                    visited[next] = true;
+                    queue.offer(next);
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
     //1162 地图分析
 //你现在手里有一份大小为 n x n 的 网格 grid，上面的每个 单元格 都用 0 和 1 标记好了。其中 0 代表海洋，1 代表陆地。
 // 请你找出一个海洋单元格，这个海洋单元格到离它最近的陆地单元格的距离是最大的，并返回该距离。如果网格上只有陆地或者海洋，请返回 -1。
@@ -735,6 +768,46 @@ public class SolutionGraphAdvance {
                 dis[y][k] = Math.min(dis[y][k], dis[x][k] + wt);
             }
         }
+    }
+
+    //1976. 到达目的地的方案数
+    public int countPaths(int n, int[][] roads) {
+        int mod = (int) 1e9 + 7;
+        Map<Integer, List<int[]>> map = new HashMap<>();
+        for (int[] road : roads) {
+            List<int[]> ls = map.getOrDefault(road[0], new ArrayList<>());
+            ls.add(new int[]{road[1], road[2]});
+            map.put(road[0], ls);
+
+            List<int[]> ls2 = map.getOrDefault(road[1], new ArrayList<>());
+            ls2.add(new int[]{road[0], road[2]});
+            map.put(road[1], ls2);
+        }
+        PriorityQueue<long[]> pq = new PriorityQueue<>(Comparator.comparingLong(o -> o[1]));
+        pq.offer(new long[]{0, 0});
+        long[] dist = new long[n];
+        Arrays.fill(dist, Long.MAX_VALUE);
+        dist[0] = 0;
+        int[] ways = new int[n];
+        ways[0] = 1;
+        while (!pq.isEmpty()) {
+            long[] cell = pq.poll();
+            int x = (int) cell[0];
+            long d = cell[1];
+            List<int[]> neighbors = map.getOrDefault(x, new ArrayList<>());
+            for (int[] neighbor : neighbors) {
+                int y = neighbor[0], t = neighbor[1];
+                long nd = t + d;
+                if (nd < dist[y]) {
+                    dist[y] = nd;
+                    ways[y] = ways[x];
+                    pq.offer(new long[]{y, nd});
+                } else if (nd == dist[y]) {
+                    ways[y] = (int) ((long) ways[x] + (long) ways[y]) % mod;
+                }
+            }
+        }
+        return ways[n - 1];
     }
     // endregion-------------------------------------------------------------------------------------------------------
     // region -------------------------------------------------------最小生成树----------------------------------------------
