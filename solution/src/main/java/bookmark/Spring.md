@@ -1,4 +1,62 @@
-### SpringBoot 相关
+## Spring Cloud 解决方案
+
+把微服务之间繁杂的问题交给通用组件来处理
+| 功能             | Alibaba  | SpringCloud             | 其他              |K8S|
+| ---------------- | -------- | ----------------------- | ----------------- |---|
+| 服务注册服务发现 | Nacos    | SpringCloudEureka       | zookeeper |k8s Service|
+| API网关          | -        | SpringCloudGateway      | SpringCloudZuul |Istio-Ingress|
+| 配置中心         | Nacos  | SpringCloudConfig  | Apollo（Ctrip）|ConfigMap & Secrets|
+| 安全认证         | -        | SpringCloudSecurity （OAuth2） |-|-|
+| 熔断限流         | Sentinel | SpringCloudHystris      | -| Istio-sidecar|
+| 服务调用         | Dubbo    | SpringCloudFeign | OpenFeign  | k8s service|
+| 负载均衡         | -  | SpringCloudLoadBalancer | SpringCloudRibbon |Istio|
+| 消息             | RocketMQ | RabbitMQ | Kafka|- |
+| 日志监控        | - |-  | ELK(ES/LogStash/Kibana)| - |
+| 调用链             |-  | SpringCloud Zipkin/Pinpoint  | Cat（Dianping） |-|
+
+
+**Cat**: Zipkin最早是Twitter消化Google Dapper论文基础上研发，eBay相同思路但出现的更早的产品CAL （和DAL、Messaging和SOA被称为eBay四大神器）
+eBay的吴其敏到点评后，吸收CAL设计，开发了CAT
+解决微服务架构产生的各种问题
+### SDK形态
+侵入式且语言相关
+
+#### Netflix OSS: Spring Cloud Netflix
+Eureka：服务发现/注册中心
+Hystrix：熔断、限流、降级
+Zuul: 网关
+Feign：服务调用
+Ribbon：负载均衡 运行在网关、服务调用的地方
+#### Spring Cloud Alibaba
+Nacos：服务注册/发现
+Dubbo RPC：服务调用
+Dubbo LB：负载均衡
+Nacos：配置中心
+Sentinel: 熔断
+#### Spring Cloud 官方
+Consul 服务发现注册
+OpenFeign/RestTemplate
+Loadbalancer
+Spring Cloud Gateway
+Spring Cloud Config
+
+#### Spring Cloud Azure/AWS/GCP
+### 服务网格形态
+分侵入式+语言无关
+#### K8S 生态
+etcd：kv存储，可用于服务注册/发现
+Istio：流量管理 =（zuul+eureka+feign+hystrix+ribbon）
+- 网关 ingress
+- 服务发现、负载均衡
+- 请求路由
+- 服务调用
+
+#### 过渡方案
+SpringBoot+K8S
+
+Spring Cloud Kubernetes：作用是把kubernetes中的服务模型映射到Spring Cloud的服务模型中，以使用Spring Cloud的那些原生sdk在kubernetes中实现服务治理。具体来说，就是把k8s中的services对应到Spring Cloud中的services，k8s中的endpoints对应到Spring Cloud的instances。这样通过标准的Spring Cloud api就可以对接k8s的服务治理体系。
+
+## SpringBoot 相关
 >在 Spring AOP 中，有 3 个常用的概念，Advices 、 Pointcut 、 Advisor ，解释如下：
 Advices ：表示一个 method 执行前或执行后的动作。
 Pointcut ：表示根据 method 的名字或者正则表达式等方式去拦截一个 method 。
@@ -12,7 +70,7 @@ Advisor ： Advice 和 Pointcut 组成的独立的单元，并且能够传给 pr
 >https://juejin.cn/post/7236932516740579383
 
 1. Filter: 可以获得Http原始的请求和响应信息，但是拿不到响应方法的信息。鉴权、数据校验、日志记录。按注册顺序执行。
-    1. 实现Filter接口，重写doFilter方法
+   1. 实现Filter接口，重写doFilter方法
     ```java
     public class MyFilter implements Filter { 
         @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException { 
@@ -25,7 +83,7 @@ Advisor ： Advice 和 Pointcut 组成的独立的单元，并且能够传给 pr
         // 继续执行请求处理 } 
         // 可以重写init和destroy方法进行初始化和销毁操作 }
     ```
-    2. 注册过滤器：可以创建配置类继承WebMvcConfigurerAdapter类，重写addFilters方法来注册过滤器
+   2. 注册过滤器：可以创建配置类继承WebMvcConfigurerAdapter类，重写addFilters方法来注册过滤器
     ```java
     public class MyFilterConfig extends WebMvcConfigurerAdapter { 
     @Bean     
@@ -41,7 +99,7 @@ Advisor ： Advice 和 Pointcut 组成的独立的单元，并且能够传给 pr
     }
     ```
 2. Interceptor: 可以获得Http原始的请求和响应信息，也拿得到响应方法的信息，但是拿不到方法响应中的参数的值。常用来：验证登录、预置数据、统计执行效率
-    1. HandlerInterceptor：SpringMVC的拦截器，拦截请求地址，优先于MethodInterceptor
+   1. HandlerInterceptor：SpringMVC的拦截器，拦截请求地址，优先于MethodInterceptor
     ```java
     public class MyInterceptor implements HandlerInterceptor { 
     @Override public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception { 
@@ -52,7 +110,7 @@ Advisor ： Advice 和 Pointcut 组成的独立的单元，并且能够传给 pr
     return true; // 返回true继续执行请求处理，返回false则不执行请求处理 } 
     // 可以重写 afterCompletion 和 postHandle 方法进行请求处理后的操作 }
     ```
-    2. MethodInterceptor：SpringAOP，拦截controller中的方法
+   2. MethodInterceptor：SpringAOP，拦截controller中的方法
 3. ControllerAdvice/RestControllerAdvice：主要用于全局的异常拦截和处理
 4. Aspect：切面，主要是进行公共方法的拦截，可以拿得到方法响应中参数的值，但是拿不到原始的Http请求和相对应响应的方法,属于方法级别的拦截器。
 
@@ -212,24 +270,58 @@ RememberMeAuthenticationFilter
 
 
 1. AuthenticationFilter
-    - 继承AbstractAuthenticationProcessingFilter
-    - SpringSecurity提供 UsernamePasswordAuthenticationFilter 表单登录 和 BasicAuthenticationFilter httpBasic方式登录，可以自定义Filter，都需要继承继承AbstractAuthenticationProcessingFilter
-    - 扩展：Security默认执行的过滤器有`SecurityContextPersistenceFilter`->`UsernamePasswordAuthenticationFilter`
-    - 获取request信息， 生成未认证的AuthenticationToken，调用AuthenticationManager的authenticate()方法
-    - 拿到Manager返回后的Authentication，放到SecurityContextHolder （threadlocal实现）
+   - 继承AbstractAuthenticationProcessingFilter
+   - SpringSecurity提供 UsernamePasswordAuthenticationFilter 表单登录 和 BasicAuthenticationFilter httpBasic方式登录，可以自定义Filter，都需要继承继承AbstractAuthenticationProcessingFilter
+   - 扩展：Security默认执行的过滤器有`SecurityContextPersistenceFilter`->`UsernamePasswordAuthenticationFilter`
+   - 获取request信息， 生成未认证的AuthenticationToken，调用AuthenticationManager的authenticate()方法
+   - 拿到Manager返回后的Authentication，放到SecurityContextHolder （threadlocal实现）
 2. AuthenticationManager -> 传入未认证Authentication返回认证后的Authentication
-    - 默认ProvideManager，维护了AuthenticationProvider列表
-    - 列表有：RememberMe（自动登录）、Remote（oauth）、Dao（查默认库）
-    - authenticate() 实际调用provider列表的authenticate()来认证,有一个通过就跳出
-    - 跳出后copy一份返回的Authentication返回给上层的filter
+   - 默认ProvideManager，维护了AuthenticationProvider列表
+   - 列表有：RememberMe（自动登录）、Remote（oauth）、Dao（查默认库）
+   - authenticate() 实际调用provider列表的authenticate()来认证,有一个通过就跳出
+   - 跳出后copy一份返回的Authentication返回给上层的filter
 3. AuthenticationProvider ->（认证） UserDetails（一般查询数据库获取） ->（认证通过） 生成认证成功的AuthenticationToken ->（存放） SecurityContextHolder
-    - AbstractUserDetailsAuthenticationProvider默认daoprovider的实现是继承该类来比对
-    - authenticate() 获取 req中未认证Authentication里面的参数
-    - 调用UserDetailsService获取UserDetails
-    - 比对成功，把UserDetails里的信息放到AbstractAuthenticationToken，set进重新包装一个Authentication返回
+   - AbstractUserDetailsAuthenticationProvider默认daoprovider的实现是继承该类来比对
+   - authenticate() 获取 req中未认证Authentication里面的参数
+   - 调用UserDetailsService获取UserDetails
+   - 比对成功，把UserDetails里的信息放到AbstractAuthenticationToken，set进重新包装一个Authentication返回
 4. 通过WebSecurityConfigurerAdapter配置拦截路由
 
 #### 自定义认证登录流程
+
+1. **自定义Filter继承AbstractAuthenticationProcessingFilter**：
+   这个会被加到filterChain中,是整个自定义认证的入口
+   注：不要用@Component，否则会被spring自动装载，而是通过new的方式addBefore/addAfter到chain中，否则会有忽略url不匹配问题
+   >https://stackoverflow.com/questions/39152803/spring-websecurity-ignoring-doesnt-ignore-custom-filter
+2. **自定义AuthenticationToken继承AbstractAuthenticationToken**：
+   用于保存是否已认证（authenticated）、权限列表（authorities）、信用凭证字段（principal），最后在FilterSecurityInterceptor会校验url配置的权限与该token的权限是否匹配
+3. **自定义AuthenticationProvider继承AuthenticationProvider**：
+   该provide用于执行具体认证逻辑，例如手机验证码、用户名密码等，认证成功返回新认证过的token，失败抛出AuthenticationException
+4. 自定义entrypoint，用于处理认证失败后的逻辑
+5. **自定义configuer，继承SecurityConfigurerAdapter<DefaultSecurityFilterChain,
+   HttpSecurity>**：
+   用于配置http，在这里new Filter，filter里面setAuthenticationManager、handler、entrypoint，http加入new的provider和filter
+
+
+
+
+具体流程：1中的Filter会新建一个未认证的authentication，调用``this.getAuthenticationManager().authenticate(authentication)``返回一个认证过后authentication
+1中this.getAuthenticationManager()默认的实现是ProviderManager，会遍历所有providers，判断3中自定义的provider的supports方法支不支持token.class
+对于抛出的异常，可以自行捕获执行entrypoint
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 > Filter指定拦截路由、AuthenticationManager、AuthenticationSuccessHandler
 > Provider 指定UserDetailService
 > SecurityConfigurerAdapter把provider加到通用manager的列表中，然后把filter加到过滤链中
@@ -427,7 +519,7 @@ RememberMeAuthenticationFilter
         - 实例化AuthenticationFilter和AuthenticationProvider
         - 将AuthenticationFilter和AuthenticationProvider添加到spring security中。
 
-### 授权过程
+### 首次认证后续认证流程
 **1. 基于session**
 如何在 request 之间共享 SecurityContext？
 既然 SecurityContext 是存放在 ThreadLocal 中的，而且在每次权限鉴定的时候，都是从 ThreadLocal 中获取 SecurityContext 中保存的 Authentication。那么既然不同的 request 属于不同的线程，为什么每次都可以从 ThreadLocal 中获取到当前用户对应的 SecurityContext 呢？
@@ -443,7 +535,47 @@ RememberMeAuthenticationFilter
 > SpringSecurity+JWT方案文章
 >https://blog.csdn.net/qq_44709990/article/details/123082560
 
-    1. 新建JwtAuthenticationTokenFilter，configure方法中通过http 加在UsernamePasswordAuthenticationFilter 之前
+1. 新建拦截器：**JwtAuthenticationTokenFilter**，继承**OncePerRequestFilter**
+   *OncePerRequestFilter对于每次请求都会拦截*
+2. 新建**JwtAuthenticationEntryPoint**，继承**AuthenticationEntryPoint**
+   *AuthenticationEntryPoint是**认证失败**的处理类：未登录或者token过期，即抛出**AuthenticationException**异常的捕获处理*
+3. 无需新建JwtAccessDeniedHandler 继承AccessDeniedHandler
+   ***AccessDeniedHandler** 是**权限异常**的处理类，即对AccessDeniedException进行捕获后进入的处理类*
+4. 新建配置类继承**WebSecurityConfigurerAdapter**，配置白名单url，加到**UsernamePasswordAuthenticationFilter**之前
+   ``httpSecurity .addFilterBefore(authenticationTokenFilter,
+   UsernamePasswordAuthenticationFilter.class)``
+
+   ##### 具体如何捕获处理？
+   1. 看各个Filter是否对自己处理的部分有异常捕获，如果有，在catch中调用自身注入的AuthenticationEntryPoint, eg：BasicAuthenticationFilter
+   2. 如果自定义Filter未捕获，而是直接抛出，则会被
+      ExceptionTranslationFilter这个拦截器捕获并处理，ExceptionTranslationFilter是根据WebSecurityConfigurerAdapter中的配置来注入entrypoint和accessdeniedhandler
+      ``httpSecurity.exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)``
+      - 拦截器链主要位于FilterChainProxy的FilterChain中，是一种链式调用，上层（最前面）的filter调用filterChain(req,res)来执行下一个，可以给SecurityContextHolder赋值来传递参数，也可以后面加逻辑，完成对后续过滤器结果的处理
+      - 默认情况下**ExceptionTranslationFilter**过滤器在整个Spring Security过滤器链中排名倒数第二，倒数第一是FilterSecurityInterceptor。在FilterSecurityInterceptor中将会对用户的身份进行校验，如果用户身份不合法，就会抛出异常，抛出的异常刚好就在ExceptionTranslationFilter中处理了
+      - **FilterSecurityInterceptor**中会判断是认证结果校验还是方法权限校验，如果是认证，会获取所有的attribute：即路由规则和对应的属性，eg：/**->permitAll, /healthcheck -> permitAll, anyRequest->authenticated，如果不在permitAll中，获取SecurityContextHolder.getContext().getAuthentication()来判断是否认证成功，否则抛出异常
+   ##### 自定义Filter失败如何处理？
+   1. 如果有登录操作，JwtAuthenticationTokenFilter放到UsernamePasswordAuthenticationFilter之前
+      - 没传token或者token过期，继续执行
+        ``filterChain.doFilter(request, response)``
+        调用后面的UsernamePasswordAuthenticationFilter完成登录
+      - 传了token，认证成功，创建Authentication放到SecurityContextHolder中，后续判断SecurityContextHolder不为空，不会继续调用数据库进行登录
+   2. 如果没有登录操作有以下几种方式处理认证失败
+      1. 写entrypoint，不自行处理，不抛出异常，而是继续执行
+         ``filterChain.doFilter(request, response)``
+         通常后面会跟**AnonymousAuthenticationFilter**,没有Authentication的话会被默认创建匿名用户，匿名用户最终在**FilterSecurityInterceptor**会被校验权限是否够用：对于配置了anonymous和permitAll的够用，如果是authenticated则会抛出异常
+      2. 写entrypoint，Filter内注入entrypoint，**自行捕获异常，调用entrypoint处理**
+      3. 写entrypoint，不自行处理，把**异常抛出，交给ExceptionTranslationFilter处理**，需要**addAfter到ExceptionTranslationFilter后面**
+      4. 不写entrypoint，Filter捕获异常，然后把错误信息放入request的attribute中，**重定向到error处理的controller中处理**
+
+       ```
+       request.setAttribute("jwtFilter.error",new BaseException("JWT 签名错误"));
+       request.getRequestDispatcher("/error/jwtFilter").forward(request,response);`
+       ```
+   **2、3、4方法会有问题：**
+   当需要配置白名单url的时候，**实现OncePerRequestFilter的自定义过滤器不会忽略配置的url，还是会执行过滤器**
+   **现象**：白名单的url请求也会进入JwtAuthenticationTokenFilter
+   **结果**：而这时候肯定认证失败，走失败流程 抛异常交给entrypoint处理或者重定向到error处理器中，等于白名单url按照认证失败处理
+   **解决**：实现oncePerRequestFilter的shouldNotFilter接口，把白名单url hard code
 
 3. 基于OAuth2
 
@@ -458,23 +590,33 @@ RememberMeAuthenticationFilter
 相当于资源服务中的SpringSecurity配置remote模式，请求认证服务来鉴权
 #### 授权模式：
 1. 授权码模式：第三方登录
-2. 简化模式
+2. 简化模式：省略授权码，直接下发给页面端access token
 3. 密码模式
 4. 客户端模式
 #### 具体流程
-第三方服务跳链至授权服务器提供的登录接口，授权服务通过后下发给第三方服务一个授权码，第三方服务再请求授权服务获取token，拿到token后请求资源服务器获取用户资源（资源服务器请求授权服务器验证token）
+**授权码模式**
+>用户请求第三方服务
+->第三方跳链至授权服务器提供的登录接口
+->用户登录，授权服务认证，认证通过后下发给用户浏览器授权码
+-> 用户拿授权码请求第三方(授权码用一次就无效，需要重新申请)
+->第三方拿授权码请求授权服务器获取access token
+->拿到token后请求资源服务器获取用户资源（资源服务器请求授权服务器验证token）
+
+**简化模式**
+> 相对授权码来说的简化，不下发浏览器授权码再通过第三方获取token，而是用户浏览器直接请求获取access token
+
 1. 第三方服务
    请求授权服务器获取token后再请求资源服务
 2. 资源服务
-    - 配置 RemoteTokenServices
+   - 配置 RemoteTokenServices
 3. 授权服务
-    - 配置TokenStore实例：token往哪里存储 （redis、内存、jwt）
-    - 配置子类继承AuthorizationServerConfigurerAdapter
+   - 配置TokenStore实例：token往哪里存储 （redis、内存、jwt）
+   - 配置子类继承AuthorizationServerConfigurerAdapter
 1. AuthorizationServerSecurityConfigurer:配置token端点谁可以访问（资源服务器收到token后会校验token合法性，会访问这个端点）
 2. ClientDetailsServiceConfigurer: 配置客户端信息，校验客户端（第三方平台）
 3. AuthorizationServerEndpointsConfigurer：配置令牌访问端点和令牌服务
-    - tokenServices 令牌存储
-    - AuthorizationCodeServices 授权码存储
+   - tokenServices 令牌存储
+   - AuthorizationCodeServices 授权码存储
 #### OAuth2+JWT
 **之前模式存在问题：**
 资源服务器请求授权服务来校验token，高并发清情况下，授权服务是瓶颈
@@ -506,6 +648,63 @@ RememberMeAuthenticationFilter
 *         StandardManager 类是tomcat容器里默认的session管理实现类，它会将session的信息存储到web容器所在服务器的内存里。
 *         PersistentManagerBase也是继承ManagerBase类，它是所有持久化存储session信息的基类，PersistentManager继承了PersistentManagerBase，但是这个类只是多了一个静态变量和一个getName方法，目前看来意义不大，对于持久化存储session，tomcat还提供了StoreBase的抽象类，它是所有持久化存储session的基类，另外tomcat还给出了文件存储FileStore和数据存储JDBCStore两个实现。
 *         session是解决http协议无状态问题的服务端解决方案，它能让客户端和服务端一系列交互动作变成一个完整的事务，能使网站变成一个真正意义上的软件
+
+#### 授权
+> https://juejin.cn/post/7312273015873011753?from=search-suggest#springsecurity__JWT__64
+
+
+|  |  |
+| --- | --- |
+| FilterSecurityInterceptor | 是一个方法级的权限过滤器，基本位于过滤链的最底部 |
+| FilterInvocationSecurityMetadataSource |获取某个受保护的安全对象object的所需要的权限信息,是一组ConfigAttribute对象的集合. |
+| AccessDecisionManagerHandler | 访问决策管理器 |
+
+##### 注解权限控制
+```java
+//角色认证 匹配的字符串需要添加前缀“ROLE_“ 不支持Spring 表达式语言
+@Secured({"ROLE_normal","ROLE_admin"})
+
+// 基于权限认证 拥有normal或者admin角色的用户都可以方法helloUser()方法 支持Spring 表达式语言 // 自动拼接ROLE_.要求数据库对应角色也具有ROLE_前缀
+@PreAuthorize("hasAnyRole('normal','admin')")
+
+//@PostAuthorize 注解使用并不多，在方法执行后再进行权限验证，适合验证带有返回值的权限
+@PostAuthorize(" returnObject!=null && returnObject.username == authentication.name")
+```
+##### 自定义权限检验注解
+
+```java
+@Component("exp")
+public class SGExpressionRoot { public boolean hasAuthority(String authority){ 
+//获取当前用户的权限 
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication(); 
+// 这里的对象已经经过security过滤器链.认证过滤器已在SecurityContextHolder存储用户信息 
+LoginUser loginUser = (LoginUser) authentication.getPrincipal(); List<String> permissions = loginUser.getPermissions();
+//判断用户权限集合中是否存在authority 
+return permissions.contains(authority); 
+}
+}
+@RequestMapping("/hello") @PreAuthorize("@exp.hasAuthority('system:dept:list')") public String hello(){ return "hello"; }
+
+```
+#### 处理器
+
+- 在SpringSecurity中，如果我们在认证或者授权的过程中出现了异常会被ExceptionTranslationFilter捕获到。在
+  ExceptionTranslationFilter中会去判断是认证失败还是授权失败出现的异常。
+
+- 如果是认证过程中出现的异常会被封装成AuthenticationException然后调用AuthenticationEntryPoint对象的方法去进行异常处理。
+
+- 如果是授权过程中出现的异常会被封装成AccessDeniedException:然后调用*AccessDeniedHandler**对象的方法去进行异常处理。
+
+- 所以如果我们需要自定义异常处理，我们只需要自定义AuthenticationEntryPoint和AccessDeniedHandler然后配置SpringSecurity即可。
+
+自定义处理器可实现以下接口,并注入容器在SecurityConfig中配置.
+
+- AuthenticationEntryPoint 认证失败异常处接口
+- AccessDeniedHandler 授权失败异常处理接口
+- AuthenticationSuccessHandler 认证成功处理接口
+- AuthenticationFailureHandler 认证失败处理接口
+- LogoutSuccessHandler 登出成功接口
+
 
 #### 扩展：
 **1、会话cookie和持久cookie的区别**
@@ -805,6 +1004,29 @@ public void dltListen(String input) {
 logger.info("Received from DLT: " + input);
 }
 ```
+
+### 异步调用、编排框架
+
+* Netflix的RxJava
+* Spring Reactor
+  Reactor 框架是 Pivotal 基于 Reactive Programming 思想实现的。它符合 Reactive Streams 规范 (Reactive Streams 是由 Netflix、TypeSafe、Pivotal 等公司发起的) 的一项技术。
+* TypeSafe公司的Akka
+* Vert.x
+
+### 全链路追踪
+
+* Google Dapper
+* eBay的CAL
+* 美团点评 Cat
+
+### 上下文传递
+
+* ThreadLocal：当前线程
+* InheritableThreadLocals：父子线程，子线程拷贝父线程中的内容
+* TransmittableThreadLocal：alibaba开源项目，解决线程池中的线程与父线程的上下文传递
+* MDC：slf4j的组件，实际还是ThreadLocal实现
+
+
 ### 邮件/短信/公众号推送
 #### 邮件
 >https://blog.csdn.net/qq_44709990/article/details/123478866
@@ -875,3 +1097,4 @@ JobExecutionContext：
 在集群环境下，Quartz 集群中的每个节点是一个独立的 Quartz 应用，没有负责集中管理的节点，而是通过数据库表来感知另一个应用，利用**数据库锁**的方式来实现集群环境下进行并发控制，每个任务当前运行的有效节点有且只有一个
 
 ### Prometheus 监控中心
+

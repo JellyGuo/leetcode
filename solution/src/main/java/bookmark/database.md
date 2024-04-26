@@ -299,47 +299,161 @@ LSM树会将所有的数据插入、修改、删除等操作记录(注意是操�
         2. 此时会从L1中选择至少一个文件，然后把它跟L2有交集的部分(非常关键)进行合并。生成的文件会放在L2
         3. 如果L2合并后的结果仍旧超出L5的阈值大小，需要重复之前的操作 - 选至少一个文件然后把它合并到下一层；多个不相干的合并是可以并发进行的
      3. leveled策略相较于size-tiered策略来说，每层内key是不会重复的，即使是最坏的情况，除开最底层外，其余层都是重复key，按照相邻层大小比例为10来算，冗余占比也很小。因此空间放大问题得到缓解。但是写放大问题会更加突出。举一个最坏场景，如果LevelN层某个SSTable的key的范围跨度非常大，覆盖了LevelN+1层所有key的范围，那么进行Compact时将涉及LevelN+1层的全部数据。
-## NoSql：
-### Cassandra (AWS DynamoDB)
+
+## Shared Nothing/Shared Disk/Shared Storage
+> https://zhuanlan.zhihu.com/p/32924680
+> https://www.zhihu.com/question/63987114
+### Shared Disk
+- Oracle的RAC集群，**AWS Aurora** (mysql on ebs)、PolarDB
+- 读写节点只有1个
+- HBase：共享一个HDFS，跨节点复制通过HDFS实现
+
+aurora多个存储节点之间共享的是redo日志，然后每个节点都独立地通过redo日志进行数据的复制，每个节点都有自己的数据库，gossip系统保证了任意时刻每个节点的redo日志是完全相同的，从数据库文件的角度上来看，其实每个节点之间存在差异的（当然，每个存储节点提供给计算节点的数据应该会保证是相同的吧）
+aurora的存储层跟计算无法完全分离，cache实际上offload到了存储层，(存储节点具有将redolog转换为innodb page的能力)从这个角度上看，aurora与 mysql on ebs 主要的区别在于cache的一致性，page页如果只是从在文件系统层支持了同步，相当于vcl推进了cpl并没有推进。
+### Shared Nothing
+- MySQL分表分库+大部分NoSQL，Spanner为代表的TiDB （Ti Server层）
+- 解决扩展性问题
+- 数据复制和一致性：
+  1. 最终一致性：简单主从复制
+  2. 强一致性的数据复制协议：zookeeper、etcd轻量级分布式存储框架
+### Shared Storage
+- 目的为了存储计算分离：NoSQL一般不存在跨sharding计算，NewSQL、OLAP数仓要支持跨Sharding
+- 多个无状态的计算节点，共享一个有状态的分布式存储引擎，这就是所谓的share storage。
+
+
+## Amazon Aurora 和 阿里云 Polar DB-X
+
+通过共享存储解决扩展问题，本质是可扩展存储的单机MySQL，具体搜两者架构区别
+> 赛道玩家：https://developer.aliyun.com/article/720563
+Aurora ：计算节点垂直扩展，存储节点可以水平扩展
+
+## NewSQL
+
+背景：MySql单机在500w数据量时会有性能瓶颈，大多通过分库分表、读写分离方式解决：
+1. 在MyBatis或JPA之上使用AOP或者拦截器，指定分区查询
+2. 在JDBC驱动层实现，分库分表路由维护在内存，重写DataSource、Connection、Statment、Resultset实现
+3. 利用中间件Proxy模式，ShardingSphere
+
+国产数据库，基于Google Spanner/F1 论文设计的开源分布式数据库
+国外类似产品有：cockroachDB
+
+分布式数据库从设计根源解决：**TiDB**、**Oceanbase** （LSMTree）
+**AWS Aurora**原理是数据层共享，但是本质还是单机
+
+### TiDB （PingCAP公司）（细节待补充）
+> https://docs.pingcap.com/zh/tidb/stable/overview
+##### 架构：
+**1. PD Server（Placement Driver）**
+1. 存储集群元信息（某个key存在哪个TiKV节点）
+2. 对TiKV集群继续调度和负载均衡（数据迁移、raft group）
+3. 分配全局唯一且递增的事务ID
+**2. TiDB Server （请求处理层）**
+1. 负责接收SQL请求，解析SQL语句
+2. 与TiKV交互
+**3. TiKV Server （行存储引擎层）**
+1. 每个节点包含多个Region，存储再一个RocksDB实例上
+2. 每个Region存储一个Key Range
+3. Raft协议保证一致性和容灾，读写都leader负责
+4. 副本以Region为单位，不同节点多个Region构成一个RaftGroup
+5. 数据再多个TiKV之间负载均衡由PD调度，也是以Region为单位进行调度
+**4. TiFlash 列存储引擎**
+1. Raft协议，以Region为单位进行数据复制和分散
+2. 低消耗不阻塞TiKV写入的方式，实时复制TiKV集群中的数据，并保证数据实时性与一致性
+#### 特性
+
+1. 一键水平扩容：计算、存储分别扩容
+2. 金融级高可用
+3. 实时HTAP：行、列存储引擎
+4. 云原生
+5. 兼容MySQL
+
+#### 适用场景
+1. 需要高可用、强一致性：金融行业
+2. 海量数据且高并发的OLTP场景
+3. 实时HTAP场景：同一系统内做联机交易处理、实时数据分析等
+4. 数据汇聚、二次加工：比Hadoop简单
+### OceanBase （细节待补充）
+#### 架构：
+**RootServer（一主一备）**
+
+*      管理进群中所有服务器，子表数据分布以及副本管理
+
+**UpdateServer（一主一备）**
+
+* 存储OB系统的增量更新数据
+
+**ChunkServer**
+
+* 存储OB的基线数据
+
+**MergeServer**
+
+* SQL引擎层，解析器、优化器、执行器
+  1. Paxos协议
+  2. 存储层：
+  1. 基线数据、增量数据
+  2. LSMTree索引：增量保存在MemTable，基线保存在SSTable，定期刷盘保存成SSTable，每晚空闲时与基线SSTbale合并
+  3. 多级缓存
+
+# NoSql
+## KV数据库
+
+* Redis
+* LevelDB（Google）
+* RocksDB （Facebook）
+* TiKV （TiDB数据存储层，用的RocksDB）
+
+## 列族数据库（面向列的KV数据库）
+
+简单来说，keyspace：{col1,col2,col3}，每种类型的数据的列组成列族
+rowKey1:{col1,col2}
+rowKey2:{col2,col3}
+
+        ID Last First Bonus
+        1 Doe John 8000
+        2 Smith Jane 4000
+        3 Beck Sam 1000
+- 在面向行的数据库管理系统中，数据将像这样存储：
+  1,Doe,John,8000;2,Smith,Jane,4000;3,Beck,Sam,1000;
+- 在面向列的数据库管理系统中，数据将像这样存储:
+  1,2,3;Doe,Smith,Beck;John,Jane,Sam;8000,4000,1000;
+
+
+### Cassandra (AWS DynamoDB) （架构细节待补充)
 #### 概念
->Cassandra 是一个分区的行存储。行被组织成具有所需主键的表。
->
->分区意味着 Cassandra 可以在应用程序透明的情况下将您的数据分布在多台机器上。Cassandra 将在集群中添加和删除机器时自动重新分区。
->
->行存储意味着像关系数据库一样，Cassandra 按行和列组织数据。
+Cassandra 是一个分区的行存储。行被组织成具有所需主键的表。
+
+分区意味着 Cassandra 可以在应用程序透明的情况下将您的数据分布在多台机器上。Cassandra 将在集群中添加和删除机器时自动重新分区。
+
+行存储意味着像关系数据库一样，Cassandra 按行和列组织数据。
 
 列族，但不是面向列，行分区存储
 #### 特点
-1. dynamo风格分布式节点：
-    - 去中心化，每个节点都可以写数据
-2. 单机效率高：bigtable LSM单机引擎
+- dynamo风格分布式节点：
+  去中心化，每个节点都可以写数据
+- 单机效率高：bigtable LSM单机引擎
     1. 写入数据的时候先写入commit log来保持数据持久化，
     2. 然后写入Memtable（内存表），根据partition key和clustering key排序
     3. 在Memtable排序后写入SSTable（磁盘文件），SSTable包含全部的行数据
     4. 之后后台Compaction线程会合并多个SSTable
-3. 根据partition key路由到不同node，不是传统列式数据库，因为数据根据key hash存储在不同分片上，针对某列的聚合操作十分低效
+- 根据partition key路由到不同node，不是传统列式数据库，因为数据根据key hash存储在不同分片上，针对某列的聚合操作十分低效
     1. 查询时，根据partition key路由到不同node
     2. Memtable和SSTable中过滤partition key和其他条件
-        - SSTable中是压缩文件，需要解压，查询数据多时会OOM
- 
- rowkey1->{column1,column2,column3}
- rowkey2->{column1,column4}
-## Hbase
-## 列式数据库 HBase/Clickouse
-ID Last First Bonus
-1 Doe John 8000
-2 Smith Jane 4000
-3 Beck Sam 1000
-- 在面向行的数据库管理系统中，数据将像这样存储： 
-1,Doe,John,8000;2,Smith,Jane,4000;3,Beck,Sam,1000;
-- 在面向列的数据库管理系统中，数据将像这样存储:
-1,2,3;Doe,Smith,Beck;John,Jane,Sam;8000,4000,1000;
+- SSTable中是压缩文件，需要解压，查询数据多时会OOM
+
+
+
+### HBase
+
+>https://zhuanlan.zhihu.com/p/145551967
+
+HBase 是一个分布式的、多版本、面向列的开源 KV 数据库。运行在 HDFS 的基础上，支持 PB 级别、百万列的数据存储。
 
 #### 数据模型
 1. 在HBase里边，定位一行数据会有一个唯一的值，这个叫做行键(RowKey)
 2. HBase的列（Column）都得归属到列族（Column Family）中。在HBase中用列修饰符（Column Qualifier）来标识每个列。
 3. 在HBase里边，先有列族，后有列。
-{rowkey:1,orderinfo{orderid,money},userinfo{name,age}}
+   {rowkey:1,orderinfo{orderid,money},userinfo{name,age}}
 4. HBase表的每一行中，列的组成都是灵活的，行与行之间的列不需要相同
 5. 修改和删除 都是新增一条数据，根据时间戳取最新
 
@@ -364,8 +478,8 @@ KeyType用来标记是否删除
     - HBase在写数据的时候，会先写到Mem Store，当MemStore超过一定阈值，就会将内存中的数据刷写到硬盘上，形成StoreFile，而StoreFile底层是以HFile的格式保存，HFile是HBase中KeyValue数据的存储格式。
 5. HLog：数据在写到内存mem store时也会同时写到HLog，用于故障恢复；顺序写入，一个regionserver有一个HLog
     - 当一个regionserver挂时，zk通知hmaster，hmaster处理问题regionserver上的hlog文件，根据region中的记录和hlog中的对应关系对hlog进行拆分，并把hlog放到相应的region目录下，region服务器领取到相应的region和hlog之后把hlog上的数据操作重新做一遍,然后memstore缓存,刷新到storefile就可以了。
-**HMaster**
-HMaster会处理 HRegion 的分配或转移。如果我们HRegion的数据量太大的话，HMaster会对拆分后的Region重新分配RegionServer。（如果发现失效的HRegion，也会将失效的HRegion分配到正常的HRegionServer中）HMaster会处理元数据的变更和监控RegionServer的状态
+      **HMaster**
+      HMaster会处理 HRegion 的分配或转移。如果我们HRegion的数据量太大的话，HMaster会对拆分后的Region重新分配RegionServer。（如果发现失效的HRegion，也会将失效的HRegion分配到正常的HRegionServer中）HMaster会处理元数据的变更和监控RegionServer的状态
 
 #### RowKey设计
 1. 分区键，尽量散列
@@ -377,18 +491,123 @@ HMaster会处理 HRegion 的分配或转移。如果我们HRegion的数据量太
 HBase本身是分布式的，读写请求根据rowkey分布到不同region上，但是数据本身没有副本，数据副本是HDFS做的，（不像其他Nebula数据副本在不同分片上）
 regionserver故障靠zookeeper和hmaster来把hlog任务拆分到不同regionserver上
 
-#### clickhouse
-更适合实时分析和查询，HBase更适合海量数据存储和管理（实时读写）
+### ClickHouse（架构细节待补充)
+
+类LSM Tree结构
+
 **适用场景**
+
+更适合实时分析和查询，HBase更适合海量数据存储和管理（实时读写）
+
 1. 读多于写，读大量行少量列
 2. 低频批量写入
 3. 无事务性，数据一致性较低
 
-## 时序数据库 Influxdb
+#### 表引擎
+##### TinyLog
+
+最简单的表引擎，用于将数据存储在磁盘上，每列都存储在单独的压缩文件中，写入时，数据附加到文件末尾.
+
+**缺点**：
+（1）没有并发控制（没有做优化，同时写会数据会损坏，报错）
+（2）不支持索引
+（3）数据存储在磁盘上
+**优点**：
+（1）小表节省空间
+（2）数据写入，只查询，不做增删改操
+
+##### Memory
+
+内存引擎，数据以未压缩的原始形式直接保存在内存中，服务器重启，数据会消失，读写操作不会相互阻塞，不支持索引。 建议上限1亿行的场景。
+**优点**：简单查询下有非常高的性能表现（超过10G/s）
+
+##### Merge
+
+本身不存储数据，但可用于同时从任意多个其他的表中读取数据，读是自动并行的，不支持写入，读取时，那些真正被读取到数据的表的索引（如果有的话）会被占用,默认是本地表，不能跨机器。
+参数：一个数据库名和一个用于匹配表名的正则表达式 创建表：
+>create table t1(id Int8, name String)ENGINE=TinyLog
+create table t2(id Int8, name String)ENGINE=TinyLog
+create table t (id UInt16, name String)ENGINE=Merge(currentDatabase(), ‘^t’)
+
+##### MergeTree
+
+CK中最强大的表引擎MergeTree(合并树)和该系列（*MergeTree）中的其他引擎。
+
+**使用场景**：有巨量数据要插入到表中，高效一批批写入数据片段，并希望这些数据片段在后台按照一定规则合并。相比在插入时不断修改（重写）数据进行存储，会高效很多。
+**优点**：
+（1）数据按主键排序
+（2）可以使用分区（如果指定了主键）
+（3）支持数据副本
+（4）支持数据采样 创建表
+
+**ReplacingMergeTree**
+
+删除具有相同主键的重复项，数据的去重只会在合并的过程中出现，合并会在未知的时间在后台进行，不保证没有重复的数据出现
+
+**SummingMergeTree** 汇总
+**AggregatingMergeTree** 聚合
+**CollapsingMergeTree** 折叠
+**VersionedCollapsingMergeTree** 数据版本
+
+##### Distributed
+
+分布式引擎，本身不存储数据，但可以在多个服务器上进行分布式查询，读是自动并行的，读取时，远程服务器的索引（如果有的话）会被使用
+
+#### 列式存储
+
+每列数据存在一个block中
+
+1. 读取时可以只选择需要的列
+2. 同一列的数据类型相同，数据压缩效率高
+3. 高压缩比，磁盘IO快，cache加载数据多
+
+#### 主键索引有序存储
+
+- 建表时如果未指定primary key，则以order by 的列时主键，在磁盘上连续存储、有序摆放
+
+- 每列数据按照index granularity（8192行）进行划分，每个index granularity的第一行被称作mark行，主键索引存储该mark行对应的primary key 的值
+
+- 查询时，对主键索引进行二分查找
+
+- 所以 ClickHouse 根据主键生成的索引实际上稀疏索引，默认情况下是每隔 8192 行数据才生成一条索引
+
+#### 数据存储结构
+
+https://www.cnblogs.com/traditional/p/15218743.html
+
+
+## 时序数据库
 随时间不断产生的一系列数据，简单说，带时间戳的数据
+
 非CRUD，不支持更新数据、删除单条数据操作
+
+时序数据库相比较Clickhouse来说，写入速度更优
 TSM 类似于LSM
-### 概念
+
+
+### IoT数据的发展
+1. 业务场景：海量设备持续产生运行时数据，数据存储量大、写入吞吐量要求高
+2. 数据特征：
+    - 按时间周期性产生
+    - 数据结构相对固定
+    - 写多读少，无更新，无事务
+    - 数据访问按时间段访问
+    - 热数据访问高
+    - 存储量大
+3. 存储要求：
+   1. 高并发的写入吞吐
+   2. 高效的查询分析：统计某时间段的均值、最大值等
+   3. 低成本的数据存储
+4. 发展阶段：
+   1. 第一阶段：解决监控类业务需求，通常使用RDDTool、Graphite等，缺点：单机容量受限、内嵌监控告警解决方案，业务单一
+   2. 第二阶段：大数据和Hadoop生态发展，基于分布式存储构建时序数据，HBase、Cassandra，解决存储能力能问题；缺点：本质是KV存储，检索、存储压缩效率都不高，对聚合处理支持较弱
+   3. 第三阶段：容器、K8S、微服务发展，时序数据需求越来越高，专门的时序数据库influxdb来解决这些痛点：高效能、低成本，缺点：influxdb只开源了单机版本，高可用的集群模式需要自运维
+   4. 第四阶段：云上时序数据库服务，阿里TSDB、Amazon TimeStream、Azure Timeseires Insight
+
+
+### Influxdb
+
+#### 概念
 **度量 Metric/Measurement**：类似table，一系列同类时序数据的集合
 **标签 Tag**：key-value结构，描述数据源特征，不随时间变化: 设备ID
 **时间戳 Timestamp**：可以写入时指定，或系统自动生成
@@ -396,72 +615,332 @@ TSM 类似于LSM
 **数据点 DataPoint**: 数据源在某个时间产生的某个量测指标值为一个数据点，查询与写入按数据点来作为统计指标
 **时间线 Time Series**: 数据源的某一个指标随时间变化，形成时间线，Metric + Tags + Field 组合确定一条时间线；针对时序数据的计算包括降采样、聚合（sum、count、max、min等）、插值等都基于时间线维度进行；
 
-### 特性
-1. 多写少读
-2. 无更新：可利用时间戳（Timestamp）和时间序列线（Series）完全相同的时序数据记录，是同一条时序数据记录，新插入的时序数据，会覆盖原有的时序数据记录
-3. 不支持单条删除时序数据记录，
-    1. 通过保留策略周期性定时删除
-    2. 通过WHERE条件语句、删除时间序列线、删除表、删除数据库、删除分片（Shard）等方式直接批量删除指定的时序数据记录，**不支持Field，只支持标签和时间戳**
- 4. 不支持join，可以连续查询
- 5. 配合Telegraf监控、Grafana服务做可视化
- 
- ### TSDB存储引擎（Shard）
+#### 特性
+
+随时间不断产生的一系列数据，简单说，带时间戳的数据
+非CRUD，不支持更新数据、删除单条数据操作
+- 特性：
+  1. 多写少读，高并发写入
+  2. 无更新：可利用时间戳（Timestamp）和时间序列线（Series）完全相同的时序数据记录，是同一条时序数据记录，新插入的时序数据，会覆盖原有的时序数据记录
+  3. 不支持单条删除时序数据记录，
+  1. 通过保留策略周期性定时删除
+  2. 通过WHERE条件语句、删除时间序列线、删除表、删除数据库、删除分片（Shard）等方式直接批量删除指定的时序数据记录，不支持Field，只支持标签和时间戳
+  4. 不支持join，可以连续查询
+  5. 配合Telegraf监控、Grafana服务做可视化
+  6. 高压缩比：数据压缩效果好，节省存储成本
+  7. 分布式集群版闭源
+#### 适用场景：
+1. 专注于海量时序数据的高性能读、高性能写、高效存储与实时分析等，在DB-Engines Ranking时序型数据库排行榜上排名第一，广泛应用于DevOps监控、IoT监控、实时分析等场景
+2. 适合无update、delete等OLTP场景
+3. TICK生态：Telegraf、 InfluxDB、Chronograf、Kapacitor，采集、存储、分析、可视化等能力的开源时序中台：Prometheus+InfluxDB+Grafana
+4. 相比OpenTSDB、MongoDB、Graphite、Cassandra等，InfluxDB的性能优势和成本优势明显。
+
+
+#### TSDB存储引擎（Shard）
+
+>https://datamining.blog.csdn.net/article/details/107688423
+
+
 **Shard** 在 InfluxDB 中按照数据的时间戳所在的范围，会去创建不同的 shard，每一个 shard 都有自己的 cache、wal、tsm file 以及 compactor，这样做的目的就是为了可以通过时间来快速定位到要查询数据的相关资源，加速查询的过程，并且也让之后的批量删除数据的操作变得非常简单且高效
 
 在 LSM Tree 中删除数据是通过给指定 key 插入一个删除标记的方式，数据并不立即删除，需要等之后对文件进行压缩合并时才会真正地将数据删除，所以删除大量数据在 LSM Tree 中是一个非常低效的操作。
 
 而在 InfluxDB 中，通过 retention policy 设置数据的保留时间，当检测到一个 shard 中的数据过期后，只需要将这个 shard 的资源释放，相关文件删除即可，这样的做法使得删除过期数据变得非常高效
 
- 一个shard就是编码压缩后的数据真实存储的位置。这种数据被组织成了一个TSM的结构。并且每一个shard属于一个shard group。
- 
+一个shard就是编码压缩后的数据真实存储的位置。这种数据被组织成了一个TSM的结构。并且每一个shard属于一个shard group。
+
 **Retention policy** 描述数据保留多久，数据的副本数量以及shard group 的时间范围
- 
+
 **Shard group**是一个逻辑概念，和retention policy（保留策略）相关，决定一个shard group 有限期多长时间的叫做shard duration
- 
- ### TSM（Time-Structured Merge Tree）
- 
+
+#### TSM（Time-Structured Merge Tree）
+
 TSM存储引擎主要包括四部分：**Cache，WAL，TSM File，Compactor**
- 
- 1. **Cache**: cache 相当于是 LSM Tree 中的 memtable，在内存中是一个简单的 map 结构，这里的 key 为 seriesKey + 分隔符 + filedName，目前代码中的分隔符为 #!~#，entry 相当于是一个按照时间排序的存放实际值的数组
- 2. **Wal**: 日志文件，用于故障恢复
- 3. **TSM File**: 类似SSTable，用于存放数据
- 4. **Compactor**: 后台持续运行，每隔1s压缩合并数据
-     1. cache数据达到阈值后，进行快照，转存到新tsm文件
-     2. 合并当前tsm文件，将多个小的 tsm 文件合并成一个，使每一个文件尽量达到单个文件的最大大小，减少文件的数量，并且一些数据的删除操作也是在这个时候完成
+
+1. **Cache**: cache 相当于是 LSM Tree 中的 memtable，在内存中是一个简单的 map 结构，这里的 key 为 seriesKey + 分隔符 + filedName，目前代码中的分隔符为 #!~#，entry 相当于是一个按照时间排序的存放实际值的数组
+2. **Wal**: 日志文件，用于故障恢复
+3. **TSM File**: 类似SSTable，用于存放数据
+4. **Compactor**: 后台持续运行，每隔1s压缩合并数据
+    1. cache数据达到阈值后，进行快照，转存到新tsm文件
+    2. 合并当前tsm文件，将多个小的 tsm 文件合并成一个，使每一个文件尽量达到单个文件的最大大小，减少文件的数量，并且一些数据的删除操作也是在这个时候完成
 
 **索引读取操作优化**：
 > https://blog.csdn.net/xiaolei1982/article/details/75004852/?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-0--blog-126382492.235^v40^pc_relevant_anti_vip&spm=1001.2101.3001.4242.1&utm_relevant_index=3
 
 
 1. **元数据索引**：一个数据库的元数据索引通过 DatabaseIndex 这个结构体来存储，在数据库启动时，会进行初始化，从所有 shard 下的 tsm file 中加载 index 数据，获取其中所有 Measurement 以及 Series 的信息并缓存到内存中
-    1. **元数据查询**: 
-    例如我们需要查询 cpu_usage 这个 measurement 上传数据的机器有哪些，一个可能的查询语句为：
-``SHOW TAG VALUES FROM "cpu_usage" WITH KEY = "host"``
+    1. **元数据查询**:
+       例如我们需要查询 cpu_usage 这个 measurement 上传数据的机器有哪些，一个可能的查询语句为：
+       ``SHOW TAG VALUES FROM "cpu_usage" WITH KEY = "host"``
         1. 首先根据 measurement 可以在 DatabaseIndex.measurements 中拿到 cpu_usage 所对应的 Measurement 对象。
         2. 通过 Measurement.seriesByTagKeyValue 获取 tagk=host 所对应的以 tagv 为键的 map 对象。
         3. 遍历这个 map 对象，所有的 key 则为我们需要获取的数据。
-    
+
     2. **普通数据查询**:
-    对于普通的数据查询语句，则可以通过上述的元数据索引快速定位到要查询的数据所包含的所有 seriesKey，fieldName 和时间范围。
-    举个例子，假设查询语句为获取 server01 这台机器上 cpu_usage 指标最近一小时的数据：`SELECT value FROM "cpu_usage" WHERE host='server01' AND time > now() - 1h`
+       对于普通的数据查询语句，则可以通过上述的元数据索引快速定位到要查询的数据所包含的所有 seriesKey，fieldName 和时间范围。
+       举个例子，假设查询语句为获取 server01 这台机器上 cpu_usage 指标最近一小时的数据：`SELECT value FROM "cpu_usage" WHERE host='server01' AND time > now() - 1h`
         1. 先根据 measurement=cpu_usage 从 DatabaseIndex.measurements 中获取到 cpu_usage 对应的 Measurement 对象。
         2. 之后通过 DatabaseIndex.measurements["cpu_usage"].seriesByTagKeyValue["host"]["server01"] 获取到所有匹配的 series 的 ID值，再通过 Measurement.seriesByID 这个 map 对象根据 series ID 获取它们的实际对象。
         3. 注意这里虽然只指定了 host=server01，但不代表 cpu_usage 下只有这一个 series，可能还有其他的 tags 例如 user=1 以及 user=2，这样获取到的 series ID 实际上有两个，获取数据时需要获取所有 series 下的数据。
         4. 在 Series 结构体中的 shardIDs 这个 map 变量存放了哪些 shard 中存在这个 series 的数据。而 Measurement.fieldNames 这个 map 可以帮助过滤掉 fieldName 不存在的情况。
         5. 至此，我们在 o(1) 的时间复杂度内，获取到了所有符合要求的 series key、这些 series key 所存在的 shardID，要查询数据的时间范围，之后我们就可以创建数据迭代器从不同的 shard 中获取每一个 series key 在指定时间范围内的数据。后续的查询则和 tsm file 中的 Index 的在内存中的缓存相关
-3. **TSM File 索引**: 
+3. **TSM File 索引**:
     1. 对于 tsm file 中的 Index 部分会在内存中做间接索引，从而可以实现快速检索的目的。b 直接对应着 tsm file 中的 Index 部分，通过对 offsets 进行二分查找，可以获取到指定 key 的所有 block 的索引信息，之后根据 offset 和 size 信息可以取出一个指定的 block 中的所有数据。
     2. 通过元数据索引可以获取到所有 符合要求的 series key，它们对应的 shardID，时间范围。通过 tsm file 索引，我们就可以根据 series key 和 时间范围快速定位到数据在 tsm file 中的位置
     3. 从tsm file中读取数据：
-        1. influxDB中所有数据读取操作都通过iterator 
+        1. influxDB中所有数据读取操作都通过iterator
         2. Iterator 是一个抽象概念，并且支持嵌套，一个 Iterator 可以从底层的其他 Iterator 中获取数据并进行处理，之后再将结果传递给上层的 Iterator
         3. cursor 提供了一个 next() 方法用于获取一个 value 值。每一种数据类型都有一个自己的 cursor 实现。
         4. 底层实现都是 KeyCursor，KeyCursor 会缓存每个 Block 的数据，通过 Next() 函数依次返回，当一个 Block 中的内容读完后再通过 ReadBlock() 函数读取下一个 Block 中的内容。
-### 目录结构
- influxdb->data->db->rp->shard->tsm引擎
-            ->meta->meta.db
-            ->wal->db->rp->shard->wal file
-## ElasticSearch
+#### 目录结构
+influxdb->data->db->rp->shard->tsm引擎
+->meta->meta.db
+->wal->db->rp->shard->wal file
+
+
+## 文档数据库 （细节待补充）
+MongoDB
+非结构化支持，KV存储，适合低成本缓存
+存储成本高，复杂查询效率低，不适合OLTP、BI分析
+
+## 图数据库
+Neo4j
+Nebula:
+- Meta 管理Graph的链接（定时同步，更新时间戳用于链接复用、销毁过期链接）、Storage内的调度
+- Grouph
+- Storage(RocksDB内核)
+
+
+# 数据仓库
+OLAP分类：
+- MOLAP 预聚合
+    1. Druid
+    2. Kylin
+- ROLPA 实时计算
+    1. MPP架构：充分利用计算，大型并行处理
+        - Greenplum：底层存储基于Postgresql (阿里的
+          AnalyticDB)
+        - Apache Doris
+        - ClickHouse
+    2. SQL on Hadoop
+        - 基于MPP的pipline系统
+            1. Presto
+            2. Apache Impala (kudu存储引擎，HDFS存储系统，impala分析引擎)
+        - 基于DAG批处理系统
+            1. HIVE
+            2. SparkSQL
+## Apach Druid （细节待补充）
+
+https://www.cnblogs.com/WeaRang/p/12421873.html
+
+时序+列式+全文检索
+
+## Apache Kylin
+
+预聚合，查询速度快
+
+Kylin是ebay大数据部门（应该是一群来自中国的工程师）从2014年开始研发的支持TB到PB级别数据量的分布式Olap分析引擎。
+
+Kylin（麒麟）是一个Hadoop生态圈下的MOLAP系统，其**特点**包括：
+1. 可扩展的超快的OLAP引擎；
+2. 提供ANSI-SQL接口；
+3. 交互式查询能力；
+4. MOLAP Cube 的概念；
+5. 与BI工具可无缝整合。
+
+Kylin典型的**应用场景**如下：
+1. 用户数据存在于Hadoop HDFS中，利用Hive将HDFS文件数据以关系数据方式存取，数据量巨大，在500G以上；
+2. 每天有数G甚至数十G的数据增量导入；
+3. 有10个左右为固定的分析维度。
+
+Kylin的核心思想是利用空间换时间，由于查询方面制定了多种灵活的策略，进一步提高空间的利用率，使得这样的平衡策略在应用中是值得采用的。
+
+
+## Apache Doris
+- 商业化版本：StarRocks、SelectDB
+- MPP架构的OLAP系统
+- 整合Google Mesa（数据模型）+Apache Impala （MPP Query Engine）和 Apache ORCFile（存储格式，编码和压缩）
+    - **存储格式**：主流两类的存储格式是Apache Parquet和Apache ORC，分别来自Spark和Hive生态。两者均为适应大数据的列式存储格式，ORC在压缩编码上有特长，Parquet在半结构支持上更优。此外另有一种内存格式Apache Arrow，设计体系也属于format，但主要为内存交换优化
+
+> https://zhuanlan.zhihu.com/p/589992367
+
+#### 架构
+
+##### FE 前端
+1. 内存存储Metadata（paxos协议的内存性高可用架构）
+2. 查询计划、查询协调分发
+3. 支持多节点负载均衡、高可用、垂直变配、横向扩缩容
+4. 读写分离、通过扩展支持高并发
+5. 任意MySQL客户端直连
+
+##### BE 后端
+1. 负责数据存储、计算执行，以及compaction、副本管理
+2. 支持垂直、横向扩缩容，PB存储容量
+3. 数据自动分片，在所有节点所有磁盘自动均衡
+4. 增加磁盘、数据冷热分层 HDD\SDD\对象存储
+
+#### 特性
+
+1. 列式存储+向量化引擎：聚合和join效率高
+2. 数据分区保证高可用：
+    - 每个table有多个分区表，每个分区表又有多个副本，分别存储在不同BE节点上
+    -  每个table按照一定大小256M拆分为多个segment文件，每个segment是列存的LSMTree
+3. 实时数据接入组件Stream Load，有：
+    - 内置的 Canal 客户端实时获取 MySQL 的 binlog；
+    -  通过 Doris Flink Connector 对接 Flink 的 CDC 能力实现数据的精确导入；
+    - 通过内置的 Kafka客户端订阅 Kafka 的 Topic， 从而实现数据的实时更新。
+4. 支持高并发下的低延时查询
+    1. MVCC技术，根据主键的多版本数据
+    2. 异步Compaction，在LSMTree上的两种Compaction
+5. 索引结构：
+    1. 智能索引：
+        - 前缀稀疏索引：
+          Doris 存储在文件中的数据，是按照排序列有序存储的，Doris 会在排序数据上，每 1024 行创建一个稀疏索引项。索引的 Key 即当前这1024行中，第一行的前缀排序列的值。当用户的查询条件包含这些排序列是，我们可以通过前缀稀疏索引快速的定位到起始行。
+        - MinMax索引
+    2. 二级索引：二级索引是用户可以选择性的在某些列上添加的辅助索引
+
+## Snowflake：
+
+https://www.zhihu.com/question/421034559
+
+https://docs.snowflake.com/en/user-guide/intro-key-concepts
+
+### 主要特点：
+- 云原生，snowflake的优势用一句概况就是用现有云组件组装出的数据仓库服务
+- 实时弹性，不需要的时候几乎0成本
+- 自动运维：只有一个参数可设置
+
+### 架构
+-  multi-cluster + shared data架构，AP
+-  整体架构分为3层：Cloud Servier -> Virture Warehouse -> Data Storage,各层通过restful api进行交互
+-   数据链路：S3->SSD->Memory
+
+#### Data Storage 存储层
+
+块存储支持Aws S3、Azure Blob（云盘）
+**优点**：无限扩容+不丢数据+超低成本，吞吐量大
+**缺点**：访问延迟高，**全量写+部分读**：filte操作只能整体写入/覆盖，无法append，影响并发控制，get可以只获取部分列
+
+#### Vitural Warehouse 计算层
+
+一个Virtual Warehouse是一个由一堆EC2机器（叫做worker node）组成的集群，通过VW实现了计算资源的扩缩容和隔离。具体来说，一个query只在一个VW上运行，这个集群有多少个worker node可以资源的需求进行配置
+
+##### 本地缓存与file stealing
+
+1. 利用计算节点的磁盘进行缓存
+2. File stealing是只空闲的worker node会询问peer node是否需要处理输入文件，拿到file header 和列offset后去S3下载
+
+##### 执行引擎
+- **columnar**：方便SIMD指令，利于压缩，CPU缓存友好。
+- **vectorized**：流水线执行，batch处理。
+- **push-based**：operator把结果push到下游operator，与volcano的pull-base正好相反
+
+#### Cloud Services
+
+访问控制、查询优化、事务管理、适用FoundationDB存储Metadata数据（table-files映射）等功能
+
+##### 查询管理和优化
+
+优化器类似Cascade-style，采用top-down cost-based的模型。因为Snowflake没有索引，整个优化的search space大大减小，同时由于将一些决策下推到执行引擎，也减少了选错最优执行方案的几率
+
+##### 事务控制
+
+基于底层S3 Copy-On-Write的特性，每个table file只要变更，就会产生一个新文件，同时构成新的table version，建立新的metadata维护新的映射，因此随机更新效果很差，bulk load / bulk update比较适用。
+file的变更都是COW，天然适合MVCC
+
+##### 剪枝 pruning
+无索引设计，采用min-max（zone-map），维护一个chunk中的最大最小值，用于判断这个chunk中是否有目标数据
+
+
+# 数据湖、湖仓一体
+### 数据仓库
+1. 数据格式提前规整好（schema）
+2. 对海量数据有管理能力：事务型写入(ACID)、查询能力，足够好的性能
+3. 是数据湖的下游应用
+### 数据湖
+#### 特性
+1. 海量存储作为统一的数据底座
+2. 任意形式的原始数据：文档、视频、语音、db中的结构、非结构化
+3. 长期存在，低成本
+#### 应用
+1. 对外提供API对下提供数据，整合成结构化的数据仓库
+2. 可以直接执行SQL进行分析
+3. 机器学习的数据源
+4. 具备搜索和分类功能，快速检索数据
+5. 提供丰富的数据采集能力：从各类数据源摄入数据
+#### 背景
+数据湖的存储一般采用低成本易扩展的对象存储：AWS S3、 Ali OSS，这些存储有延迟高、无事务、只能保证最终一致性等特点，Delta，Hudi，IceBerg就是为了管理这类存储的工具，主要提供近实时化存储格式：
+1. 数据摄取组件，上游对接各种类型数据源：
+2. 元数据管理，存储格式的统一管理
+3. 写入的事务支持
+4. 下游可以对接数据存储（OSS）和计算引擎，用于提供查询、分析能力（Hive、Spark、Flink等）
+在这些组件出现之前，通常使用传统的Lambda架构来实现流批处理场景
+
+##### 传统的Lambda架构
+
+> https://www.cnblogs.com/cciejh/p/lambda-architecture.html
+
+基于HDFS的分布式文件系统的批量数据的计算系统（MapReduce作业）往往不是低延迟的，Lambda架构（Storm作者提出）通过批量 MapReduce作业提供了虽有些延迟但是结果准确的计算，同时通过Storm将最新数据的计算结果初步展示出来
+
+#### Databricks（Spark的公司）-Delta Lake (细节待补充)
+默认Spark为计算引擎
+
+> https://www.databricks.com/wp-content/uploads/2020/08/p975-armbrust.pdf
+
+#### Uber-Apache Hudi (细节待补充)
+
+默认Spark为计算引擎
+1. 数据写入和存储在基于列的存储的parquet文件（一种存储格式）
+2. Copy on Write: 文件更新是发生，优化了查询性能，限制了写入性能和数据新鲜度
+3. 表存储布局：Merge On Read：基于列的parquet和基于行的Avro日志文件的组合来存储数据，在读取时compaction
+    - 更新可以在日志文件中批量更新，以后可以同步或异步压缩到新的 parquet 文件中，以平衡最大查询性能和降低写入放大。
+    - 对于近乎实时的流式工作负载，Hudi 可以使用更高效的面向行的格式，而对于批处理工作负载，hudi 格式使用可向量化的面向列的格式，并在需要时无缝合并两种格式。
+
+#### Netflix-Apachge Iceburgh (细节待补充)
+
+高度抽象、通用化设计的Table Format，可以结合各种存储引擎和计算引擎，结合Flink做到流批一体
+
+
+## 对象存储
+### Object Storage的特性
+
+云上的对象存储是目前全球最大的数据存储系统，包括AWS S3，Azure Blob storage，Alibaba OSS...这些存储系统的特点类似：
+1. Key-Value的数据组织方式，key是数据的path，value是data object(file)
+2. 超低成本
+3. 超高扩展性，可以认为是近乎无限的存储容量超高持久性，写入后不用担心数据的丢失
+4. 读取的延迟大，单链接吞吐量不高data object(file)支持按字节offset的范围read，但写只能是完全覆盖，也就是partial read + overwrite
+
+这种key-value的组织形式类似filesystem，但并没有文件系统这么丰富的操作接口。而是提供了例如LIST这样的metadata API，用来快速获取data object列表，列举的方式是按照字典序获取比给定key(filepath)更大的object集合，也就相当于读取某个特定"目录"下的所有文件+子目录。
+但这个操作效率很低（S3一个LIST request最多返回1000个object，如果有大量object可能花费很长时间）
+从一致性的角度，object storage只能提供eventual consistency的保证，也就是说，对一个key-value对象，写入后不一定立即可见，有些系统甚至无法做到read-after-write，此外单个object的写入是原子的，但多object之间不提供原子写能力，metadata也是如此，LIST不一定看到最新状态。
+从性能角度，每次读操作的基础延迟是5-10ms，这就意味着需要做大块的sequential IO(xxMB)来均摊掉这部分latency，此外由于单个read操作吞吐低 (50-100M/s），需要在上层做充分并行来提升throughput。LIST操作也需要并行来加速，但如果data object非常多，即使并行了延迟也仍然很大。写操作是原子的，但这里会有读性能和写延迟的trade-off，如果要求写入得快，可能产生文件会比较碎比较小导致不利于读，反之则写延迟会变大。
+
+提供事务型的读写能力并保证性能ok，必然要克服以上问题，包括：
+1. 尽量保证顺序访问的模式 - 列存 （Parquet/ORC）
+2. data object要有合适的大小
+3. 尽量避免LIST操作
+
+### 常见解决方案
+- 原始方案
+
+  最简单的方式就是没有单独的元数据管理层，只是原生的一堆data objects集合，data objects按照类似文件目录的方式来组织，例如如果业务侧有分区，可以把不同分区组织为不同子目录，但由于上面提到的各类一致性、性能缺陷，用户会遇到类似partial update，corrupt state，没有任何管理接口，性能糟糕等问题。
+
+- 定制Storage engine
+  这也是Snowflake/Hive等系统采用的方案，把metadata，statstics组织在一个单独的，高可用的，具备事务能力的存储系统中，作为底层数据视图的"source of truth"，并利用其ACID的能力提供对底层存储的事务支持，包括并发控制、多版本管理等。这样data lake就成了一个dummy的存储系统而已，策略完全在第三方组件里。这是一个很不错也很流行的方案，但paper认为它存在以下问题：
+  1. 所有I/O操作都要以第三方组件作为入口点，例如Snowflake cloud service，这使得集成变得更复杂，也降低了性能，databricks更倾向于直接访问底层存储。
+  2. 存在供应商绑定问题，不具备开放性。
+  3. 额外组件意味着更高的运维成本、失效风险。
+
+- 用Object storage存储metadata
+  这是Databricks采用的方案，这个"source of truth"仍然由cloud object storage来提供，所有以上定制系统提到的能力都由其完成，这也就解决了包括供应商绑定、额外组件的问题。目前Apache Hudi和Apache Iceberg也采用了同样的机制，但他们没有像Databricks一样提供更全面的上层能力，后面会介绍.
+
+
+## ElasticSearch (细节待补充）
 
 Elasticsearch会把数据写到translog然后结合FileSystemCache将数据刷到磁盘中
 
+查询快，支持文本查找
+复杂查询效率低（join、聚合），不是集群部署
+
+
+![69313f7d5a80161dac0a85f6c4e7fbc9.png](evernotecid://7C421C31-405D-49A0-9EBC-98E479245B63/appyinxiangcom/50728397/ENResource/p5)

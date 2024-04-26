@@ -288,6 +288,18 @@ synchronized
 
 ### ThreadLocal
 
+InheritableThreadLocal继承关系图
+使用InheritableThreadLocal操作的是Thread内的InheritableThreadLocalMap
+使用ThreadLocal操作的是Thread内的ThreadLocalMap
+
+子线程用父线程的InheritableThreadLocal实例的话，可以读到父线程中set的值
+**原因**：子线程init时拷贝了父线程的InheritableThreadLocalMap到自身线程的InheritableThreadLocalMap中
+子线程新建InheritableThreadLocal实例的话，get到是空的
+**原因**：子线程中的InheritableThreadLocalMap的key是InheritableThreadLocal实例，
+第一个entry是[父线程InheritableThreadLocal实例，父线程set的值]，
+第二个entry是[子线程新建的InheritableThreadLocal实例，null]
+
+
 ![c8f363a8e4dff2849d6263701c55e188.jpeg](evernotecid://7C421C31-405D-49A0-9EBC-98E479245B63/appyinxiangcom/50728397/ENResource/p4)
 
 
@@ -429,3 +441,16 @@ Object val = method.getDefaultValue();
     
       ```
 
+## 问题排查
+
+1. JVM OOM：
+   1.1 堆
+   1.1.1  内存溢出
+   1.1.2 内存泄露：无法合理释放
+    2. 栈
+        1. stackoverflow：递归太深
+        2. 剩余内存不够
+    3. 方法区 OOM MetaSpace
+
+2. Docker OOM：
+    1. 堆内存（jvm）+堆外内存（direct memory），而堆外内存包括对linux内核文件的打开（fd）,如果stream流未正确关闭，内核会开劈越来越多的堆外内存，造成docker oom
